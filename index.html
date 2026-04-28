@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WMS Pro | Cloud Warehouse Management System</title>
+    <title>WMS | Warehouse Management System with Firebase</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -24,7 +24,7 @@
         .panel{display:none;padding:28px 32px;animation:fade 0.2s ease;}
         .panel.active-panel{display:block;}
         @keyframes fade{from{opacity:0;}to{opacity:1;}}
-        .card{background:#1e293b;border-radius:26px;border:1px solid #334155;padding:24px;margin-bottom:28px;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+        .card{background:#1e293b;border-radius:26px;border:1px solid #334155;padding:24px;margin-bottom:28px;}
         .form-row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;margin-bottom:20px;}
         .input-group{flex:1;min-width:170px;}
         .input-group label{font-size:0.7rem;font-weight:700;text-transform:uppercase;color:#94a3b8;display:block;margin-bottom:6px;}
@@ -53,7 +53,13 @@
         .status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;}
         .status-online{background:#064e3b;color:#34d399;}
         .status-offline{background:#7f1d1d;color:#fca5a5;}
-        .connection-bar{background:#1e293b;padding:8px 20px;border-radius:40px;font-size:0.75rem;display:inline-flex;align-items:center;gap:8px;}
+        .status-warning{background:#713f12;color:#fbbf24;}
+        .connection-status-bar{background:#1e293b;padding:10px 20px;border-radius:40px;font-size:0.8rem;display:inline-flex;align-items:center;gap:10px;margin-bottom:16px;}
+        .instruction-box{background:#0f172a;border:1px solid #34d399;border-radius:16px;padding:16px;margin-bottom:20px;}
+        .instruction-box h4{color:#34d399;margin-bottom:12px;}
+        .instruction-box ol{margin-left:20px;color:#94a3b8;}
+        .instruction-box li{margin:8px 0;}
+        .code-block{background:#0a0a0a;padding:12px;border-radius:10px;font-family:monospace;font-size:0.75rem;margin:10px 0;color:#7ee787;}
     </style>
 </head>
 <body>
@@ -77,24 +83,38 @@
     </div>
 
     <div id="inventoryPanel" class="panel active-panel">
+        <div class="instruction-box">
+            <h4><i class="fas fa-info-circle"></i> Firestore Setup Required</h4>
+            <p>If you see "Loading data from Firestore..." for more than 5 seconds, please complete these steps:</p>
+            <ol>
+                <li>Go to <a href="https://console.firebase.google.com/project/warehouse-ccc23/firestore" target="_blank" style="color:#34d399;">Firebase Console → Firestore Database</a></li>
+                <li>Click <strong>"Create database"</strong></li>
+                <li><strong style="color:#fbbf24;">Select "Start in test mode"</strong> (IMPORTANT!)</li>
+                <li>Choose a region and click "Enable"</li>
+                <li>Then click the <strong>"Add Demo Products"</strong> button below</li>
+            </ol>
+        </div>
         <div class="flex-between">
             <h2><i class="fas fa-clipboard-list"></i> Stock Overview</h2>
             <div><input type="text" id="searchInventory" placeholder="🔍 SKU / Name / Barcode" style="width:250px;"></div>
         </div>
         <div class="card">
             <div class="flex-between" style="margin-bottom:16px;">
-                <div class="connection-bar" id="connectionStatus">
+                <div class="connection-status-bar" id="connectionStatus">
                     <i class="fas fa-spinner fa-pulse"></i> Connecting to Firebase...
                 </div>
-                <button id="refreshDataBtn" class="secondary" style="padding:6px 16px;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <div>
+                    <button id="seedDemoDataBtn" class="secondary" style="margin-right:8px;"><i class="fas fa-seedling"></i> Add Demo Products</button>
+                    <button id="refreshDataBtn" class="secondary"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
             </div>
             <div class="table-wrapper" style="overflow-x:auto;">
-                <table>
+                <table id="inventoryTable">
                     <thead>
-                        <tr><th>Barcode (Code128)</th><th>SKU</th><th>Product</th><th>Category</th><th>Qty</th><th>Min</th><th>Status</th><th>Actions</th></td>
+                        <tr><th>Barcode (Code128)</th><th>SKU</th><th>Product</th><th>Category</th><th>Qty</th><th>Min</th><th>Status</th><th>Actions</th></tr>
                     </thead>
                     <tbody id="inventoryTbody">
-                        <tr><td colspan="8" style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-pulse"></i> Loading data from Firestore...</td></tr>
+                        <tr><td colspan="8" style="text-align:center;padding:60px;"><i class="fas fa-spinner fa-pulse"></i> Loading data from Firestore...<br><span style="font-size:0.8rem; color:#64748b;">If this persists, create Firestore database in test mode</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -127,10 +147,6 @@
                     <div><button id="scanStockActionBtn" class="secondary"><i class="fas fa-exchange-alt"></i> Apply</button></div>
                 </div>
             </div>
-        </div>
-        <div class="card">
-            <h4><i class="fas fa-info-circle"></i> How to Use</h4>
-            <p>Use a physical barcode scanner or type the barcode number. The system will find the product and allow stock adjustments in real-time.</p>
         </div>
     </div>
 
@@ -176,19 +192,12 @@
                 <div><button id="deleteProductBtn" class="danger"><i class="fas fa-trash"></i> Delete</button></div>
             </div>
         </div>
-        <div class="card">
-            <div class="flex-between">
-                <div><i class="fab fa-github"></i> Ready for GitHub Pages</div>
-                <button id="seedDemoDataBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo Products</button>
-            </div>
-        </div>
     </div>
 </div>
 
 <script type="module">
-    // ========== FIREBASE CONFIGURATION (YOUR PROVIDED CONFIG) ==========
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     
     const firebaseConfig = {
         apiKey: "AIzaSyD3W-j1l1gDH4m0RPHRnImQZjWvEA-XjMs",
@@ -207,8 +216,8 @@
     let products = [];
     let transactionLog = [];
     let unsubscribeProducts = null;
+    let retryCount = 0;
     
-    // Helper functions
     function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
     
     function generateUniqueBarcode(sku, productId) {
@@ -263,7 +272,7 @@
                 let id = icon.getAttribute("data-id");
                 if (confirm("Delete this product permanently?")) {
                     await deleteDoc(doc(db, "products", id));
-                    addLogEntry(`Deleted product from cloud`);
+                    addLogEntry(`Deleted product`);
                 }
             };
         });
@@ -291,7 +300,7 @@
         const tbody = document.getElementById("inventoryTbody");
         if (!tbody) return;
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;">📦 No products found. Click "Manage Products" to add items.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;">📦 No products found. Click "Add Demo Products" to get started.</td></tr>';
         } else {
             tbody.innerHTML = filtered.map(p => {
                 const low = (p.quantity || 0) <= (p.minStock || 0);
@@ -328,25 +337,66 @@
         return true;
     }
     
-    // Load saved logs
     const savedLogs = localStorage.getItem("wms_logs");
     if (savedLogs) transactionLog = JSON.parse(savedLogs);
     renderTransactionLog();
     
-    // Set up real-time Firestore listener
+    // Set up Firestore listener with error handling
     const statusDiv = document.getElementById("connectionStatus");
-    unsubscribeProducts = onSnapshot(productsCollection, (snapshot) => {
-        products = [];
-        snapshot.forEach(doc => {
-            products.push({ id: doc.id, ...doc.data() });
-        });
-        renderInventory();
-        statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Connected to Firestore | Data syncing in real-time';
-        statusDiv.style.background = "#064e3b";
-    }, (error) => {
-        console.error("Firestore error:", error);
-        statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ Firestore connection issue. Check your database rules.';
-        statusDiv.style.background = "#7f1d1d";
+    
+    try {
+        unsubscribeProducts = onSnapshot(productsCollection, 
+            (snapshot) => {
+                retryCount = 0;
+                products = [];
+                snapshot.forEach(doc => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+                renderInventory();
+                statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Connected to Firestore | Data syncing';
+                statusDiv.style.background = "#064e3b";
+            }, 
+            (error) => {
+                console.error("Firestore error:", error);
+                if (error.code === 'permission-denied') {
+                    statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ Permission denied! Please set Firestore to "test mode" in Firebase Console.';
+                    statusDiv.style.background = "#7f1d1d";
+                } else if (error.code === 'not-found') {
+                    statusDiv.innerHTML = '<i class="fas fa-database"></i> 📁 Create Firestore database in Firebase Console (test mode)';
+                    statusDiv.style.background = "#713f12";
+                } else {
+                    statusDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ⚠️ ${error.message.substring(0, 100)}`;
+                    statusDiv.style.background = "#7f1d1d";
+                }
+            }
+        );
+    } catch(e) {
+        console.error("Setup error:", e);
+        statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ Firebase configuration error. Check console.';
+    }
+    
+    // Add Demo Products
+    document.getElementById("seedDemoDataBtn")?.addEventListener("click", async () => {
+        const demos = [
+            { sku: "WH-1001", name: "Wireless Mouse", category: "Electronics", quantity: 42, minStock: 8, barcode: "690123456789", createdAt: new Date().toISOString() },
+            { sku: "WH-1002", name: "Mechanical Keyboard", category: "Electronics", quantity: 18, minStock: 5, barcode: "692837461025", createdAt: new Date().toISOString() },
+            { sku: "WH-2001", name: "Steel Shelf", category: "Furniture", quantity: 7, minStock: 4, barcode: "697215438902", createdAt: new Date().toISOString() },
+            { sku: "WH-3005", name: "Anti-static Mat", category: "Safety", quantity: 3, minStock: 5, barcode: "694178362501", createdAt: new Date().toISOString() },
+            { sku: "WH-4002", name: "Pallet Jack", category: "Equipment", quantity: 12, minStock: 2, barcode: "698234517890", createdAt: new Date().toISOString() }
+        ];
+        let added = 0;
+        for (const prod of demos) {
+            try {
+                await addDoc(productsCollection, prod);
+                added++;
+            } catch(e) { console.error("Error adding:", e); }
+        }
+        if (added > 0) {
+            alert(`✅ Added ${added} demo products to Firestore!`);
+            addLogEntry(`Seeded ${added} demo products`);
+        } else {
+            alert("⚠️ Failed to add products. Make sure Firestore is in TEST MODE.");
+        }
     });
     
     // Add product
@@ -357,23 +407,27 @@
         if (products.some(p => p.sku === sku)) { alert("SKU already exists!"); return; }
         const newId = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
         const newBarcode = generateUniqueBarcode(sku, newId);
-        await addDoc(productsCollection, {
-            sku, name,
-            category: document.getElementById("newCategory").value.trim() || "General",
-            quantity: parseInt(document.getElementById("newQty").value) || 0,
-            minStock: parseInt(document.getElementById("newMinStock").value) || 5,
-            barcode: newBarcode,
-            createdAt: new Date().toISOString()
-        });
-        addLogEntry(`Added product: ${sku} | Barcode: ${newBarcode}`);
-        document.getElementById("newSku").value = "";
-        document.getElementById("newName").value = "";
-        document.getElementById("newCategory").value = "";
-        document.getElementById("newQty").value = "0";
-        const msg = document.getElementById("addSuccessMsg");
-        msg.style.display = "block";
-        msg.innerHTML = `✅ Product added! Barcode: ${newBarcode}`;
-        setTimeout(() => msg.style.display = "none", 3000);
+        try {
+            await addDoc(productsCollection, {
+                sku, name,
+                category: document.getElementById("newCategory").value.trim() || "General",
+                quantity: parseInt(document.getElementById("newQty").value) || 0,
+                minStock: parseInt(document.getElementById("newMinStock").value) || 5,
+                barcode: newBarcode,
+                createdAt: new Date().toISOString()
+            });
+            addLogEntry(`Added product: ${sku} | Barcode: ${newBarcode}`);
+            document.getElementById("newSku").value = "";
+            document.getElementById("newName").value = "";
+            document.getElementById("newCategory").value = "";
+            document.getElementById("newQty").value = "0";
+            const msg = document.getElementById("addSuccessMsg");
+            msg.style.display = "block";
+            msg.innerHTML = `✅ Product added! Barcode: ${newBarcode}`;
+            setTimeout(() => msg.style.display = "none", 3000);
+        } catch(e) {
+            alert("Error adding product: " + e.message);
+        }
     });
     
     // Update product
@@ -389,22 +443,20 @@
         if (Object.keys(updates).length > 0) {
             await updateDoc(doc(db, "products", id), updates);
             addLogEntry(`Updated product: ${prod.sku}`);
-            alert("Product updated successfully!");
+            alert("Product updated!");
         }
     });
     
-    // Delete product
     document.getElementById("deleteProductBtn")?.addEventListener("click", async () => {
         const id = document.getElementById("editProductSelect").value;
         const prod = products.find(p => p.id === id);
         if (prod && confirm(`Delete "${prod.name}" permanently?`)) {
             await deleteDoc(doc(db, "products", id));
-            addLogEntry(`Deleted product: ${prod.sku}`);
+            addLogEntry(`Deleted: ${prod.sku}`);
             alert("Product deleted!");
         }
     });
     
-    // Load product into edit form
     document.getElementById("editProductSelect")?.addEventListener("change", (e) => {
         const prod = products.find(p => p.id === e.target.value);
         if (prod) {
@@ -414,15 +466,14 @@
         }
     });
     
-    // Barcode lookup
     document.getElementById("lookupBarcodeBtn")?.addEventListener("click", () => {
         const barcode = document.getElementById("scannerInput").value.trim();
         if (!barcode) { alert("Enter or scan a barcode"); return; }
         const product = findProductByBarcode(barcode);
         const resultDiv = document.getElementById("barcodeLookupResult");
         if (product) {
-            document.getElementById("lookupProductInfo").innerHTML = `<strong><i class="fas fa-cube"></i> ${escapeHtml(product.name)}</strong> (SKU: ${escapeHtml(product.sku)})`;
-            document.getElementById("lookupStockInfo").innerHTML = `📊 Current Stock: ${product.quantity} | Min Stock: ${product.minStock}`;
+            document.getElementById("lookupProductInfo").innerHTML = `<strong>${escapeHtml(product.name)}</strong> (${escapeHtml(product.sku)})`;
+            document.getElementById("lookupStockInfo").innerHTML = `Stock: ${product.quantity} | Min: ${product.minStock}`;
             resultDiv.style.display = "block";
             resultDiv.setAttribute("data-current-id", product.id);
         } else {
@@ -431,80 +482,5 @@
         }
     });
     
-    // Scan stock action
     document.getElementById("scanStockActionBtn")?.addEventListener("click", async () => {
-        const resultDiv = document.getElementById("barcodeLookupResult");
-        const prodId = resultDiv.getAttribute("data-current-id");
-        if (!prodId) return;
-        let qty = parseInt(document.getElementById("scanAdjustQty").value);
-        const type = document.getElementById("scanAdjustType").value;
-        if (isNaN(qty) || qty <= 0) qty = 1;
-        const delta = type === "add" ? qty : -qty;
-        if (await modifyStock(prodId, delta, `Scanner ${type === 'add' ? 'addition' : 'removal'}`)) {
-            document.getElementById("scannerInput").value = "";
-            const updated = products.find(p => p.id === prodId);
-            if (updated) document.getElementById("lookupStockInfo").innerHTML = `📊 Current Stock: ${updated.quantity} | Min Stock: ${updated.minStock}`;
-        }
-    });
-    
-    // Quick barcode action
-    document.getElementById("applyBarcodeActionBtn")?.addEventListener("click", async () => {
-        const barcode = document.getElementById("quickBarcodeInput").value.trim();
-        if (!barcode) { alert("Scan or enter a barcode"); return; }
-        const prod = findProductByBarcode(barcode);
-        if (!prod) { alert(`Barcode not recognized: ${barcode}`); return; }
-        let qty = parseInt(document.getElementById("quickQty").value);
-        const action = document.getElementById("quickAction").value;
-        if (isNaN(qty) || qty < 1) qty = 1;
-        const delta = action === "add" ? qty : -qty;
-        if (await modifyStock(prod.id, delta, `Quick ${action}`)) {
-            document.getElementById("quickBarcodeInput").value = "";
-            const msg = document.getElementById("quickActionSuccess");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ ${prod.name}: ${action === 'add' ? '+' : '-'}${qty} → New stock: ${prod.quantity + delta}`;
-            setTimeout(() => msg.style.display = "none", 2000);
-        }
-    });
-    
-    // Generate barcode preview
-    document.getElementById("generateBarcodeBtn")?.addEventListener("click", () => {
-        const selectedId = document.getElementById("barcodeProductSelect").value;
-        const product = products.find(p => p.id === selectedId);
-        if (!product) { alert("Select a product first"); return; }
-        const container = document.getElementById("barcodeRenderDiv");
-        container.innerHTML = `<svg id="dynamicBarcodeSvg"></svg>`;
-        JsBarcode("#dynamicBarcodeSvg", product.barcode, { format: "CODE128", width: 2, height: 55, displayValue: true, fontSize: 14, margin: 10 });
-        document.getElementById("barcodePreviewArea").style.display = "block";
-        window.currentBarcodeProduct = product;
-    });
-    
-    // Save barcode as PNG
-    document.getElementById("printBarcodeImgBtn")?.addEventListener("click", () => {
-        const svgElem = document.querySelector("#barcodeRenderDiv svg");
-        if (!svgElem) { alert("Generate a barcode preview first"); return; }
-        const svgData = new XMLSerializer().serializeToString(svgElem);
-        const canvas = document.createElement("canvas");
-        const img = new Image();
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext("2d");
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
-            const link = document.createElement("a");
-            link.download = `barcode_${(window.currentBarcodeProduct?.sku || "product")}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-        };
-        img.src = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(svgData);
-    });
-    
-    // Seed demo data
-    document.getElementById("seedDemoDataBtn")?.addEventListener("click", async () => {
-        const demos = [
-            { sku: "WH-1001", name: "Wireless Mouse", category: "Electronics", quantity: 42, minStock: 8, barcode: "690123456789" },
-            { sku: "WH-1002", name: "Mechanical Keyboard", category: "Electronics", quantity: 18, minStock: 5, barcode: "692837461025" },
-            { sku: "WH-2001", name: "Steel Shelf", category: "Furniture", quantity: 7, minStock: 4, barcode: "697215438902" },
-            { sku: "WH-3005", name: "Anti-static Mat", category: "Safety", quantity: 3, minStock: 5, barcode: "694178362501" },
-            { sku: "WH-4002", name: "Pallet
+        const resultDiv = document.getElementById
