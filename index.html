@@ -3,54 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WMS | Code 128 Barcode Warehouse System</title>
+    <title>WMS Pro | Code 128 Barcode Warehouse System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #ecf2f9; font-family: 'Inter', sans-serif; color: #0a2b3c; padding: 20px 24px; }
-        .wms-container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 32px; box-shadow: 0 20px 40px -12px rgba(0,0,0,0.12); overflow: hidden; }
-        .header { padding: 20px 32px; background: white; border-bottom: 1px solid #e9edf2; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
-        .logo-area h1 { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #0a4c36, #166c47); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .logo-area p { font-size: 0.8rem; color: #557c9c; margin-top: 4px; }
-        .stats-badge { display: flex; gap: 28px; background: #f8fafd; padding: 8px 24px; border-radius: 60px; }
-        .stat-number { font-weight: 800; font-size: 1.45rem; color: #1a6e42; }
-        .stat-label { font-size: 0.7rem; text-transform: uppercase; color: #5a7a9a; }
-        .tabs { display: flex; background: #ffffff; padding: 0 28px; gap: 6px; border-bottom: 1px solid #eef2f8; flex-wrap: wrap; }
-        .tab-btn { background: none; border: none; font-weight: 600; padding: 14px 22px; font-size: 0.95rem; cursor: pointer; color: #5f7d9c; border-radius: 30px 30px 0 0; display: inline-flex; align-items: center; gap: 10px; transition: 0.2s; }
-        .tab-btn.active { color: #1b6e42; background: #edf7f0; border-bottom: 3px solid #2b8c4a; }
-        .panel { display: none; padding: 28px 32px; animation: fade 0.2s ease; }
-        .panel.active-panel { display: block; }
-        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-        .card { background: white; border-radius: 26px; border: 1px solid #eaf0f6; padding: 24px; margin-bottom: 28px; }
-        .form-row { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; margin-bottom: 20px; }
-        .input-group { flex: 1; min-width: 170px; }
-        .input-group label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #3f6e8c; display: block; margin-bottom: 6px; }
-        input, select { width: 100%; padding: 12px 14px; border-radius: 18px; border: 1px solid #d9e2ef; font-family: 'Inter', monospace; font-size: 0.9rem; background: white; }
-        input:focus, select:focus { outline: none; border-color: #2b8c4a; box-shadow: 0 0 0 3px rgba(43,140,74,0.12); }
-        button { background: #1a6e42; border: none; padding: 10px 24px; border-radius: 44px; font-weight: 600; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; transition: 0.2s; font-size: 0.85rem; }
-        button.danger { background: #dc2626; }
-        button.danger:hover { background: #b91c1c; }
-        button.secondary { background: #eef2ff; color: #1f3a6b; border: 1px solid #cddae9; }
-        button:hover { background: #0f5a34; transform: translateY(-1px); }
-        .barcode-preview-card { background: #fbfefe; border-radius: 24px; padding: 24px; text-align: center; border: 2px dashed #cde0ed; margin-top: 16px; }
-        .barcode-svg-container { background: white; padding: 20px; display: inline-block; border-radius: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { text-align: left; padding: 14px 10px; background: #fafdff; color: #1f4870; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 12px 10px; border-bottom: 1px solid #ecf3fa; vertical-align: middle; }
-        .stock-badge { background: #e2f3e8; color: #196f46; border-radius: 40px; padding: 4px 12px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
-        .low-stock { background: #ffe3de; color: #bc2c1e; }
-        .action-icons i { margin: 0 5px; cursor: pointer; font-size: 1.05rem; }
-        .action-icons i:hover { opacity: 0.7; }
-        .log-list { max-height: 280px; overflow-y: auto; background: #fbfeff; border-radius: 20px; border: 1px solid #eef2f8; }
-        .log-entry { padding: 12px 16px; border-bottom: 1px solid #ecf3f9; font-size: 0.8rem; font-family: monospace; display: flex; gap: 12px; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-        .barcode-scanner-card { background: #f6fafe; border-radius: 28px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #d4e4f5; }
-        @media (max-width: 680px) { body { padding: 12px; } .panel { padding: 18px; } }
-        .code128-note { font-size: 0.7rem; color: #5b7e9e; margin-top: 8px; }
-        .success-msg { background: #e0f2e6; color: #1a6e42; padding: 8px 16px; border-radius: 12px; margin-top: 10px; display: none; }
-        .loading-placeholder { text-align: center; padding: 40px; color: #7c8ea0; }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:#ecf2f9;font-family:'Inter',sans-serif;color:#0a2b3c;padding:20px 24px;}
+        .wms-container{max-width:1600px;margin:0 auto;background:white;border-radius:32px;box-shadow:0 20px 40px -12px rgba(0,0,0,0.12);overflow:hidden;}
+        .header{padding:20px 32px;background:white;border-bottom:1px solid #e9edf2;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;}
+        .logo-area h1{font-size:1.8rem;font-weight:800;background:linear-gradient(135deg,#0a4c36,#166c47);-webkit-background-clip:text;background-clip:text;color:transparent;}
+        .logo-area p{font-size:0.8rem;color:#557c9c;margin-top:4px;}
+        .stats-badge{display:flex;gap:28px;background:#f8fafd;padding:8px 24px;border-radius:60px;}
+        .stat-number{font-weight:800;font-size:1.45rem;color:#1a6e42;}
+        .stat-label{font-size:0.7rem;text-transform:uppercase;color:#5a7a9a;}
+        .tabs{display:flex;background:#fff;padding:0 28px;gap:6px;border-bottom:1px solid #eef2f8;flex-wrap:wrap;}
+        .tab-btn{background:none;border:none;font-weight:600;padding:14px 22px;font-size:0.95rem;cursor:pointer;color:#5f7d9c;border-radius:30px 30px 0 0;display:inline-flex;align-items:center;gap:10px;transition:0.2s;}
+        .tab-btn.active{color:#1b6e42;background:#edf7f0;border-bottom:3px solid #2b8c4a;}
+        .panel{display:none;padding:28px 32px;animation:fade 0.2s ease;}
+        .panel.active-panel{display:block;}
+        @keyframes fade{from{opacity:0;}to{opacity:1;}}
+        .card{background:white;border-radius:26px;border:1px solid #eaf0f6;padding:24px;margin-bottom:28px;}
+        .form-row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;margin-bottom:20px;}
+        .input-group{flex:1;min-width:170px;}
+        .input-group label{font-size:0.7rem;font-weight:700;text-transform:uppercase;color:#3f6e8c;display:block;margin-bottom:6px;}
+        input,select{width:100%;padding:12px 14px;border-radius:18px;border:1px solid #d9e2ef;font-family:'Inter',monospace;font-size:0.9rem;background:white;}
+        input:focus,select:focus{outline:none;border-color:#2b8c4a;box-shadow:0 0 0 3px rgba(43,140,74,0.12);}
+        button{background:#1a6e42;border:none;padding:10px 24px;border-radius:44px;font-weight:600;color:white;cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:0.2s;font-size:0.85rem;}
+        button.danger{background:#dc2626;}
+        button.danger:hover{background:#b91c1c;}
+        button.secondary{background:#eef2ff;color:#1f3a6b;border:1px solid #cddae9;}
+        button:hover{background:#0f5a34;transform:translateY(-1px);}
+        .barcode-preview-card{background:#fbfefe;border-radius:24px;padding:24px;text-align:center;border:2px dashed #cde0ed;margin-top:16px;}
+        .barcode-svg-container{background:white;padding:20px;display:inline-block;border-radius:20px;}
+        table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+        th{text-align:left;padding:14px 10px;background:#fafdff;color:#1f4870;font-weight:700;border-bottom:2px solid #e2e8f0;}
+        td{padding:12px 10px;border-bottom:1px solid #ecf3fa;vertical-align:middle;}
+        .stock-badge{background:#e2f3e8;color:#196f46;border-radius:40px;padding:4px 12px;font-weight:600;font-size:0.75rem;display:inline-block;}
+        .low-stock{background:#ffe3de;color:#bc2c1e;}
+        .action-icons i{margin:0 5px;cursor:pointer;font-size:1.05rem;transition:0.1s;}
+        .action-icons i:hover{opacity:0.7;transform:scale(1.05);}
+        .log-list{max-height:280px;overflow-y:auto;background:#fbfeff;border-radius:20px;border:1px solid #eef2f8;}
+        .log-entry{padding:12px 16px;border-bottom:1px solid #ecf3f9;font-size:0.8rem;font-family:monospace;display:flex;gap:12px;}
+        .flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+        .barcode-scanner-card{background:#f6fafe;border-radius:28px;padding:20px 24px;margin-bottom:24px;border:1px solid #d4e4f5;}
+        @media(max-width:680px){body{padding:12px;}.panel{padding:18px;}}
+        .code128-note{font-size:0.7rem;color:#5b7e9e;margin-top:8px;}
+        .success-msg{background:#e0f2e6;color:#1a6e42;padding:8px 16px;border-radius:12px;margin-top:10px;display:none;}
     </style>
 </head>
 <body>
@@ -74,467 +73,371 @@
     </div>
 
     <div id="inventoryPanel" class="panel active-panel">
-        <div class="flex-between">
-            <h2><i class="fas fa-clipboard-list"></i> Stock Overview</h2>
-            <div><input type="text" id="searchInventory" placeholder="🔍 SKU / Name / Barcode" style="width: 250px;"></div>
-        </div>
-        <div class="card">
-            <div class="table-wrapper" style="overflow-x: auto;">
-                <table id="inventoryTable">
-                    <thead><tr><th>Barcode (Code128)</th><th>SKU</th><th>Product</th><th>Category</th><th>Qty</th><th>Min</th><th>Status</th><th>Actions</th></tr></thead>
-                    <tbody id="inventoryTbody"><tr><td colspan="8" class="loading-placeholder"><i class="fas fa-spinner fa-pulse"></i> Loading inventory...</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-        <div class="card">
-            <h3><i class="fas fa-bolt"></i> Quick Barcode Stock Action</h3>
-            <div class="form-row">
-                <div class="input-group"><label>📷 Scan / Enter Barcode</label><input type="text" id="quickBarcodeInput" placeholder="e.g., 690123456789"></div>
-                <div class="input-group"><label>Operation</label><select id="quickAction"><option value="add">➕ Add Stock</option><option value="remove">➖ Remove Stock</option></select></div>
-                <div class="input-group"><label>Quantity</label><input type="number" id="quickQty" value="1" min="1"></div>
-                <div><button id="applyBarcodeActionBtn"><i class="fas fa-barcode"></i> Apply</button></div>
-            </div>
-            <div id="quickActionSuccess" class="success-msg"></div>
-        </div>
+        <div class="flex-between"><h2><i class="fas fa-clipboard-list"></i> Stock Overview</h2><div><input type="text" id="searchInventory" placeholder="🔍 SKU / Name / Barcode" style="width:250px;"></div></div>
+        <div class="card"><div class="table-wrapper" style="overflow-x:auto;"><table id="inventoryTable"><thead><tr><th>Barcode (Code128)</th><th>SKU</th><th>Product</th><th>Category</th><th>Qty</th><th>Min</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventoryTbody"><tr><td colspan="8" style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-pulse"></i> Loading inventory...</td></tr></tbody></table></div></div>
+        <div class="card"><h3><i class="fas fa-bolt"></i> Quick Barcode Stock Action</h3><div class="form-row"><div class="input-group"><label>📷 Scan / Enter Barcode</label><input type="text" id="quickBarcodeInput" placeholder="e.g., 690123456789"></div><div class="input-group"><label>Operation</label><select id="quickAction"><option value="add">➕ Add Stock</option><option value="remove">➖ Remove Stock</option></select></div><div class="input-group"><label>Quantity</label><input type="number" id="quickQty" value="1" min="1"></div><div><button id="applyBarcodeActionBtn"><i class="fas fa-barcode"></i> Apply</button></div></div><div id="quickActionSuccess" class="success-msg"></div></div>
     </div>
 
-    <div id="barcodeScanPanel" class="panel">
-        <div class="barcode-scanner-card">
-            <h3><i class="fas fa-camera-retro"></i> Code 128 Scanner Console</h3>
-            <p style="margin-bottom: 16px;">Use physical barcode scanner or type the exact barcode. System supports standard Code 128.</p>
-            <div class="form-row">
-                <div class="input-group" style="flex: 3;"><label>🔍 Barcode input</label><input type="text" id="scannerInput" placeholder="Scan barcode ..." autofocus></div>
-                <div><button id="lookupBarcodeBtn"><i class="fas fa-search"></i> Find Product</button></div>
-            </div>
-            <div id="barcodeLookupResult" style="display: none; margin-top: 16px; background: #fefaf0; border-radius: 20px; padding: 20px; border: 1px solid #f0e0c0;">
-                <div class="flex-between"><span id="lookupProductInfo">—</span><span id="lookupStockInfo">—</span></div>
-                <div class="form-row" style="margin-top: 16px;">
-                    <div class="input-group"><label>Adjust Qty</label><input type="number" id="scanAdjustQty" value="1" min="1"></div>
-                    <div class="input-group"><label>Type</label><select id="scanAdjustType"><option value="add">➕ Add</option><option value="remove">➖ Remove</option></select></div>
-                    <div><button id="scanStockActionBtn" class="secondary"><i class="fas fa-arrows-spin"></i> Apply</button></div>
-                </div>
-            </div>
-        </div>
-        <div class="card">
-            <h4><i class="fas fa-info-circle"></i> Barcode standard</h4>
-            <p>All products are assigned a unique <strong>Code 128</strong> barcode (no prefix). Generate printable barcodes in "Manage & Barcodes". Data saved in browser localStorage.</p>
-        </div>
-    </div>
+    <div id="barcodeScanPanel" class="panel"><div class="barcode-scanner-card"><h3><i class="fas fa-camera-retro"></i> Code 128 Scanner Console</h3><p style="margin-bottom:16px;">Use physical barcode scanner or type the exact barcode. System supports standard Code 128.</p><div class="form-row"><div class="input-group" style="flex:3;"><label>🔍 Barcode input</label><input type="text" id="scannerInput" placeholder="Scan barcode ..." autofocus></div><div><button id="lookupBarcodeBtn"><i class="fas fa-search"></i> Find Product</button></div></div><div id="barcodeLookupResult" style="display:none;margin-top:16px;background:#fefaf0;border-radius:20px;padding:20px;border:1px solid #f0e0c0;"><div class="flex-between"><span id="lookupProductInfo">—</span><span id="lookupStockInfo">—</span></div><div class="form-row" style="margin-top:16px;"><div class="input-group"><label>Adjust Qty</label><input type="number" id="scanAdjustQty" value="1" min="1"></div><div class="input-group"><label>Type</label><select id="scanAdjustType"><option value="add">➕ Add</option><option value="remove">➖ Remove</option></select></div><div><button id="scanStockActionBtn" class="secondary"><i class="fas fa-arrows-spin"></i> Apply</button></div></div></div></div><div class="card"><h4><i class="fas fa-info-circle"></i> Barcode standard</h4><p>All products are assigned a unique <strong>Code 128</strong> barcode (no prefix). Generate printable barcodes in "Manage & Barcodes". Data saved in browser localStorage.</p></div></div>
 
-    <div id="transactionsPanel" class="panel">
-        <div class="flex-between"><h2><i class="fas fa-history"></i> Movement Log</h2><button id="clearLogBtn" class="secondary"><i class="fas fa-broom"></i> Clear Log</button></div>
-        <div class="card"><div class="log-list" id="transactionLogList"><div class="log-entry">No transactions recorded</div></div></div>
-    </div>
+    <div id="transactionsPanel" class="panel"><div class="flex-between"><h2><i class="fas fa-history"></i> Movement Log</h2><button id="clearLogBtn" class="secondary"><i class="fas fa-broom"></i> Clear Log</button></div><div class="card"><div class="log-list" id="transactionLogList"><div class="log-entry">No transactions recorded</div></div></div></div>
 
-    <div id="managePanel" class="panel">
-        <h2><i class="fas fa-database"></i> Product & Barcode Management</h2>
-        <div class="card">
-            <h3>➕ Add New Product (Auto Code128 Barcode)</h3>
-            <div class="form-row">
-                <div class="input-group"><label>SKU *</label><input type="text" id="newSku" placeholder="WH-500X"></div>
-                <div class="input-group"><label>Product Name *</label><input type="text" id="newName" placeholder="Product name"></div>
-                <div class="input-group"><label>Category</label><input type="text" id="newCategory" placeholder="Category"></div>
-                <div class="input-group"><label>Initial Qty</label><input type="number" id="newQty" value="0"></div>
-                <div class="input-group"><label>Min Stock</label><input type="number" id="newMinStock" value="5"></div>
-                <div><button id="addProductBtn"><i class="fas fa-barcode"></i> Create</button></div>
-            </div>
-            <div id="addSuccessMsg" class="success-msg"></div>
-        </div>
-        <div class="card">
-            <h3><i class="fas fa-print"></i> Code 128 Barcode Generator</h3>
-            <div class="form-row">
-                <div class="input-group"><label>Select product</label><select id="barcodeProductSelect"></select></div>
-                <div><button id="generateBarcodeBtn" class="secondary"><i class="fas fa-qrcode"></i> Preview</button></div>
-                <div><button id="printBarcodeImgBtn" class="secondary"><i class="fas fa-print"></i> Save PNG</button></div>
-            </div>
-            <div id="barcodePreviewArea" style="display: none;" class="barcode-preview-card">
-                <div class="barcode-svg-container" id="barcodeRenderDiv"></div>
-                <p class="code128-note">✅ Standard Code 128 — No prefix</p>
-            </div>
-        </div>
-        <div class="card">
-            <h3>✏️ Edit / Delete Product</h3>
-            <div class="form-row">
-                <div class="input-group"><label>Product</label><select id="editProductSelect"></select></div>
-                <div class="input-group"><label>New Name</label><input type="text" id="editName" placeholder="Update name"></div>
-                <div class="input-group"><label>Category</label><input type="text" id="editCategory" placeholder="Update category"></div>
-                <div class="input-group"><label>Min Stock</label><input type="number" id="editMinStock" placeholder="Min stock"></div>
-                <div><button id="updateProductBtn" class="secondary"><i class="fas fa-save"></i> Save</button></div>
-                <div><button id="deleteProductBtn" class="danger"><i class="fas fa-trash"></i> Delete</button></div>
-            </div>
-            <div class="flex-between" style="margin-top: 20px;">
-                <div class="code128-note"><i class="fab fa-github"></i> Ready for GitHub Pages</div>
-                <button id="resetDemoDataBtn" class="secondary"><i class="fas fa-undo-alt"></i> Reset Demo Data</button>
-            </div>
-        </div>
-    </div>
+    <div id="managePanel" class="panel"><h2><i class="fas fa-database"></i> Product & Barcode Management</h2><div class="card"><h3>➕ Add New Product (Auto Code128 Barcode)</h3><div class="form-row"><div class="input-group"><label>SKU *</label><input type="text" id="newSku" placeholder="WH-500X"></div><div class="input-group"><label>Product Name *</label><input type="text" id="newName" placeholder="Product name"></div><div class="input-group"><label>Category</label><input type="text" id="newCategory" placeholder="Category"></div><div class="input-group"><label>Initial Qty</label><input type="number" id="newQty" value="0"></div><div class="input-group"><label>Min Stock</label><input type="number" id="newMinStock" value="5"></div><div><button id="addProductBtn"><i class="fas fa-barcode"></i> Create</button></div></div><div id="addSuccessMsg" class="success-msg"></div></div><div class="card"><h3><i class="fas fa-print"></i> Code 128 Barcode Generator</h3><div class="form-row"><div class="input-group"><label>Select product</label><select id="barcodeProductSelect"></select></div><div><button id="generateBarcodeBtn" class="secondary"><i class="fas fa-qrcode"></i> Preview</button></div><div><button id="printBarcodeImgBtn" class="secondary"><i class="fas fa-print"></i> Save PNG</button></div></div><div id="barcodePreviewArea" style="display:none;" class="barcode-preview-card"><div class="barcode-svg-container" id="barcodeRenderDiv"></div><p class="code128-note">✅ Standard Code 128 — No prefix</p></div></div><div class="card"><h3>✏️ Edit / Delete Product</h3><div class="form-row"><div class="input-group"><label>Product</label><select id="editProductSelect"></select></div><div class="input-group"><label>New Name</label><input type="text" id="editName" placeholder="Update name"></div><div class="input-group"><label>Category</label><input type="text" id="editCategory" placeholder="Update category"></div><div class="input-group"><label>Min Stock</label><input type="number" id="editMinStock" placeholder="Min stock"></div><div><button id="updateProductBtn" class="secondary"><i class="fas fa-save"></i> Save</button></div><div><button id="deleteProductBtn" class="danger"><i class="fas fa-trash"></i> Delete</button></div></div><div class="flex-between" style="margin-top:20px;"><div class="code128-note"><i class="fab fa-github"></i> Ready for GitHub Pages</div><button id="resetDemoDataBtn" class="secondary"><i class="fas fa-undo-alt"></i> Reset Demo Data</button></div></div></div>
 </div>
 
 <script>
-    (function() {
-        // Storage keys
-        const STORAGE_KEYS = { PRODUCTS: "wms_products_fixed", LOGS: "wms_logs_fixed" };
-        
-        // Demo products with Code128 barcodes (no prefix)
-        const DEFAULT_PRODUCTS = [
-            { id: "p1", sku: "WH-1001", name: "Wireless Mouse", category: "Electronics", quantity: 42, minStock: 8, barcode: "690123456789" },
-            { id: "p2", sku: "WH-1002", name: "Mechanical Keyboard", category: "Electronics", quantity: 18, minStock: 5, barcode: "692837461025" },
-            { id: "p3", sku: "WH-2001", name: "Steel Shelf", category: "Furniture", quantity: 7, minStock: 4, barcode: "697215438902" },
-            { id: "p4", sku: "WH-3005", name: "Anti-static Mat", category: "Safety", quantity: 3, minStock: 5, barcode: "694178362501" },
-            { id: "p5", sku: "WH-4002", name: "Pallet Jack", category: "Equipment", quantity: 12, minStock: 2, barcode: "698234517890" }
-        ];
-        
-        let products = [];
-        let transactionLog = [];
+// ============================================================
+// COMPLETE WAREHOUSE MANAGEMENT SYSTEM - FULLY FUNCTIONAL
+// ============================================================
+(function() {
+    const STORAGE_KEYS = { PRODUCTS: "wms_complete_v1", LOGS: "wms_logs_complete_v1" };
+    
+    const DEFAULT_PRODUCTS = [
+        { id: "p1", sku: "WH-1001", name: "Wireless Mouse", category: "Electronics", quantity: 42, minStock: 8, barcode: "690123456789" },
+        { id: "p2", sku: "WH-1002", name: "Mechanical Keyboard", category: "Electronics", quantity: 18, minStock: 5, barcode: "692837461025" },
+        { id: "p3", sku: "WH-2001", name: "Steel Shelf", category: "Furniture", quantity: 7, minStock: 4, barcode: "697215438902" },
+        { id: "p4", sku: "WH-3005", name: "Anti-static Mat", category: "Safety", quantity: 3, minStock: 5, barcode: "694178362501" },
+        { id: "p5", sku: "WH-4002", name: "Pallet Jack", category: "Equipment", quantity: 12, minStock: 2, barcode: "698234517890" }
+    ];
+    
+    let products = [];
+    let transactionLog = [];
 
-        // Helper functions
-        function generateUniqueBarcode(sku, productId) {
-            let raw = sku.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-            let suffix = productId.slice(-6);
-            let combined = (raw + suffix).slice(0, 18);
-            if (!combined || combined.length < 4) combined = "WH" + productId.slice(-8);
-            return combined;
-        }
-        
-        function generateId() { 
-            return Date.now().toString(36) + Math.random().toString(36).substring(2, 6); 
-        }
+    function generateUniqueBarcode(sku, productId) {
+        let raw = sku.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        let suffix = productId.slice(-6);
+        let combined = (raw + suffix).slice(0, 18);
+        if (!combined || combined.length < 4) combined = "WH" + productId.slice(-8);
+        if (!combined || combined.length < 3) combined = "PROD" + Date.now().toString().slice(-8);
+        return combined;
+    }
+    
+    function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2, 8); }
 
-        function persistData() {
-            try {
-                localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
-                localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(transactionLog.slice(0, 200)));
-            } catch(e) { console.warn("Storage failed", e); }
-        }
+    function persistData() {
+        try {
+            localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+            localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(transactionLog.slice(0, 200)));
+        } catch(e) { console.warn("Storage failed"); }
+    }
 
-        function loadInitialData() {
-            const storedProducts = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
-            const storedLogs = localStorage.getItem(STORAGE_KEYS.LOGS);
-            
-            if (storedProducts && storedProducts !== "undefined" && storedProducts !== "null") {
-                products = JSON.parse(storedProducts);
-            } else {
-                products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-            }
-            
-            if (storedLogs && storedLogs !== "undefined" && storedLogs !== "null") {
-                transactionLog = JSON.parse(storedLogs);
-            } else {
-                transactionLog = [{ time: new Date().toLocaleString(), text: "WMS ready | Code 128 barcode system loaded" }];
-            }
+    function loadData() {
+        const storedProducts = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+        const storedLogs = localStorage.getItem(STORAGE_KEYS.LOGS);
+        if (storedProducts && storedProducts !== "undefined") {
+            products = JSON.parse(storedProducts);
+        } else {
+            products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
         }
-
-        function addLogEntry(text) {
-            transactionLog.unshift({ time: new Date().toLocaleString(), text: text });
-            if (transactionLog.length > 100) transactionLog.pop();
-            persistData();
-            renderTransactionLog();
+        if (storedLogs && storedLogs !== "undefined") {
+            transactionLog = JSON.parse(storedLogs);
+        } else {
+            transactionLog = [{ time: new Date().toLocaleString(), text: "WMS ready | Code 128 barcode system loaded" }];
         }
+    }
 
-        function updateStats() {
-            const totalProductsElem = document.getElementById("totalProductsStat");
-            const totalUnitsElem = document.getElementById("totalUnitsStat");
-            const lowStockElem = document.getElementById("lowStockCountStat");
-            if (totalProductsElem) totalProductsElem.innerText = products.length;
-            if (totalUnitsElem) totalUnitsElem.innerText = products.reduce((s, p) => s + p.quantity, 0);
-            if (lowStockElem) lowStockElem.innerText = products.filter(p => p.quantity <= p.minStock).length;
+    function addLogEntry(text) {
+        transactionLog.unshift({ time: new Date().toLocaleString(), text: text });
+        if (transactionLog.length > 100) transactionLog.pop();
+        persistData();
+        renderTransactionLog();
+    }
+
+    function updateStats() {
+        document.getElementById("totalProductsStat").innerText = products.length;
+        document.getElementById("totalUnitsStat").innerText = products.reduce((s, p) => s + p.quantity, 0);
+        document.getElementById("lowStockCountStat").innerText = products.filter(p => p.quantity <= p.minStock).length;
+    }
+
+    function escapeHtml(str) { 
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m){ 
+            if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;
+        }); 
+    }
+
+    function refreshSelects() {
+        const options = products.map(p => `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)} (${escapeHtml(p.barcode)})</option>`).join('');
+        const editSelect = document.getElementById("editProductSelect");
+        const barcodeSelect = document.getElementById("barcodeProductSelect");
+        if (editSelect) editSelect.innerHTML = options || '<option value="">No products</option>';
+        if (barcodeSelect) barcodeSelect.innerHTML = options || '<option value="">No products</option>';
+    }
+
+    function renderInventory() {
+        const searchTerm = (document.getElementById("searchInventory")?.value || "").toLowerCase();
+        const filtered = products.filter(p => 
+            p.sku.toLowerCase().includes(searchTerm) || 
+            p.name.toLowerCase().includes(searchTerm) || 
+            (p.barcode && p.barcode.toLowerCase().includes(searchTerm))
+        );
+        const tbody = document.getElementById("inventoryTbody");
+        if (!tbody) return;
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;">📦 No products found</td></tr>';
+        } else {
+            tbody.innerHTML = filtered.map(p => {
+                const low = p.quantity <= p.minStock;
+                return `<tr>
+                    <td><i class="fas fa-barcode"></i> <strong>${escapeHtml(p.barcode)}</strong></td>
+                    <td>${escapeHtml(p.sku)}</td>
+                    <td>${escapeHtml(p.name)}</td>
+                    <td>${escapeHtml(p.category)}</td>
+                    <td><span class="stock-badge ${low ? 'low-stock' : ''}">${p.quantity}</span></td>
+                    <td>${p.minStock}</td>
+                    <td>${low ? '⚠️ Low stock' : '✔️ OK'}</td>
+                    <td class="action-icons">
+                        <i class="fas fa-edit" data-id="${p.id}" title="Edit"></i>
+                        <i class="fas fa-trash-alt" data-id="${p.id}" title="Delete"></i>
+                        <i class="fas fa-barcode" data-id="${p.id}" title="Preview Barcode"></i>
+                    </td>
+                </tr>`;
+            }).join('');
         }
+        refreshSelects();
+        attachTableEvents();
+        updateStats();
+        persistData();
+    }
 
-        function escapeHtml(str) { 
-            if (!str) return '';
-            return String(str).replace(/[&<>]/g, function(m){ 
-                if(m==='&') return '&amp;'; 
-                if(m==='<') return '&lt;'; 
-                if(m==='>') return '&gt;'; 
-                return m;
-            }); 
-        }
-
-        function refreshSelects() {
-            const options = products.map(p => `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)} (${escapeHtml(p.barcode)})</option>`).join('');
-            const editSelect = document.getElementById("editProductSelect");
-            const barcodeSelect = document.getElementById("barcodeProductSelect");
-            if (editSelect) editSelect.innerHTML = options || '<option value="">No products</option>';
-            if (barcodeSelect) barcodeSelect.innerHTML = options || '<option value="">No products</option>';
-        }
-
-        function renderInventory() {
-            const searchTerm = (document.getElementById("searchInventory")?.value || "").toLowerCase();
-            const filtered = products.filter(p => 
-                p.sku.toLowerCase().includes(searchTerm) || 
-                p.name.toLowerCase().includes(searchTerm) || 
-                (p.barcode && p.barcode.toLowerCase().includes(searchTerm))
-            );
-            const tbody = document.getElementById("inventoryTbody");
-            if (!tbody) return;
-            
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px;">📦 No products found</td></tr>';
-            } else {
-                tbody.innerHTML = filtered.map(p => {
-                    const low = p.quantity <= p.minStock;
-                    return `<tr>
-                        <td><i class="fas fa-barcode"></i> <strong>${escapeHtml(p.barcode)}</strong></td>
-                        <td>${escapeHtml(p.sku)}</td>
-                        <td>${escapeHtml(p.name)}</td>
-                        <td>${escapeHtml(p.category)}</td>
-                        <td><span class="stock-badge ${low ? 'low-stock' : ''}">${p.quantity}</span></td>
-                        <td>${p.minStock}</td>
-                        <td>${low ? '⚠️ Low stock' : '✔️ OK'}</td>
-                        <td class="action-icons">
-                            <i class="fas fa-edit" data-id="${p.id}" title="Edit"></i>
-                            <i class="fas fa-trash-alt" data-id="${p.id}" title="Delete"></i>
-                            <i class="fas fa-barcode" data-id="${p.id}" title="Preview Barcode"></i>
-                        </td>
-                    </tr>`;
-                }).join('');
-            }
-            refreshSelects();
-            attachTableEvents();
-            updateStats();
-            persistData();
-        }
-
-        function attachTableEvents() {
-            // Edit buttons
-            document.querySelectorAll("#inventoryTbody .fa-edit").forEach(icon => {
-                icon.onclick = (e) => {
-                    e.stopPropagation();
-                    let id = icon.getAttribute("data-id");
-                    // Switch to manage tab
-                    document.querySelector('[data-tab="manage"]').click();
-                    setTimeout(() => {
-                        const editSelect = document.getElementById("editProductSelect");
-                        if (editSelect) { 
-                            editSelect.value = id; 
-                            // Trigger change event
-                            const changeEvent = new Event('change');
-                            editSelect.dispatchEvent(changeEvent);
-                        }
-                    }, 50);
-                };
-            });
-            // Delete buttons
-            document.querySelectorAll("#inventoryTbody .fa-trash-alt").forEach(icon => {
-                icon.onclick = (e) => {
-                    e.stopPropagation();
-                    let id = icon.getAttribute("data-id");
-                    if (confirm("Delete product permanently?")) {
-                        let idx = products.findIndex(p => p.id === id);
-                        if (idx !== -1) {
-                            let removed = products[idx];
-                            products.splice(idx, 1);
-                            addLogEntry(`DELETED ${removed.sku} (${removed.name})`);
-                            renderInventory();
-                        }
-                    }
-                };
-            });
-            // Barcode preview buttons
-            document.querySelectorAll("#inventoryTbody .fa-barcode").forEach(icon => {
-                icon.onclick = (e) => {
-                    e.stopPropagation();
-                    let id = icon.getAttribute("data-id");
-                    let prod = products.find(p => p.id === id);
-                    if (prod) {
-                        document.querySelector('[data-tab="manage"]').click();
-                        const select = document.getElementById("barcodeProductSelect");
-                        if (select) { select.value = prod.id; }
-                        setTimeout(() => { 
-                            const genBtn = document.getElementById("generateBarcodeBtn");
-                            if (genBtn) genBtn.click(); 
-                        }, 150);
-                    }
-                };
-            });
-        }
-
-        function renderTransactionLog() {
-            const container = document.getElementById("transactionLogList");
-            if (!container) return;
-            if (!transactionLog.length) { 
-                container.innerHTML = '<div class="log-entry">No movements</div>'; 
-                return; 
-            }
-            container.innerHTML = transactionLog.map(l => `<div class="log-entry"><span class="log-time">${escapeHtml(l.time)}</span><span>📦 ${escapeHtml(l.text)}</span></div>`).join('');
-        }
-
-        function findProductByBarcode(barcode) {
-            return products.find(p => p.barcode && p.barcode === barcode);
-        }
-
-        function modifyStock(productId, delta, reason) {
-            const prod = products.find(p => p.id === productId);
-            if (!prod) return false;
-            const newQty = prod.quantity + delta;
-            if (newQty < 0) { 
-                alert(`Stock underflow! Only ${prod.quantity} units available.`); 
-                return false; 
-            }
-            prod.quantity = newQty;
-            addLogEntry(`${reason}: ${prod.sku} (${prod.name}) | ${delta > 0 ? `+${delta}` : `${delta}`} → ${newQty}`);
-            renderInventory();
-            return true;
-        }
-
-        // Tab switching
-        const tabs = document.querySelectorAll(".tab-btn");
-        const panels = {
-            inventory: document.getElementById("inventoryPanel"),
-            barcodeScan: document.getElementById("barcodeScanPanel"),
-            transactions: document.getElementById("transactionsPanel"),
-            manage: document.getElementById("managePanel")
-        };
-        
-        tabs.forEach(btn => {
-            btn.addEventListener("click", () => {
-                const tabId = btn.getAttribute("data-tab");
-                Object.keys(panels).forEach(key => {
-                    if (panels[key]) panels[key].classList.remove("active-panel");
-                });
-                if (panels[tabId]) panels[tabId].classList.add("active-panel");
-                tabs.forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                if (tabId === "barcodeScan") {
-                    const scannerInput = document.getElementById("scannerInput");
-                    if (scannerInput) scannerInput.focus();
-                }
-            });
+    function attachTableEvents() {
+        document.querySelectorAll("#inventoryTbody .fa-edit").forEach(icon => {
+            icon.onclick = (e) => {
+                e.stopPropagation();
+                let id = icon.getAttribute("data-id");
+                document.querySelector('[data-tab="manage"]').click();
+                setTimeout(() => {
+                    const editSelect = document.getElementById("editProductSelect");
+                    if (editSelect) { editSelect.value = id; editSelect.dispatchEvent(new Event('change')); }
+                }, 50);
+            };
         });
-
-        // ========== EVENT LISTENERS ==========
-        // Barcode lookup
-        const lookupBtn = document.getElementById("lookupBarcodeBtn");
-        if (lookupBtn) {
-            lookupBtn.addEventListener("click", () => {
-                const barcodeVal = document.getElementById("scannerInput").value.trim();
-                if (!barcodeVal) { alert("Please scan or enter barcode"); return; }
-                const product = findProductByBarcode(barcodeVal);
-                const resultDiv = document.getElementById("barcodeLookupResult");
-                if (product) {
-                    document.getElementById("lookupProductInfo").innerHTML = `<strong><i class="fas fa-cube"></i> ${escapeHtml(product.name)}</strong> (SKU: ${escapeHtml(product.sku)})`;
-                    document.getElementById("lookupStockInfo").innerHTML = `📊 Stock: ${product.quantity} | Min: ${product.minStock}`;
-                    resultDiv.style.display = "block";
-                    resultDiv.setAttribute("data-current-id", product.id);
-                } else {
-                    alert(`No product matches barcode: "${barcodeVal}"`);
-                    resultDiv.style.display = "none";
+        document.querySelectorAll("#inventoryTbody .fa-trash-alt").forEach(icon => {
+            icon.onclick = (e) => {
+                e.stopPropagation();
+                let id = icon.getAttribute("data-id");
+                if (confirm("Delete product permanently?")) {
+                    let idx = products.findIndex(p => p.id === id);
+                    if (idx !== -1) {
+                        let removed = products[idx];
+                        products.splice(idx, 1);
+                        addLogEntry(`DELETED ${removed.sku} (${removed.name})`);
+                        renderInventory();
+                    }
                 }
-            });
-        }
-
-        // Scan stock action
-        const scanActionBtn = document.getElementById("scanStockActionBtn");
-        if (scanActionBtn) {
-            scanActionBtn.addEventListener("click", () => {
-                const resultDiv = document.getElementById("barcodeLookupResult");
-                const prodId = resultDiv.getAttribute("data-current-id");
-                if (!prodId) return;
-                let qty = parseInt(document.getElementById("scanAdjustQty").value);
-                const type = document.getElementById("scanAdjustType").value;
-                if (isNaN(qty) || qty <= 0) qty = 1;
-                const delta = type === "add" ? qty : -qty;
-                if (modifyStock(prodId, delta, `Scanner ${type === 'add' ? 'addition' : 'removal'}`)) {
-                    document.getElementById("scannerInput").value = "";
-                    const updated = products.find(p => p.id === prodId);
-                    if (updated) document.getElementById("lookupStockInfo").innerHTML = `📊 Stock: ${updated.quantity} | Min: ${updated.minStock}`;
+            };
+        });
+        document.querySelectorAll("#inventoryTbody .fa-barcode").forEach(icon => {
+            icon.onclick = (e) => {
+                e.stopPropagation();
+                let id = icon.getAttribute("data-id");
+                let prod = products.find(p => p.id === id);
+                if (prod) {
+                    document.querySelector('[data-tab="manage"]').click();
+                    const select = document.getElementById("barcodeProductSelect");
+                    if (select) { select.value = prod.id; }
+                    setTimeout(() => { document.getElementById("generateBarcodeBtn").click(); }, 150);
                 }
-            });
-        }
+            };
+        });
+    }
 
-        // Quick barcode action
-        const quickActionBtn = document.getElementById("applyBarcodeActionBtn");
-        if (quickActionBtn) {
-            quickActionBtn.addEventListener("click", () => {
-                const barcode = document.getElementById("quickBarcodeInput").value.trim();
-                if (!barcode) { alert("Scan or enter barcode"); return; }
-                const prod = findProductByBarcode(barcode);
-                if (!prod) { alert(`Barcode not recognized: ${barcode}`); return; }
-                let qty = parseInt(document.getElementById("quickQty").value);
-                const action = document.getElementById("quickAction").value;
-                if (isNaN(qty) || qty < 1) qty = 1;
-                const delta = action === "add" ? qty : -qty;
-                if (modifyStock(prod.id, delta, `Quick ${action}`)) {
-                    document.getElementById("quickBarcodeInput").value = "";
-                    const msgDiv = document.getElementById("quickActionSuccess");
-                    msgDiv.style.display = "block";
-                    msgDiv.innerHTML = `✅ Updated ${prod.name}: ${action === 'add' ? '+' : '-'}${qty}`;
-                    setTimeout(() => { msgDiv.style.display = "none"; }, 2000);
-                }
-            });
-        }
+    function renderTransactionLog() {
+        const container = document.getElementById("transactionLogList");
+        if (!container) return;
+        if (!transactionLog.length) { container.innerHTML = '<div class="log-entry">No movements</div>'; return; }
+        container.innerHTML = transactionLog.map(l => `<div class="log-entry"><span class="log-time">${escapeHtml(l.time)}</span><span>📦 ${escapeHtml(l.text)}</span></div>`).join('');
+    }
 
-        // Add product
-        const addBtn = document.getElementById("addProductBtn");
-        if (addBtn) {
-            addBtn.addEventListener("click", () => {
-                const sku = document.getElementById("newSku").value.trim();
-                const name = document.getElementById("newName").value.trim();
-                const category = document.getElementById("newCategory").value.trim();
-                const qty = parseInt(document.getElementById("newQty").value) || 0;
-                const minStock = parseInt(document.getElementById("newMinStock").value) || 5;
-                if (!sku || !name) { alert("SKU and Product Name required"); return; }
-                if (products.some(p => p.sku.toLowerCase() === sku.toLowerCase())) { alert("SKU already exists"); return; }
-                const newId = generateId();
-                const newBarcode = generateUniqueBarcode(sku, newId);
-                products.push({ id: newId, sku, name, category: category || "General", quantity: qty, minStock, barcode: newBarcode });
-                addLogEntry(`NEW: ${sku} | Barcode: ${newBarcode}`);
-                renderInventory();
-                document.getElementById("newSku").value = "";
-                document.getElementById("newName").value = "";
-                document.getElementById("newCategory").value = "";
-                document.getElementById("newQty").value = "0";
-                document.getElementById("newMinStock").value = "5";
-                const successMsg = document.getElementById("addSuccessMsg");
-                successMsg.style.display = "block";
-                successMsg.innerHTML = `✅ Product added! Barcode: ${newBarcode}`;
-                setTimeout(() => { successMsg.style.display = "none"; }, 3000);
-            });
-        }
+    function findProductByBarcode(barcode) { return products.find(p => p.barcode && p.barcode === barcode); }
 
-        // Generate barcode preview
-        const genBarcodeBtn = document.getElementById("generateBarcodeBtn");
-        if (genBarcodeBtn) {
-            genBarcodeBtn.addEventListener("click", () => {
-                const selectedId = document.getElementById("barcodeProductSelect").value;
-                const product = products.find(p => p.id === selectedId);
-                if (!product) { alert("Select a product"); return; }
-                const container = document.getElementById("barcodeRenderDiv");
-                container.innerHTML = `<svg id="dynamicBarcodeSvg"></svg>`;
-                try {
-                    JsBarcode("#dynamicBarcodeSvg", product.barcode, { format: "CODE128", width: 2, height: 55, displayValue: true, fontSize: 14, margin: 10 });
-                    document.getElementById("barcodePreviewArea").style.display = "block";
-                    window.currentBarcodeProduct = product;
-                } catch(e) { alert("Error generating barcode"); }
-            });
-        }
+    function modifyStock(productId, delta, reason) {
+        const prod = products.find(p => p.id === productId);
+        if (!prod) return false;
+        const newQty = prod.quantity + delta;
+        if (newQty < 0) { alert(`Stock underflow! Only ${prod.quantity} units available.`); return false; }
+        prod.quantity = newQty;
+        addLogEntry(`${reason}: ${prod.sku} (${prod.name}) | ${delta > 0 ? `+${delta}` : `${delta}`} → ${newQty}`);
+        renderInventory();
+        return true;
+    }
 
-        // Save PNG
-        const printBtn = document.getElementById("printBarcodeImgBtn");
-        if (printBtn) {
-            printBtn.addEventListener("click", () => {
-                const svgElem = document.querySelector("#barcodeRenderDiv svg");
-                if (!svgElem) { alert("Please generate barcode preview first."); return; }
-                const svgData = new XMLSerializer().serializeToString(svgElem);
-                const canvas = document.createElement("canvas");
-                const img = new Image();
-                img.onload = () => {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext("2d");
-                    ctx.fillStyle = "white";
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0);
-                    const link = document.createElement("a");
-                    link.download = `barcode_${(window.currentBarcodeProduct?.sku || "product")}.png`;
-                    link.href = canvas.toDataURL();
-                    link.click();
-                };
-                img.src = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(svgData);
-            });
-        }
+    // Tab switching
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const tabId = btn.getAttribute("data-tab");
+            document.querySelectorAll(".panel").forEach(p => p.classList.remove("active-panel"));
+            document.getElementById(`${tabId}Panel`).classList.add("active-panel");
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            if (tabId === "barcodeScan") document.getElementById("scannerInput")?.focus();
+        });
+    });
 
-        // Update product
-        const updateBtn = document.getElementById("updateProductBtn");
-        if (updateBtn) {
-            updateBtn.addEventListener("click", () =>
+    // Event Listeners
+    document.getElementById("lookupBarcodeBtn")?.addEventListener("click", () => {
+        const barcodeVal = document.getElementById("scannerInput").value.trim();
+        if (!barcodeVal) { alert("Please scan or enter barcode"); return; }
+        const product = findProductByBarcode(barcodeVal);
+        const resultDiv = document.getElementById("barcodeLookupResult");
+        if (product) {
+            document.getElementById("lookupProductInfo").innerHTML = `<strong><i class="fas fa-cube"></i> ${escapeHtml(product.name)}</strong> (SKU: ${escapeHtml(product.sku)})`;
+            document.getElementById("lookupStockInfo").innerHTML = `📊 Stock: ${product.quantity} | Min: ${product.minStock}`;
+            resultDiv.style.display = "block";
+            resultDiv.setAttribute("data-current-id", product.id);
+        } else { alert(`No product matches barcode: "${barcodeVal}"`); resultDiv.style.display = "none"; }
+    });
+
+    document.getElementById("scanStockActionBtn")?.addEventListener("click", () => {
+        const resultDiv = document.getElementById("barcodeLookupResult");
+        const prodId = resultDiv.getAttribute("data-current-id");
+        if (!prodId) return;
+        let qty = parseInt(document.getElementById("scanAdjustQty").value);
+        const type = document.getElementById("scanAdjustType").value;
+        if (isNaN(qty) || qty <= 0) qty = 1;
+        const delta = type === "add" ? qty : -qty;
+        if (modifyStock(prodId, delta, `Scanner ${type === 'add' ? 'addition' : 'removal'}`)) {
+            document.getElementById("scannerInput").value = "";
+            const updated = products.find(p => p.id === prodId);
+            if (updated) document.getElementById("lookupStockInfo").innerHTML = `📊 Stock: ${updated.quantity} | Min: ${updated.minStock}`;
+        }
+    });
+
+    document.getElementById("applyBarcodeActionBtn")?.addEventListener("click", () => {
+        const barcode = document.getElementById("quickBarcodeInput").value.trim();
+        if (!barcode) { alert("Scan or enter barcode"); return; }
+        const prod = findProductByBarcode(barcode);
+        if (!prod) { alert(`Barcode not recognized: ${barcode}`); return; }
+        let qty = parseInt(document.getElementById("quickQty").value);
+        const action = document.getElementById("quickAction").value;
+        if (isNaN(qty) || qty < 1) qty = 1;
+        const delta = action === "add" ? qty : -qty;
+        if (modifyStock(prod.id, delta, `Quick ${action}`)) {
+            document.getElementById("quickBarcodeInput").value = "";
+            const msgDiv = document.getElementById("quickActionSuccess");
+            msgDiv.style.display = "block";
+            msgDiv.innerHTML = `✅ Updated ${prod.name}: ${action === 'add' ? '+' : '-'}${qty}`;
+            setTimeout(() => msgDiv.style.display = "none", 2000);
+        }
+    });
+
+    document.getElementById("addProductBtn")?.addEventListener("click", () => {
+        const sku = document.getElementById("newSku").value.trim();
+        const name = document.getElementById("newName").value.trim();
+        const category = document.getElementById("newCategory").value.trim();
+        const qty = parseInt(document.getElementById("newQty").value) || 0;
+        const minStock = parseInt(document.getElementById("newMinStock").value) || 5;
+        if (!sku || !name) { alert("SKU and Product Name required"); return; }
+        if (products.some(p => p.sku.toLowerCase() === sku.toLowerCase())) { alert("SKU already exists"); return; }
+        const newId = generateId();
+        const newBarcode = generateUniqueBarcode(sku, newId);
+        products.push({ id: newId, sku, name, category: category || "General", quantity: qty, minStock, barcode: newBarcode });
+        addLogEntry(`NEW: ${sku} | Barcode: ${newBarcode}`);
+        renderInventory();
+        document.getElementById("newSku").value = "";
+        document.getElementById("newName").value = "";
+        document.getElementById("newCategory").value = "";
+        document.getElementById("newQty").value = "0";
+        document.getElementById("newMinStock").value = "5";
+        const msg = document.getElementById("addSuccessMsg");
+        msg.style.display = "block";
+        msg.innerHTML = `✅ Product added! Barcode: ${newBarcode}`;
+        setTimeout(() => msg.style.display = "none", 3000);
+    });
+
+    document.getElementById("generateBarcodeBtn")?.addEventListener("click", () => {
+        const selectedId = document.getElementById("barcodeProductSelect").value;
+        const product = products.find(p => p.id === selectedId);
+        if (!product) { alert("Select a product"); return; }
+        document.getElementById("barcodeRenderDiv").innerHTML = `<svg id="dynamicBarcodeSvg"></svg>`;
+        try {
+            JsBarcode("#dynamicBarcodeSvg", product.barcode, { format: "CODE128", width: 2, height: 55, displayValue: true, fontSize: 14, margin: 10 });
+            document.getElementById("barcodePreviewArea").style.display = "block";
+            window.currentBarcodeProduct = product;
+        } catch(e) { alert("Error generating barcode"); }
+    });
+
+    document.getElementById("printBarcodeImgBtn")?.addEventListener("click", () => {
+        const svgElem = document.querySelector("#barcodeRenderDiv svg");
+        if (!svgElem) { alert("Please generate barcode preview first."); return; }
+        const svgData = new XMLSerializer().serializeToString(svgElem);
+        const canvas = document.createElement("canvas");
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            const link = document.createElement("a");
+            link.download = `barcode_${(window.currentBarcodeProduct?.sku || "product")}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        };
+        img.src = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(svgData);
+    });
+
+    document.getElementById("updateProductBtn")?.addEventListener("click", () => {
+        const id = document.getElementById("editProductSelect").value;
+        const prod = products.find(p => p.id === id);
+        if (prod) {
+            if (document.getElementById("editName").value.trim()) prod.name = document.getElementById("editName").value.trim();
+            if (document.getElementById("editCategory").value.trim()) prod.category = document.getElementById("editCategory").value.trim();
+            const newMin = parseInt(document.getElementById("editMinStock").value);
+            if (!isNaN(newMin) && newMin >= 0) prod.minStock = newMin;
+            addLogEntry(`Updated product: ${prod.sku}`);
+            renderInventory();
+            alert("Product updated successfully!");
+        }
+    });
+
+    document.getElementById("deleteProductBtn")?.addEventListener("click", () => {
+        const id = document.getElementById("editProductSelect").value;
+        const idx = products.findIndex(p => p.id === id);
+        if (idx !== -1 && confirm("Delete product permanently?")) {
+            let rem = products[idx];
+            products.splice(idx, 1);
+            addLogEntry(`Deleted ${rem.sku}`);
+            renderInventory();
+            document.getElementById("editName").value = "";
+            document.getElementById("editCategory").value = "";
+            alert("Product deleted!");
+        }
+    });
+
+    document.getElementById("editProductSelect")?.addEventListener("change", (e) => {
+        const prod = products.find(p => p.id === e.target.value);
+        if (prod) {
+            document.getElementById("editName").value = prod.name;
+            document.getElementById("editCategory").value = prod.category;
+            document.getElementById("editMinStock").value = prod.minStock;
+        }
+    });
+
+    document.getElementById("clearLogBtn")?.addEventListener("click", () => { 
+        transactionLog = []; 
+        addLogEntry("Log cleared"); 
+        renderTransactionLog();
+    });
+
+    document.getElementById("searchInventory")?.addEventListener("input", () => renderInventory());
+
+    document.getElementById("resetDemoDataBtn")?.addEventListener("click", () => {
+        if (confirm("Reset ALL data to demo products? Current data will be lost.")) {
+            localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
+            localStorage.removeItem(STORAGE_KEYS.LOGS);
+            location.reload();
+        }
+    });
+
+    // Initialize
+    loadData();
+    renderInventory();
+    renderTransactionLog();
+    refreshSelects();
+    updateStats();
+})();
+</script>
+</body>
+</html>
