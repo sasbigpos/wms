@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WMS | Firebase Setup Guide + Warehouse System</title>
+    <title>WMS Pro | Cloud Warehouse Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -48,27 +48,20 @@
         .log-list{max-height:280px;overflow-y:auto;background:#0f172a;border-radius:20px;border:1px solid #334155;}
         .log-entry{padding:12px 16px;border-bottom:1px solid #1e293b;font-size:0.8rem;font-family:monospace;display:flex;gap:12px;color:#94a3b8;}
         .flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
-        .setup-steps{background:#0f172a;border-radius:20px;padding:20px;margin-top:16px;}
-        .setup-steps h4{color:#34d399;margin:20px 0 12px 0;font-size:1.1rem;}
-        .setup-steps h4:first-child{margin-top:0;}
-        .setup-steps p{margin-bottom:12px;line-height:1.5;color:#cbd5e1;}
-        .code-block{background:#0a0a0a;padding:16px;border-radius:12px;font-family:monospace;font-size:0.75rem;overflow-x:auto;color:#7ee787;margin:12px 0;border:1px solid #334155;}
+        @media(max-width:680px){body{padding:12px;}.panel{padding:18px;}}
         .success-msg{background:#064e3b;color:#34d399;padding:8px 16px;border-radius:12px;margin-top:10px;display:none;}
         .status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;}
         .status-online{background:#064e3b;color:#34d399;}
         .status-offline{background:#7f1d1d;color:#fca5a5;}
-        .status-warning{background:#713f12;color:#fbbf24;}
-        .firebase-highlight{background:#1e293b;border-left:4px solid #34d399;padding:16px;margin:16px 0;border-radius:12px;}
-        @media(max-width:680px){body{padding:12px;}.panel{padding:18px;}}
-        .code128-note{font-size:0.7rem;color:#64748b;margin-top:8px;}
+        .connection-bar{background:#1e293b;padding:8px 20px;border-radius:40px;font-size:0.75rem;display:inline-flex;align-items:center;gap:8px;}
     </style>
 </head>
 <body>
 <div class="wms-container">
     <div class="header">
         <div class="logo-area">
-            <h1><i class="fab fa-firebase"></i> Firebase WMS | Setup Guide</h1>
-            <p>Step-by-step Firebase configuration • Real-time cloud warehouse</p>
+            <h1><i class="fas fa-cloud"></i> StockFlow | Firebase Cloud</h1>
+            <p>Real-time warehouse management • Data stored securely in Firestore</p>
         </div>
         <div class="stats-badge">
             <div class="stat-item"><span class="stat-number" id="totalProductsStat">0</span><div class="stat-label">Products</div></div>
@@ -77,125 +70,140 @@
         </div>
     </div>
     <div class="tabs">
-        <button class="tab-btn" data-tab="inventory"><i class="fas fa-boxes"></i> Inventory</button>
-        <button class="tab-btn" data-tab="barcodeScan"><i class="fas fa-qrcode"></i> Scanner</button>
+        <button class="tab-btn active" data-tab="inventory"><i class="fas fa-boxes"></i> Inventory</button>
+        <button class="tab-btn" data-tab="barcodeScan"><i class="fas fa-qrcode"></i> Barcode Scanner</button>
         <button class="tab-btn" data-tab="transactions"><i class="fas fa-exchange-alt"></i> Movements</button>
-        <button class="tab-btn" data-tab="manage"><i class="fas fa-plus-circle"></i> Manage</button>
-        <button class="tab-btn active" data-tab="setup"><i class="fab fa-firebase"></i> Firebase Setup</button>
+        <button class="tab-btn" data-tab="manage"><i class="fas fa-plus-circle"></i> Manage Products</button>
     </div>
 
-    <div id="inventoryPanel" class="panel">
-        <div class="flex-between"><h2>📦 Stock Overview</h2><div><input type="text" id="searchInventory" placeholder="🔍 Search..." style="width:250px;"></div></div>
-        <div class="card"><div class="table-wrapper" style="overflow-x:auto;"><table><thead><tr><th>Barcode</th><th>SKU</th><th>Product</th><th>Category</th><th>Qty</th><th>Min</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventoryTbody"><tr><td colspan="8" style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-pulse"></i> Complete Firebase setup first (see Setup tab)</td></tr></tbody></table></div></div>
-        <div class="card"><h3>⚡ Quick Stock Update</h3><div class="form-row"><div class="input-group"><label>📷 Barcode</label><input type="text" id="quickBarcodeInput" placeholder="Scan barcode"></div><div class="input-group"><label>Action</label><select id="quickAction"><option value="add">➕ Add</option><option value="remove">➖ Remove</option></select></div><div class="input-group"><label>Qty</label><input type="number" id="quickQty" value="1" min="1"></div><div><button id="applyBarcodeActionBtn">Apply</button></div></div></div>
-    </div>
-
-    <div id="barcodeScanPanel" class="panel"><div class="card"><h3><i class="fas fa-camera"></i> Barcode Scanner Console</h3><div class="form-row"><div class="input-group" style="flex:3;"><label>🔍 Barcode input</label><input type="text" id="scannerInput" placeholder="Scan or type barcode..." autofocus></div><div><button id="lookupBarcodeBtn">Lookup</button></div></div><div id="barcodeLookupResult" style="display:none;margin-top:16px;background:#0f172a;border-radius:20px;padding:20px;border:1px solid #334155;"><div id="lookupProductInfo"></div><div id="lookupStockInfo"></div><div class="form-row" style="margin-top:16px;"><div class="input-group"><label>Adjust Qty</label><input type="number" id="scanAdjustQty" value="1"></div><div class="input-group"><label>Type</label><select id="scanAdjustType"><option value="add">Add</option><option value="remove">Remove</option></select></div><div><button id="scanStockActionBtn" class="secondary">Apply</button></div></div></div></div></div>
-
-    <div id="transactionsPanel" class="panel"><div class="flex-between"><h2>📜 Movement Log</h2><button id="clearLogBtn" class="secondary">Clear</button></div><div class="card"><div class="log-list" id="transactionLogList"><div class="log-entry">No transactions yet</div></div></div></div>
-
-    <div id="managePanel" class="panel"><h2>📦 Product Management</h2><div class="card"><h3>➕ Add Product</h3><div class="form-row"><div class="input-group"><label>SKU *</label><input type="text" id="newSku" placeholder="WH-1001"></div><div class="input-group"><label>Name *</label><input type="text" id="newName" placeholder="Product name"></div><div class="input-group"><label>Category</label><input type="text" id="newCategory" placeholder="Category"></div><div class="input-group"><label>Qty</label><input type="number" id="newQty" value="0"></div><div class="input-group"><label>Min Stock</label><input type="number" id="newMinStock" value="5"></div><div><button id="addProductBtn">Create</button></div></div></div><div class="card"><h3>📷 Barcode Generator</h3><div class="form-row"><div class="input-group"><label>Product</label><select id="barcodeProductSelect"></select></div><div><button id="generateBarcodeBtn" class="secondary">Preview</button></div><div><button id="printBarcodeImgBtn" class="secondary">Save PNG</button></div></div><div id="barcodePreviewArea" style="display:none;" class="barcode-preview-card"><div class="barcode-svg-container" id="barcodeRenderDiv"></div></div></div><div class="card"><h3>✏️ Edit/Delete</h3><div class="form-row"><div class="input-group"><label>Product</label><select id="editProductSelect"></select></div><div class="input-group"><label>New Name</label><input type="text" id="editName"></div><div class="input-group"><label>Category</label><input type="text" id="editCategory"></div><div class="input-group"><label>Min Stock</label><input type="number" id="editMinStock"></div><div><button id="updateProductBtn" class="secondary">Save</button></div><div><button id="deleteProductBtn" class="danger">Delete</button></div></div></div></div>
-
-    <!-- FIREBASE SETUP PANEL - COMPLETE STEP-BY-STEP GUIDE -->
-    <div id="setupPanel" class="panel active-panel">
+    <div id="inventoryPanel" class="panel active-panel">
+        <div class="flex-between">
+            <h2><i class="fas fa-clipboard-list"></i> Stock Overview</h2>
+            <div><input type="text" id="searchInventory" placeholder="🔍 SKU / Name / Barcode" style="width:250px;"></div>
+        </div>
         <div class="card">
-            <h2><i class="fab fa-firebase"></i> Firebase Setup: What You Need To Do</h2>
-            <p style="margin-bottom:20px;">Follow these 5 simple steps to connect your warehouse to Firebase. The whole process takes about 5 minutes.</p>
-            
-            <!-- STEP 1 -->
-            <div class="setup-steps">
-                <h4>📌 STEP 1: Create a Firebase Project</h4>
-                <p>1. Go to <a href="https://console.firebase.google.com/" target="_blank" style="color:#34d399;">https://console.firebase.google.com/</a><br>
-                2. Click <strong style="color:#34d399;">"Create a project"</strong> or <strong style="color:#34d399;">"Add project"</strong><br>
-                3. Name your project: <code style="background:#0a0a0a;padding:2px 6px;">warehouse-wms</code> (or any name)<br>
-                4. <strong>Turn OFF Google Analytics</strong> (click the toggle to disable)<br>
-                5. Click <strong style="color:#34d399;">"Create project"</strong> → Wait 10-20 seconds</p>
-                <div class="firebase-highlight">✅ After creation, you'll see "Your new project is ready"</div>
-            </div>
-
-            <!-- STEP 2 -->
-            <div class="setup-steps">
-                <h4>🌐 STEP 2: Register Your Web Application</h4>
-                <p>1. On the project dashboard, click the <strong style="color:#34d399;">"&lt;/&gt;" (Web)</strong> icon to add a web app<br>
-                2. App nickname: <code style="background:#0a0a0a;padding:2px 6px;">wms-app</code><br>
-                3. Click <strong style="color:#34d399;">"Register app"</strong><br>
-                4. <strong>IMPORTANT:</strong> You will see a configuration object. <strong>COPY THIS ENTIRE OBJECT</strong> - it looks like:</p>
-                <div class="code-block" id="configExample">
-{
-  apiKey: "AIzaSyD3W-j1l1gDH4m0RPHRnImQZjWvEA-XjMs",
-  authDomain: "warehouse-ccc23.firebaseapp.com",
-  projectId: "warehouse-ccc23",
-  storageBucket: "warehouse-ccc23.firebasestorage.app",
-  messagingSenderId: "946331303130",
-  appId: "1:946331303130:web:7bbddb616567a11eb079e3"
-}
+            <div class="flex-between" style="margin-bottom:16px;">
+                <div class="connection-bar" id="connectionStatus">
+                    <i class="fas fa-spinner fa-pulse"></i> Connecting to Firebase...
                 </div>
-                <p>5. Click <strong style="color:#34d399;">"Continue to console"</strong> (you don't need to install SDK)</p>
+                <button id="refreshDataBtn" class="secondary" style="padding:6px 16px;"><i class="fas fa-sync-alt"></i> Refresh</button>
             </div>
-
-            <!-- STEP 3 -->
-            <div class="setup-steps">
-                <h4>🗄️ STEP 3: Create Firestore Database</h4>
-                <p>1. In left sidebar, click <strong style="color:#34d399;">"Firestore Database"</strong><br>
-                2. Click <strong style="color:#34d399;">"Create database"</strong><br>
-                3. <strong style="color:#fbbf24;">⚠️ IMPORTANT:</strong> Choose <strong style="color:#34d399;">"Start in test mode"</strong> (this allows read/write access for development)<br>
-                4. Select a location close to you (e.g., <code>eur3 (Europe)</code> or <code>nam5 (US)</code>)<br>
-                5. Click <strong style="color:#34d399;">"Enable"</strong> → Wait for database creation</p>
-                <div class="firebase-highlight">✅ Your Firestore database is now ready! It will appear empty initially.</div>
+            <div class="table-wrapper" style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr><th>Barcode (Code128)</th><th>SKU</th><th>Product</th><th>Category</th><th>Qty</th><th>Min</th><th>Status</th><th>Actions</th></td>
+                    </thead>
+                    <tbody id="inventoryTbody">
+                        <tr><td colspan="8" style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-pulse"></i> Loading data from Firestore...</td></tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
+        <div class="card">
+            <h3><i class="fas fa-bolt"></i> Quick Stock Action</h3>
+            <div class="form-row">
+                <div class="input-group"><label>📷 Scan Barcode</label><input type="text" id="quickBarcodeInput" placeholder="Scan or enter barcode"></div>
+                <div class="input-group"><label>Operation</label><select id="quickAction"><option value="add">➕ Add Stock</option><option value="remove">➖ Remove Stock</option></select></div>
+                <div class="input-group"><label>Quantity</label><input type="number" id="quickQty" value="1" min="1"></div>
+                <div><button id="applyBarcodeActionBtn"><i class="fas fa-barcode"></i> Apply</button></div>
+            </div>
+            <div id="quickActionSuccess" class="success-msg"></div>
+        </div>
+    </div>
 
-            <!-- STEP 4 - CONFIGURATION -->
-            <div class="setup-steps">
-                <h4>🔧 STEP 4: Paste Your Firebase Config Below</h4>
-                <p>Paste the configuration object you copied from Step 2 into the box below. Then click <strong style="color:#34d399;">"Connect to Firebase"</strong>.</p>
-                <div class="code-block" contenteditable="true" id="userConfigInput" style="min-height:180px; background:#0a0a0a; color:#7ee787; font-family:monospace;">
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY_HERE",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
+    <div id="barcodeScanPanel" class="panel">
+        <div class="card">
+            <h3><i class="fas fa-camera"></i> Barcode Scanner Console</h3>
+            <p style="margin-bottom:16px; color:#94a3b8;">Scan Code 128 barcodes to instantly lookup and update inventory.</p>
+            <div class="form-row">
+                <div class="input-group" style="flex:3;"><label>🔍 Barcode Input</label><input type="text" id="scannerInput" placeholder="Scan or type barcode..." autofocus></div>
+                <div><button id="lookupBarcodeBtn"><i class="fas fa-search"></i> Lookup</button></div>
+            </div>
+            <div id="barcodeLookupResult" style="display:none; margin-top:20px; background:#0f172a; border-radius:20px; padding:20px; border:1px solid #334155;">
+                <div class="flex-between"><span id="lookupProductInfo">—</span><span id="lookupStockInfo">—</span></div>
+                <div class="form-row" style="margin-top:16px;">
+                    <div class="input-group"><label>Adjust Quantity</label><input type="number" id="scanAdjustQty" value="1" min="1"></div>
+                    <div class="input-group"><label>Operation</label><select id="scanAdjustType"><option value="add">➕ Add</option><option value="remove">➖ Remove</option></select></div>
+                    <div><button id="scanStockActionBtn" class="secondary"><i class="fas fa-exchange-alt"></i> Apply</button></div>
                 </div>
-                <div style="display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;">
-                    <button id="applyConfigBtn" style="background:#34d399;"><i class="fas fa-plug"></i> Connect to Firebase</button>
-                    <button id="seedDemoDataBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo Products</button>
-                </div>
-                <div id="connectionStatus" style="margin-top:16px;"></div>
             </div>
+        </div>
+        <div class="card">
+            <h4><i class="fas fa-info-circle"></i> How to Use</h4>
+            <p>Use a physical barcode scanner or type the barcode number. The system will find the product and allow stock adjustments in real-time.</p>
+        </div>
+    </div>
 
-            <!-- STEP 5 -->
-            <div class="setup-steps">
-                <h4>🚀 STEP 5: (Optional) Set Up Security Rules</h4>
-                <p>For production, update Firestore Rules to secure your data. Go to Firestore → Rules and paste:</p>
-                <div class="code-block">
-rules_version = '2';<br>
-service cloud.firestore {<br>
-&nbsp;&nbsp;match /databases/{database}/documents {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;match /products/{document} {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;}<br>
-}
-                </div>
-                <div class="code128-note"><i class="fas fa-shield-alt"></i> For production, add authentication rules. Test mode is fine for learning.</div>
+    <div id="transactionsPanel" class="panel">
+        <div class="flex-between"><h2><i class="fas fa-history"></i> Movement History</h2><button id="clearLogBtn" class="secondary"><i class="fas fa-broom"></i> Clear Log</button></div>
+        <div class="card"><div class="log-list" id="transactionLogList"><div class="log-entry">No transactions recorded</div></div></div>
+    </div>
+
+    <div id="managePanel" class="panel">
+        <h2><i class="fas fa-database"></i> Product Management</h2>
+        <div class="card">
+            <h3>➕ Add New Product</h3>
+            <div class="form-row">
+                <div class="input-group"><label>SKU *</label><input type="text" id="newSku" placeholder="WH-1001"></div>
+                <div class="input-group"><label>Product Name *</label><input type="text" id="newName" placeholder="Product name"></div>
+                <div class="input-group"><label>Category</label><input type="text" id="newCategory" placeholder="Category"></div>
+                <div class="input-group"><label>Initial Quantity</label><input type="number" id="newQty" value="0"></div>
+                <div class="input-group"><label>Min Stock Alert</label><input type="number" id="newMinStock" value="5"></div>
+                <div><button id="addProductBtn"><i class="fas fa-barcode"></i> Create</button></div>
             </div>
-
-            <div class="firebase-highlight" style="margin-top:16px;">
-                <i class="fas fa-check-circle"></i> <strong>After connecting:</strong> The Inventory tab will automatically load your Firestore data. Add products and they'll sync to the cloud!
+            <div id="addSuccessMsg" class="success-msg"></div>
+        </div>
+        <div class="card">
+            <h3><i class="fas fa-print"></i> Barcode Generator</h3>
+            <div class="form-row">
+                <div class="input-group"><label>Select Product</label><select id="barcodeProductSelect"></select></div>
+                <div><button id="generateBarcodeBtn" class="secondary"><i class="fas fa-qrcode"></i> Preview Barcode</button></div>
+                <div><button id="printBarcodeImgBtn" class="secondary"><i class="fas fa-print"></i> Save as PNG</button></div>
+            </div>
+            <div id="barcodePreviewArea" style="display:none;" class="barcode-preview-card">
+                <div class="barcode-svg-container" id="barcodeRenderDiv"></div>
+                <p class="code128-note" style="margin-top:12px; color:#64748b;">✅ Code 128 format — Ready for scanning</p>
+            </div>
+        </div>
+        <div class="card">
+            <h3>✏️ Edit / Delete Product</h3>
+            <div class="form-row">
+                <div class="input-group"><label>Select Product</label><select id="editProductSelect"></select></div>
+                <div class="input-group"><label>New Name</label><input type="text" id="editName" placeholder="Update name"></div>
+                <div class="input-group"><label>Category</label><input type="text" id="editCategory" placeholder="Update category"></div>
+                <div class="input-group"><label>Min Stock</label><input type="number" id="editMinStock" placeholder="Min stock level"></div>
+                <div><button id="updateProductBtn" class="secondary"><i class="fas fa-save"></i> Save Changes</button></div>
+                <div><button id="deleteProductBtn" class="danger"><i class="fas fa-trash"></i> Delete</button></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="flex-between">
+                <div><i class="fab fa-github"></i> Ready for GitHub Pages</div>
+                <button id="seedDemoDataBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo Products</button>
             </div>
         </div>
     </div>
 </div>
 
 <script type="module">
-    // Firebase imports
+    // ========== FIREBASE CONFIGURATION (YOUR PROVIDED CONFIG) ==========
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     
-    let db = null;
-    let productsCollection = null;
+    const firebaseConfig = {
+        apiKey: "AIzaSyD3W-j1l1gDH4m0RPHRnImQZjWvEA-XjMs",
+        authDomain: "warehouse-ccc23.firebaseapp.com",
+        projectId: "warehouse-ccc23",
+        storageBucket: "warehouse-ccc23.firebasestorage.app",
+        messagingSenderId: "946331303130",
+        appId: "1:946331303130:web:7bbddb616567a11eb079e3"
+    };
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const productsCollection = collection(db, "products");
+    
     let products = [];
     let transactionLog = [];
     let unsubscribeProducts = null;
@@ -215,13 +223,13 @@ service cloud.firestore {<br>
         transactionLog.unshift({ time: new Date().toLocaleString(), text: text });
         if (transactionLog.length > 100) transactionLog.pop();
         renderTransactionLog();
-        localStorage.setItem("wms_firebase_logs", JSON.stringify(transactionLog.slice(0, 100)));
+        localStorage.setItem("wms_logs", JSON.stringify(transactionLog.slice(0, 100)));
     }
     
     function renderTransactionLog() {
         const container = document.getElementById("transactionLogList");
         if (!container) return;
-        if (!transactionLog.length) { container.innerHTML = '<div class="log-entry">No transactions</div>'; return; }
+        if (!transactionLog.length) { container.innerHTML = '<div class="log-entry">No transactions recorded</div>'; return; }
         container.innerHTML = transactionLog.slice(0, 50).map(l => `<div class="log-entry"><span>${escapeHtml(l.time)}</span><span>📦 ${escapeHtml(l.text)}</span></div>`).join('');
     }
     
@@ -235,8 +243,8 @@ service cloud.firestore {<br>
         const options = products.map(p => `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)}</option>`).join('');
         const editSelect = document.getElementById("editProductSelect");
         const barcodeSelect = document.getElementById("barcodeProductSelect");
-        if (editSelect) editSelect.innerHTML = options || '<option>No products</option>';
-        if (barcodeSelect) barcodeSelect.innerHTML = options || '<option>No products</option>';
+        if (editSelect) editSelect.innerHTML = options || '<option value="">No products</option>';
+        if (barcodeSelect) barcodeSelect.innerHTML = options || '<option value="">No products</option>';
     }
     
     function attachTableEvents() {
@@ -253,7 +261,7 @@ service cloud.firestore {<br>
         document.querySelectorAll("#inventoryTbody .fa-trash-alt").forEach(icon => {
             icon.onclick = async () => {
                 let id = icon.getAttribute("data-id");
-                if (confirm("Delete permanently?")) {
+                if (confirm("Delete this product permanently?")) {
                     await deleteDoc(doc(db, "products", id));
                     addLogEntry(`Deleted product from cloud`);
                 }
@@ -283,19 +291,23 @@ service cloud.firestore {<br>
         const tbody = document.getElementById("inventoryTbody");
         if (!tbody) return;
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;">📦 No products. Add some in Manage tab or seed demo data.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;">📦 No products found. Click "Manage Products" to add items.</td></tr>';
         } else {
             tbody.innerHTML = filtered.map(p => {
                 const low = (p.quantity || 0) <= (p.minStock || 0);
                 return `<tr>
-                    <td><i class="fas fa-barcode"></i> ${escapeHtml(p.barcode)}</td>
+                    <td><i class="fas fa-barcode"></i> <strong>${escapeHtml(p.barcode)}</strong></td>
                     <td>${escapeHtml(p.sku)}</td>
                     <td>${escapeHtml(p.name)}</td>
                     <td>${escapeHtml(p.category || "General")}</td>
                     <td><span class="stock-badge ${low ? 'low-stock' : ''}">${p.quantity || 0}</span></td>
                     <td>${p.minStock || 5}</td>
-                    <td>${low ? '⚠️ Low' : '✅ OK'}</td>
-                    <td class="action-icons"><i class="fas fa-edit" data-id="${p.id}"></i> <i class="fas fa-trash-alt" data-id="${p.id}"></i> <i class="fas fa-barcode" data-id="${p.id}"></i></td>
+                    <td>${low ? '⚠️ Low stock' : '✅ OK'}</td>
+                    <td class="action-icons">
+                        <i class="fas fa-edit" data-id="${p.id}"></i>
+                        <i class="fas fa-trash-alt" data-id="${p.id}"></i>
+                        <i class="fas fa-barcode" data-id="${p.id}"></i>
+                    </td>
                 </tr>`;
             }).join('');
         }
@@ -307,109 +319,61 @@ service cloud.firestore {<br>
     function findProductByBarcode(barcode) { return products.find(p => p.barcode === barcode); }
     
     async function modifyStock(productId, delta, reason) {
-        if (!db) { alert("Firebase not connected. Complete setup first."); return false; }
         const prod = products.find(p => p.id === productId);
         if (!prod) return false;
         const newQty = (prod.quantity || 0) + delta;
-        if (newQty < 0) { alert(`Only ${prod.quantity} units available!`); return false; }
+        if (newQty < 0) { alert(`Insufficient stock! Only ${prod.quantity} units available.`); return false; }
         await updateDoc(doc(db, "products", productId), { quantity: newQty });
-        addLogEntry(`${reason}: ${prod.sku} | ${delta > 0 ? `+${delta}` : `${delta}`} → ${newQty}`);
+        addLogEntry(`${reason}: ${prod.sku} (${prod.name}) | ${delta > 0 ? `+${delta}` : `${delta}`} → ${newQty}`);
         return true;
     }
     
-    // Load logs
-    const storedLogs = localStorage.getItem("wms_firebase_logs");
-    if (storedLogs) transactionLog = JSON.parse(storedLogs);
+    // Load saved logs
+    const savedLogs = localStorage.getItem("wms_logs");
+    if (savedLogs) transactionLog = JSON.parse(savedLogs);
     renderTransactionLog();
     
-    // Apply Firebase config
-    async function applyFirebaseConfig(configObj) {
-        const statusDiv = document.getElementById("connectionStatus");
-        statusDiv.innerHTML = '<span class="status-badge status-warning"><i class="fas fa-spinner fa-pulse"></i> Connecting...</span>';
-        try {
-            const app = initializeApp(configObj);
-            db = getFirestore(app);
-            productsCollection = collection(db, "products");
-            
-            if (unsubscribeProducts) unsubscribeProducts();
-            unsubscribeProducts = onSnapshot(productsCollection, (snapshot) => {
-                products = [];
-                snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
-                renderInventory();
-                statusDiv.innerHTML = '<span class="status-badge status-online"><i class="fas fa-check-circle"></i> ✅ Connected to Firestore! Data syncing.</span>';
-                setTimeout(() => statusDiv.innerHTML = '', 3000);
-            }, (error) => {
-                statusDiv.innerHTML = `<span class="status-badge status-offline"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</span>`;
-            });
-            addLogEntry("Firebase connected successfully");
-            return true;
-        } catch(e) {
-            statusDiv.innerHTML = `<span class="status-badge status-offline">Failed: ${e.message}</span>`;
-            return false;
-        }
-    }
-    
-    // Connect button
-    document.getElementById("applyConfigBtn")?.addEventListener("click", async () => {
-        const configText = document.getElementById("userConfigInput").innerText;
-        try {
-            const match = configText.match(/\{[\s\S]*\}/);
-            if (match) {
-                const configObj = eval('(' + match[0] + ')');
-                if (configObj.apiKey && configObj.projectId && configObj.apiKey !== "YOUR_API_KEY_HERE") {
-                    await applyFirebaseConfig(configObj);
-                } else {
-                    document.getElementById("connectionStatus").innerHTML = '<span class="status-badge status-offline">❌ Please replace placeholder values with your actual Firebase config from Step 2</span>';
-                }
-            } else {
-                document.getElementById("connectionStatus").innerHTML = '<span class="status-badge status-offline">Invalid config format. Paste the exact object.</span>';
-            }
-        } catch(e) {
-            document.getElementById("connectionStatus").innerHTML = `<span class="status-badge status-offline">Error: ${e.message}</span>`;
-        }
-    });
-    
-    // Seed demo data
-    document.getElementById("seedDemoDataBtn")?.addEventListener("click", async () => {
-        if (!db) { alert("Please connect to Firebase first using the Connect button above."); return; }
-        const demos = [
-            { sku: "WH-1001", name: "Wireless Mouse", category: "Electronics", quantity: 42, minStock: 8, barcode: "690123456789", createdAt: new Date().toISOString() },
-            { sku: "WH-1002", name: "Mechanical Keyboard", category: "Electronics", quantity: 18, minStock: 5, barcode: "692837461025", createdAt: new Date().toISOString() },
-            { sku: "WH-2001", name: "Steel Shelf", category: "Furniture", quantity: 7, minStock: 4, barcode: "697215438902", createdAt: new Date().toISOString() },
-            { sku: "WH-3005", name: "Anti-static Mat", category: "Safety", quantity: 3, minStock: 5, barcode: "694178362501", createdAt: new Date().toISOString() },
-            { sku: "WH-4002", name: "Pallet Jack", category: "Equipment", quantity: 12, minStock: 2, barcode: "698234517890", createdAt: new Date().toISOString() }
-        ];
-        let added = 0;
-        for (const prod of demos) {
-            try {
-                await addDoc(productsCollection, prod);
-                added++;
-            } catch(e) { console.error(e); }
-        }
-        alert(`Added ${added} demo products to Firestore!`);
-        addLogEntry(`Seeded ${added} demo products`);
+    // Set up real-time Firestore listener
+    const statusDiv = document.getElementById("connectionStatus");
+    unsubscribeProducts = onSnapshot(productsCollection, (snapshot) => {
+        products = [];
+        snapshot.forEach(doc => {
+            products.push({ id: doc.id, ...doc.data() });
+        });
+        renderInventory();
+        statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Connected to Firestore | Data syncing in real-time';
+        statusDiv.style.background = "#064e3b";
+    }, (error) => {
+        console.error("Firestore error:", error);
+        statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ Firestore connection issue. Check your database rules.';
+        statusDiv.style.background = "#7f1d1d";
     });
     
     // Add product
     document.getElementById("addProductBtn")?.addEventListener("click", async () => {
-        if (!db) { alert("Connect to Firebase first"); return; }
         const sku = document.getElementById("newSku").value.trim();
         const name = document.getElementById("newName").value.trim();
-        if (!sku || !name) { alert("SKU and Name required"); return; }
+        if (!sku || !name) { alert("SKU and Product Name are required"); return; }
+        if (products.some(p => p.sku === sku)) { alert("SKU already exists!"); return; }
         const newId = Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
         const newBarcode = generateUniqueBarcode(sku, newId);
         await addDoc(productsCollection, {
-            sku, name, category: document.getElementById("newCategory").value.trim() || "General",
+            sku, name,
+            category: document.getElementById("newCategory").value.trim() || "General",
             quantity: parseInt(document.getElementById("newQty").value) || 0,
             minStock: parseInt(document.getElementById("newMinStock").value) || 5,
-            barcode: newBarcode, createdAt: new Date().toISOString()
+            barcode: newBarcode,
+            createdAt: new Date().toISOString()
         });
-        addLogEntry(`Added product: ${sku}`);
+        addLogEntry(`Added product: ${sku} | Barcode: ${newBarcode}`);
         document.getElementById("newSku").value = "";
         document.getElementById("newName").value = "";
         document.getElementById("newCategory").value = "";
         document.getElementById("newQty").value = "0";
-        alert(`✅ Product added! Barcode: ${newBarcode}`);
+        const msg = document.getElementById("addSuccessMsg");
+        msg.style.display = "block";
+        msg.innerHTML = `✅ Product added! Barcode: ${newBarcode}`;
+        setTimeout(() => msg.style.display = "none", 3000);
     });
     
     // Update product
@@ -421,5 +385,126 @@ service cloud.firestore {<br>
         if (document.getElementById("editName").value.trim()) updates.name = document.getElementById("editName").value.trim();
         if (document.getElementById("editCategory").value.trim()) updates.category = document.getElementById("editCategory").value.trim();
         const newMin = parseInt(document.getElementById("editMinStock").value);
-        if (!isNaN(newMin)) updates.minStock = newMin;
-        if
+        if (!isNaN(newMin) && newMin >= 0) updates.minStock = newMin;
+        if (Object.keys(updates).length > 0) {
+            await updateDoc(doc(db, "products", id), updates);
+            addLogEntry(`Updated product: ${prod.sku}`);
+            alert("Product updated successfully!");
+        }
+    });
+    
+    // Delete product
+    document.getElementById("deleteProductBtn")?.addEventListener("click", async () => {
+        const id = document.getElementById("editProductSelect").value;
+        const prod = products.find(p => p.id === id);
+        if (prod && confirm(`Delete "${prod.name}" permanently?`)) {
+            await deleteDoc(doc(db, "products", id));
+            addLogEntry(`Deleted product: ${prod.sku}`);
+            alert("Product deleted!");
+        }
+    });
+    
+    // Load product into edit form
+    document.getElementById("editProductSelect")?.addEventListener("change", (e) => {
+        const prod = products.find(p => p.id === e.target.value);
+        if (prod) {
+            document.getElementById("editName").value = prod.name || "";
+            document.getElementById("editCategory").value = prod.category || "";
+            document.getElementById("editMinStock").value = prod.minStock || 5;
+        }
+    });
+    
+    // Barcode lookup
+    document.getElementById("lookupBarcodeBtn")?.addEventListener("click", () => {
+        const barcode = document.getElementById("scannerInput").value.trim();
+        if (!barcode) { alert("Enter or scan a barcode"); return; }
+        const product = findProductByBarcode(barcode);
+        const resultDiv = document.getElementById("barcodeLookupResult");
+        if (product) {
+            document.getElementById("lookupProductInfo").innerHTML = `<strong><i class="fas fa-cube"></i> ${escapeHtml(product.name)}</strong> (SKU: ${escapeHtml(product.sku)})`;
+            document.getElementById("lookupStockInfo").innerHTML = `📊 Current Stock: ${product.quantity} | Min Stock: ${product.minStock}`;
+            resultDiv.style.display = "block";
+            resultDiv.setAttribute("data-current-id", product.id);
+        } else {
+            alert(`No product found with barcode: "${barcode}"`);
+            resultDiv.style.display = "none";
+        }
+    });
+    
+    // Scan stock action
+    document.getElementById("scanStockActionBtn")?.addEventListener("click", async () => {
+        const resultDiv = document.getElementById("barcodeLookupResult");
+        const prodId = resultDiv.getAttribute("data-current-id");
+        if (!prodId) return;
+        let qty = parseInt(document.getElementById("scanAdjustQty").value);
+        const type = document.getElementById("scanAdjustType").value;
+        if (isNaN(qty) || qty <= 0) qty = 1;
+        const delta = type === "add" ? qty : -qty;
+        if (await modifyStock(prodId, delta, `Scanner ${type === 'add' ? 'addition' : 'removal'}`)) {
+            document.getElementById("scannerInput").value = "";
+            const updated = products.find(p => p.id === prodId);
+            if (updated) document.getElementById("lookupStockInfo").innerHTML = `📊 Current Stock: ${updated.quantity} | Min Stock: ${updated.minStock}`;
+        }
+    });
+    
+    // Quick barcode action
+    document.getElementById("applyBarcodeActionBtn")?.addEventListener("click", async () => {
+        const barcode = document.getElementById("quickBarcodeInput").value.trim();
+        if (!barcode) { alert("Scan or enter a barcode"); return; }
+        const prod = findProductByBarcode(barcode);
+        if (!prod) { alert(`Barcode not recognized: ${barcode}`); return; }
+        let qty = parseInt(document.getElementById("quickQty").value);
+        const action = document.getElementById("quickAction").value;
+        if (isNaN(qty) || qty < 1) qty = 1;
+        const delta = action === "add" ? qty : -qty;
+        if (await modifyStock(prod.id, delta, `Quick ${action}`)) {
+            document.getElementById("quickBarcodeInput").value = "";
+            const msg = document.getElementById("quickActionSuccess");
+            msg.style.display = "block";
+            msg.innerHTML = `✅ ${prod.name}: ${action === 'add' ? '+' : '-'}${qty} → New stock: ${prod.quantity + delta}`;
+            setTimeout(() => msg.style.display = "none", 2000);
+        }
+    });
+    
+    // Generate barcode preview
+    document.getElementById("generateBarcodeBtn")?.addEventListener("click", () => {
+        const selectedId = document.getElementById("barcodeProductSelect").value;
+        const product = products.find(p => p.id === selectedId);
+        if (!product) { alert("Select a product first"); return; }
+        const container = document.getElementById("barcodeRenderDiv");
+        container.innerHTML = `<svg id="dynamicBarcodeSvg"></svg>`;
+        JsBarcode("#dynamicBarcodeSvg", product.barcode, { format: "CODE128", width: 2, height: 55, displayValue: true, fontSize: 14, margin: 10 });
+        document.getElementById("barcodePreviewArea").style.display = "block";
+        window.currentBarcodeProduct = product;
+    });
+    
+    // Save barcode as PNG
+    document.getElementById("printBarcodeImgBtn")?.addEventListener("click", () => {
+        const svgElem = document.querySelector("#barcodeRenderDiv svg");
+        if (!svgElem) { alert("Generate a barcode preview first"); return; }
+        const svgData = new XMLSerializer().serializeToString(svgElem);
+        const canvas = document.createElement("canvas");
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            const link = document.createElement("a");
+            link.download = `barcode_${(window.currentBarcodeProduct?.sku || "product")}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        };
+        img.src = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(svgData);
+    });
+    
+    // Seed demo data
+    document.getElementById("seedDemoDataBtn")?.addEventListener("click", async () => {
+        const demos = [
+            { sku: "WH-1001", name: "Wireless Mouse", category: "Electronics", quantity: 42, minStock: 8, barcode: "690123456789" },
+            { sku: "WH-1002", name: "Mechanical Keyboard", category: "Electronics", quantity: 18, minStock: 5, barcode: "692837461025" },
+            { sku: "WH-2001", name: "Steel Shelf", category: "Furniture", quantity: 7, minStock: 4, barcode: "697215438902" },
+            { sku: "WH-3005", name: "Anti-static Mat", category: "Safety", quantity: 3, minStock: 5, barcode: "694178362501" },
+            { sku: "WH-4002", name: "Pallet
