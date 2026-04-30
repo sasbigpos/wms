@@ -7,6 +7,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- Firebase SDK (using the correct modular SDK) -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
+            }
+        }
+    </script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
         body{background:#0a1628;font-family:'Inter',sans-serif;color:#e2e8f0;padding:16px;}
@@ -18,7 +27,7 @@
         .stat-num{font-weight:800;font-size:1.3rem;color:#34d399;}
         .stat-label{font-size:0.65rem;color:#94a3b8;}
         .tabs{display:flex;background:#0f172a;padding:0 20px;gap:4px;border-bottom:1px solid #1e293b;flex-wrap:wrap;}
-        .tab{background:none;border:none;font-weight:600;padding:10px 20px;font-size:0.85rem;cursor:pointer;color:#94a3b8;border-radius:20px 20px 0 0;display:flex;align-items:center;gap:8px;}
+        .tab{background:none;border:none;font-weight:600;padding:10px 20px;font-size:0.85rem;cursor:pointer;color:#94a3b8;border-radius:20px 20px 0 0;display:flex;align-items:center;gap:8px;transition:0.2s;}
         .tab.active{color:#34d399;background:#1e293b;border-bottom:2px solid #34d399;}
         .panel{display:none;padding:24px;}
         .panel.active{display:block;}
@@ -52,7 +61,6 @@
         .log-entry{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:0.75rem;display:flex;gap:12px;color:#94a3b8;}
         .barcode-preview{background:#0f172a;border-radius:16px;padding:20px;text-align:center;border:2px dashed #334155;margin-top:15px;}
         .success-msg{background:#064e3b;color:#34d399;padding:10px;border-radius:12px;margin-top:12px;display:none;}
-        @media(max-width:640px){body{padding:10px;}.panel{padding:12px;}}
     </style>
 </head>
 <body>
@@ -73,36 +81,32 @@
         <button class="tab" data-tab="scanner"><i class="fas fa-qrcode"></i> Scanner</button>
         <button class="tab" data-tab="logs"><i class="fas fa-history"></i> Logs</button>
         <button class="tab" data-tab="manage"><i class="fas fa-plus-circle"></i> Manage</button>
-        <button class="tab" data-tab="setup"><i class="fas fa-database"></i> Setup</button>
     </div>
 
     <div id="inventoryPanel" class="panel active">
         <div class="card">
             <div class="flex-between">
                 <h3><i class="fas fa-clipboard-list"></i> Stock Overview</h3>
-                <input type="text" id="searchInput" placeholder="🔍 Search" style="width:200px;">
+                <input type="text" id="searchInput" placeholder="🔍 Search SKU/Name/Barcode" style="width:230px;">
             </div>
             <div class="flex-between" style="margin-top:12px;">
-                <div class="status-bar" id="connectionStatus"><i class="fas fa-spinner fa-pulse"></i> Checking Firestore...</div>
-                <div>
-                    <button id="seedBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo</button>
-                    <button id="forceRefreshBtn" class="secondary" style="margin-left:8px;"><i class="fas fa-sync-alt"></i> Refresh</button>
-                </div>
+                <div class="status-bar" id="connectionStatus"><i class="fas fa-spinner fa-pulse"></i> Connecting to Firestore...</div>
+                <button id="seedBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo Products</button>
             </div>
             <div style="overflow-x:auto; margin-top:18px;">
                 <table style="width:100%">
                     <thead><tr><th>Barcode</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Min</th><th>Status</th><th></th></tr></thead>
-                    <tbody id="tableBody"><tr><td colspan="8" style="text-align:center;padding:50px;">Click "Add Demo" to get started<br><span style="font-size:12px;">Firestore will be created automatically</span></td></tr></tbody>
+                    <tbody id="tableBody"><tr><td colspan="8" style="text-align:center;padding:50px;"><i class="fas fa-spinner fa-pulse"></i> Loading from Firestore...<br><span style="font-size:12px;">If this takes more than 5 seconds, check Firestore Rules</span></td></tr></tbody>
                 </table>
             </div>
         </div>
         <div class="card">
             <h3>⚡ Quick Stock Update</h3>
             <div class="form-row">
-                <div class="input-group"><label>Barcode</label><input type="text" id="quickBarcode" placeholder="Scan barcode"></div>
-                <div class="input-group"><label>Action</label><select id="quickAction"><option value="add">Add Stock</option><option value="remove">Remove Stock</option></select></div>
-                <div class="input-group"><label>Qty</label><input type="number" id="quickQty" value="1" min="1"></div>
-                <button id="quickBtn">Apply</button>
+                <div class="input-group"><label>📷 Barcode</label><input type="text" id="quickBarcode" placeholder="Scan or enter barcode"></div>
+                <div class="input-group"><label>Action</label><select id="quickAction"><option value="add">➕ Add Stock</option><option value="remove">➖ Remove Stock</option></select></div>
+                <div class="input-group"><label>Quantity</label><input type="number" id="quickQty" value="1" min="1"></div>
+                <button id="quickBtn"><i class="fas fa-bolt"></i> Apply</button>
             </div>
             <div id="quickMsg" class="success-msg"></div>
         </div>
@@ -110,16 +114,16 @@
 
     <div id="scannerPanel" class="panel">
         <div class="card">
-            <h3><i class="fas fa-camera"></i> Barcode Scanner</h3>
+            <h3><i class="fas fa-camera"></i> Barcode Scanner Console</h3>
             <div class="form-row">
-                <div class="input-group" style="flex:3;"><label>Scan Barcode</label><input type="text" id="scannerInput" placeholder="Scan or type barcode..." autofocus></div>
-                <button id="lookupBtn">Lookup</button>
+                <div class="input-group" style="flex:3;"><label>🔍 Scan Barcode</label><input type="text" id="scannerInput" placeholder="Scan or type barcode..." autofocus></div>
+                <button id="lookupBtn"><i class="fas fa-search"></i> Lookup</button>
             </div>
             <div id="lookupResult" style="display:none; margin-top:16px; background:#0f172a; border-radius:12px; padding:16px; border:1px solid #334155;">
                 <div id="lookupInfo"></div>
                 <div class="form-row" style="margin-top:12px;">
-                    <div class="input-group"><label>Qty</label><input type="number" id="scanQty" value="1"></div>
-                    <div class="input-group"><label>Type</label><select id="scanType"><option value="add">Add</option><option value="remove">Remove</option></select></div>
+                    <div class="input-group"><label>Quantity</label><input type="number" id="scanQty" value="1" min="1"></div>
+                    <div class="input-group"><label>Type</label><select id="scanType"><option value="add">➕ Add</option><option value="remove">➖ Remove</option></select></div>
                     <button id="scanApplyBtn" class="secondary">Apply</button>
                 </div>
             </div>
@@ -127,51 +131,52 @@
     </div>
 
     <div id="logsPanel" class="panel">
-        <div class="flex-between"><h3>📜 Movement Log</h3><button id="clearLogsBtn" class="secondary">Clear</button></div>
-        <div class="card"><div class="log-list" id="logsList"><div class="log-entry">No transactions</div></div></div>
+        <div class="flex-between"><h3>📜 Movement History</h3><button id="clearLogsBtn" class="secondary">Clear All</button></div>
+        <div class="card"><div class="log-list" id="logsList"><div class="log-entry">No transactions yet</div></div></div>
     </div>
 
     <div id="managePanel" class="panel">
         <div class="card">
-            <h3>➕ Add Product</h3>
+            <h3>➕ Add New Product</h3>
             <div class="form-row">
                 <div class="input-group"><label>SKU *</label><input type="text" id="newSku" placeholder="WH-1001"></div>
-                <div class="input-group"><label>Name *</label><input type="text" id="newName" placeholder="Product name"></div>
+                <div class="input-group"><label>Product Name *</label><input type="text" id="newName" placeholder="Product name"></div>
                 <div class="input-group"><label>Category</label><input type="text" id="newCat" placeholder="Category"></div>
                 <div class="input-group"><label>Initial Qty</label><input type="number" id="newQty" value="0"></div>
                 <div class="input-group"><label>Min Stock</label><input type="number" id="newMin" value="5"></div>
             </div>
             <div class="barcode-option">
                 <div class="radio-group">
-                    <label><input type="radio" name="barcodeType" value="auto" checked> Auto-generate</label>
-                    <label><input type="radio" name="barcodeType" value="custom"> Custom barcode</label>
+                    <label><input type="radio" name="barcodeType" value="auto" checked> 🔄 Auto-generate Barcode</label>
+                    <label><input type="radio" name="barcodeType" value="custom"> ✏️ Specify Custom Barcode</label>
                 </div>
                 <div id="customBarcodeDiv" class="hidden">
-                    <input type="text" id="customBarcode" placeholder="Enter custom barcode" style="width:100%;">
+                    <input type="text" id="customBarcode" placeholder="Enter custom barcode (e.g., 690123456789)" style="width:100%;">
+                    <div style="font-size:11px; color:#64748b; margin-top:5px;">Must be unique, 4-20 characters</div>
                 </div>
             </div>
-            <button id="addBtn"><i class="fas fa-plus"></i> Create</button>
+            <button id="addBtn"><i class="fas fa-plus"></i> Create Product</button>
             <div id="addMsg" class="success-msg"></div>
         </div>
         
         <div class="card">
             <h3>📷 Barcode Tools</h3>
             <div class="form-row">
-                <div class="input-group"><label>Product</label><select id="barcodeSelect"></select></div>
+                <div class="input-group"><label>Select Product</label><select id="barcodeSelect"></select></div>
             </div>
             <div class="barcode-option">
                 <div class="radio-group">
-                    <label><input type="radio" name="regenType" value="auto" checked> Auto-regenerate</label>
-                    <label><input type="radio" name="regenType" value="custom"> Custom barcode</label>
+                    <label><input type="radio" name="regenType" value="auto" checked> 🔄 Auto-regenerate Barcode</label>
+                    <label><input type="radio" name="regenType" value="custom"> ✏️ Set Custom Barcode</label>
                 </div>
                 <div id="regenCustomDiv" class="hidden">
-                    <input type="text" id="regenCustomBarcode" placeholder="New barcode" style="width:100%;">
+                    <input type="text" id="regenCustomBarcode" placeholder="Enter new barcode" style="width:100%;">
                 </div>
-                <button id="updateBarcodeBtn" class="secondary" style="margin-top:12px;">Update Barcode</button>
+                <button id="updateBarcodeBtn" class="secondary" style="margin-top:12px;"><i class="fas fa-sync-alt"></i> Update Barcode</button>
             </div>
-            <div style="margin-top:15px; display:flex; gap:12px;">
-                <button id="previewBtn" class="secondary">Preview</button>
-                <button id="savePngBtn" class="secondary">Save PNG</button>
+            <div style="margin-top:15px; display:flex; gap:12px; flex-wrap:wrap;">
+                <button id="previewBtn" class="secondary"><i class="fas fa-eye"></i> Preview Barcode</button>
+                <button id="savePngBtn" class="secondary"><i class="fas fa-download"></i> Save as PNG</button>
             </div>
             <div id="barcodePreviewDiv" style="display:none;" class="barcode-preview">
                 <div id="barcodeSvg"></div>
@@ -179,51 +184,24 @@
         </div>
         
         <div class="card">
-            <h3>✏️ Edit / Delete</h3>
+            <h3>✏️ Edit / Delete Product</h3>
             <div class="form-row">
-                <div class="input-group"><label>Product</label><select id="editSelect"></select></div>
-                <div class="input-group"><label>New Name</label><input type="text" id="editName"></div>
-                <div class="input-group"><label>Category</label><input type="text" id="editCat"></div>
-                <div class="input-group"><label>Min Stock</label><input type="number" id="editMin"></div>
-                <button id="updateBtn" class="secondary">Save</button>
+                <div class="input-group"><label>Select Product</label><select id="editSelect"></select></div>
+                <div class="input-group"><label>New Name</label><input type="text" id="editName" placeholder="Update name"></div>
+                <div class="input-group"><label>Category</label><input type="text" id="editCat" placeholder="Update category"></div>
+                <div class="input-group"><label>Min Stock</label><input type="number" id="editMin" placeholder="Min stock level"></div>
+                <button id="updateBtn" class="secondary">Save Changes</button>
                 <button id="deleteBtn" class="danger">Delete</button>
             </div>
-        </div>
-    </div>
-
-    <div id="setupPanel" class="panel">
-        <div class="card">
-            <h3><i class="fab fa-firebase"></i> Firebase Setup Instructions</h3>
-            <div style="background:#1e293b; padding:16px; border-radius:12px; margin:15px 0;">
-                <h4 style="color:#34d399;">Step 1: Create Firestore Database</h4>
-                <p style="margin:10px 0;">Go to: <a href="https://console.firebase.google.com/project/warehouse-ccc23/firestore" target="_blank" style="color:#34d399;">https://console.firebase.google.com/project/warehouse-ccc23/firestore</a></p>
-                <p>Click <strong>"Create database"</strong> → Select <strong style="color:#fbbf24;">"Start in test mode"</strong> → Choose region → Enable</p>
-            </div>
-            <div style="background:#1e293b; padding:16px; border-radius:12px; margin:15px 0;">
-                <h4 style="color:#34d399;">Step 2: Update Security Rules</h4>
-                <p>Go to <strong>"Rules"</strong> tab and paste:</p>
-                <div style="background:#0a0a0a; padding:10px; border-radius:8px; margin:10px 0; font-family:monospace; font-size:11px;">
-rules_version = '2';<br>
-service cloud.firestore {<br>
-&nbsp;&nbsp;match /databases/{database}/documents {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;}<br>
-}
-                </div>
-                <p>Click <strong>"Publish"</strong></p>
-            </div>
-            <button id="checkFirebaseBtn" class="secondary" style="margin-top:10px;"><i class="fas fa-check"></i> Test Connection</button>
-            <div id="setupStatus" style="margin-top:15px;"></div>
         </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     
+    // Your Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyD3W-j1l1gDH4m0RPHRnImQZjWvEA-XjMs",
         authDomain: "warehouse-ccc23.firebaseapp.com",
@@ -233,7 +211,13 @@ service cloud.firestore {<br>
         appId: "1:946331303130:web:7bbddb616567a11eb079e3"
     };
     
-    let db, productsRef;
+    console.log("Starting Firebase connection...");
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const productsRef = collection(db, "products");
+    
     let products = [];
     let transactionLogs = [];
     
@@ -258,7 +242,7 @@ service cloud.firestore {<br>
         const container = document.getElementById("logsList");
         if(!container) return;
         if(transactionLogs.length === 0) {
-            container.innerHTML = '<div class="log-entry">No transactions</div>';
+            container.innerHTML = '<div class="log-entry">No transactions yet</div>';
         } else {
             container.innerHTML = transactionLogs.slice(0, 50).map(log => `
                 <div class="log-entry">
@@ -285,31 +269,35 @@ service cloud.firestore {<br>
         
         const tbody = document.getElementById("tableBody");
         if(filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;">📦 No products. Click "Add Demo" to get started</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;">📦 No products. Click "Add Demo Products" to get started</td></tr>';
         } else {
             tbody.innerHTML = filtered.map(p => {
                 const isLow = (p.qty || 0) <= (p.minStock || 0);
-                return `<tr>
-                    <td><i class="fas fa-barcode"></i> ${escapeHtml(p.barcode)}</td>
-                    <td><strong>${escapeHtml(p.sku)}</strong></td>
-                    <td>${escapeHtml(p.name)}</td>
-                    <td>${escapeHtml(p.cat || "General")}</td>
-                    <td><span class="stock-badge ${isLow ? 'low-stock' : ''}">${p.qty || 0}</span></td>
-                    <td>${p.minStock || 5}</td>
-                    <td>${isLow ? '⚠️ Low' : '✅ OK'}</td>
-                    <td class="action-icons">
-                        <i class="fas fa-edit" data-id="${p.id}"></i>
-                        <i class="fas fa-trash-alt" data-id="${p.id}"></i>
-                        <i class="fas fa-barcode" data-id="${p.id}"></i>
-                    </td>
-                </tr>`;
+                return `
+                    <tr>
+                        <td><i class="fas fa-barcode"></i> ${escapeHtml(p.barcode)}</td>
+                        <td><strong>${escapeHtml(p.sku)}</strong></td>
+                        <td>${escapeHtml(p.name)}</td>
+                        <td>${escapeHtml(p.cat || "General")}</td>
+                        <td><span class="stock-badge ${isLow ? 'low-stock' : ''}">${p.qty || 0}</span></td>
+                        <td>${p.minStock || 5}</td>
+                        <td>${isLow ? '⚠️ Low Stock' : '✅ OK'}</td>
+                        <td class="action-icons">
+                            <i class="fas fa-edit" data-id="${p.id}" title="Edit"></i>
+                            <i class="fas fa-trash-alt" data-id="${p.id}" title="Delete"></i>
+                            <i class="fas fa-barcode" data-id="${p.id}" title="View Barcode"></i>
+                        </td>
+                    </tr>
+                `;
             }).join('');
         }
         
+        // Update dropdowns
         const options = products.map(p => `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)}</option>`).join('');
         document.getElementById("editSelect").innerHTML = options || '<option>No products</option>';
         document.getElementById("barcodeSelect").innerHTML = options || '<option>No products</option>';
         
+        // Attach edit events
         document.querySelectorAll(".fa-edit").forEach(icon => {
             icon.onclick = () => {
                 let id = icon.getAttribute("data-id");
@@ -321,19 +309,21 @@ service cloud.firestore {<br>
             };
         });
         
-        document.querySelectorAll(".fa-trash-alt").forEach(async (icon) => {
+        // Attach delete events
+        document.querySelectorAll(".fa-trash-alt").forEach(icon => {
             icon.onclick = async () => {
                 let id = icon.getAttribute("data-id");
-                if(confirm("Delete this product?")) {
+                if(confirm("Delete this product permanently?")) {
                     const product = products.find(p => p.id === id);
                     if(product) {
                         await deleteDoc(doc(db, "products", id));
-                        addLog(`Deleted: ${product.sku}`);
+                        addLog(`Deleted product: ${product.sku} (${product.name})`);
                     }
                 }
             };
         });
         
+        // Attach barcode preview events
         document.querySelectorAll(".fa-barcode").forEach(icon => {
             icon.onclick = () => {
                 let id = icon.getAttribute("data-id");
@@ -342,51 +332,17 @@ service cloud.firestore {<br>
                     document.querySelector('[data-tab="manage"]').click();
                     document.getElementById("barcodeSelect").value = id;
                     setTimeout(() => {
-                        document.getElementById("barcodeSvg").innerHTML = `<svg id="previewSvg"></svg>`;
+                        const container = document.getElementById("barcodeSvg");
+                        container.innerHTML = `<svg id="previewSvg"></svg>`;
                         JsBarcode("#previewSvg", product.barcode, { format: "CODE128", width: 2, height: 45, displayValue: true, fontSize: 11 });
                         document.getElementById("barcodePreviewDiv").style.display = "block";
+                        window.currentBarcodeProd = product;
                     }, 100);
                 }
             };
         });
         
         updateStats();
-    }
-    
-    // Initialize Firebase and load data
-    async function initFirebase() {
-        const statusDiv = document.getElementById("connectionStatus");
-        try {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            productsRef = collection(db, "products");
-            
-            // Load data
-            const snapshot = await getDocs(productsRef);
-            products = [];
-            snapshot.forEach(doc => {
-                products.push({ id: doc.id, ...doc.data() });
-            });
-            renderTable();
-            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Connected to Firestore';
-            statusDiv.classList.add("status-online");
-            statusDiv.classList.remove("status-offline");
-            addLog("Connected to Firestore successfully");
-            
-            // Set up real-time listener
-            let unsubscribe = onSnapshot(productsRef, (snapshot) => {
-                products = [];
-                snapshot.forEach(doc => {
-                    products.push({ id: doc.id, ...doc.data() });
-                });
-                renderTable();
-            });
-        } catch(e) {
-            console.error("Firebase error:", e);
-            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ Not connected. Go to Setup tab.';
-            statusDiv.classList.add("status-offline");
-            statusDiv.classList.remove("status-online");
-        }
     }
     
     // Load saved logs
@@ -396,19 +352,38 @@ service cloud.firestore {<br>
         renderLogs();
     }
     
-    // Start the app
-    initFirebase();
+    // Real-time Firestore listener
+    const statusDiv = document.getElementById("connectionStatus");
     
-    // Tab switching
-    document.querySelectorAll(".tab").forEach(tab => {
-        tab.onclick = () => {
-            const tabId = tab.getAttribute("data-tab");
-            document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-            document.getElementById(tabId + "Panel").classList.add("active");
-            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-        };
-    });
+    try {
+        const unsubscribe = onSnapshot(productsRef, 
+            (snapshot) => {
+                products = [];
+                snapshot.forEach(doc => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+                renderTable();
+                statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Connected to Firestore';
+                statusDiv.classList.add("status-online");
+                statusDiv.classList.remove("status-offline");
+                console.log("Loaded", products.length, "products from Firestore");
+                if(products.length === 0) {
+                    addLog("Firestore connected. Add demo products to get started.");
+                }
+            },
+            (error) => {
+                console.error("Firestore error:", error);
+                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ Firestore error: Check Rules tab - must be TEST MODE';
+                statusDiv.classList.add("status-offline");
+                statusDiv.classList.remove("status-online");
+                addLog(`Firestore connection error: ${error.message}`);
+            }
+        );
+    } catch(e) {
+        console.error("Setup error:", e);
+        statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ Firebase initialization error';
+        statusDiv.classList.add("status-offline");
+    }
     
     // Add demo products
     document.getElementById("seedBtn").onclick = async () => {
@@ -424,86 +399,148 @@ service cloud.firestore {<br>
             try {
                 await addDoc(productsRef, demo);
                 added++;
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Error adding demo:", e); }
         }
-        addLog(`Added ${added} demo products`);
+        addLog(`Added ${added} demo products to Firestore`);
         alert(`✅ Added ${added} demo products to Firestore!`);
-    };
-    
-    // Force refresh
-    document.getElementById("forceRefreshBtn").onclick = async () => {
-        const snapshot = await getDocs(productsRef);
-        products = [];
-        snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
-        renderTable();
-        alert(`Reloaded ${products.length} products`);
     };
     
     // Add product
     document.getElementById("addBtn").onclick = async () => {
         const sku = document.getElementById("newSku").value.trim();
         const name = document.getElementById("newName").value.trim();
-        if(!sku || !name) { alert("SKU and Name required"); return; }
+        if(!sku || !name) {
+            alert("SKU and Product Name are required!");
+            return;
+        }
         
         const barcodeType = document.querySelector('input[name="barcodeType"]:checked').value;
-        let barcode = barcodeType === 'custom' ? document.getElementById("customBarcode").value.trim() : autoGenerateBarcode(sku);
-        if(barcodeType === 'custom' && !barcode) { alert("Enter custom barcode"); return; }
+        let barcode;
+        
+        if(barcodeType === 'custom') {
+            barcode = document.getElementById("customBarcode").value.trim();
+            if(!barcode) {
+                alert("Please enter a custom barcode");
+                return;
+            }
+            if(products.some(p => p.barcode === barcode)) {
+                alert("This barcode already exists!");
+                return;
+            }
+        } else {
+            barcode = autoGenerateBarcode(sku);
+            let counter = 1;
+            while(products.some(p => p.barcode === barcode)) {
+                barcode = autoGenerateBarcode(sku) + counter;
+                counter++;
+            }
+        }
         
         try {
             await addDoc(productsRef, {
-                sku, name,
+                sku: sku,
+                name: name,
                 cat: document.getElementById("newCat").value.trim() || "General",
                 qty: parseInt(document.getElementById("newQty").value) || 0,
                 minStock: parseInt(document.getElementById("newMin").value) || 5,
-                barcode: barcode
+                barcode: barcode,
+                createdAt: new Date().toISOString()
             });
-            addLog(`Added: ${sku} | Barcode: ${barcode}`);
+            
+            addLog(`Added product: ${sku} | Barcode: ${barcode} (${barcodeType === 'custom' ? 'custom' : 'auto'})`);
+            
             document.getElementById("newSku").value = "";
             document.getElementById("newName").value = "";
             document.getElementById("newCat").value = "";
             document.getElementById("newQty").value = "0";
             document.getElementById("customBarcode").value = "";
-            const msg = document.getElementById("addMsg");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ Added! Barcode: ${barcode}`;
-            setTimeout(() => msg.style.display = "none", 3000);
-        } catch(e) { alert("Error: " + e.message); }
+            
+            const msgDiv = document.getElementById("addMsg");
+            msgDiv.style.display = "block";
+            msgDiv.innerHTML = `✅ Product added to Firestore! Barcode: ${barcode}`;
+            setTimeout(() => msgDiv.style.display = "none", 3000);
+        } catch(e) {
+            alert("Error adding product: " + e.message);
+            console.error(e);
+        }
     };
     
-    // Toggle custom barcode
-    document.querySelectorAll('input[name="barcodeType"]').forEach(r => {
-        r.onchange = () => document.getElementById("customBarcodeDiv").classList.toggle("hidden", r.value !== "custom");
-    });
-    document.querySelectorAll('input[name="regenType"]').forEach(r => {
-        r.onchange = () => document.getElementById("regenCustomDiv").classList.toggle("hidden", r.value !== "custom");
+    // Toggle custom barcode fields
+    document.querySelectorAll('input[name="barcodeType"]').forEach(radio => {
+        radio.onchange = () => {
+            document.getElementById("customBarcodeDiv").classList.toggle("hidden", radio.value !== "custom");
+        };
     });
     
-    // Update barcode
+    document.querySelectorAll('input[name="regenType"]').forEach(radio => {
+        radio.onchange = () => {
+            document.getElementById("regenCustomDiv").classList.toggle("hidden", radio.value !== "custom");
+        };
+    });
+    
+    // Update barcode for existing product
     document.getElementById("updateBarcodeBtn").onclick = async () => {
         const id = document.getElementById("barcodeSelect").value;
         const product = products.find(p => p.id === id);
-        if(!product) { alert("Select a product"); return; }
+        if(!product) {
+            alert("Select a product first");
+            return;
+        }
+        
         const regenType = document.querySelector('input[name="regenType"]:checked').value;
-        let newBarcode = regenType === 'custom' ? document.getElementById("regenCustomBarcode").value.trim() : autoGenerateBarcode(product.sku);
-        if(regenType === 'custom' && !newBarcode) { alert("Enter barcode"); return; }
-        await updateDoc(doc(db, "products", id), { barcode: newBarcode });
-        addLog(`Updated barcode for ${product.sku}: ${newBarcode}`);
-        alert(`Barcode updated to: ${newBarcode}`);
+        let newBarcode;
+        
+        if(regenType === 'custom') {
+            newBarcode = document.getElementById("regenCustomBarcode").value.trim();
+            if(!newBarcode) {
+                alert("Enter a custom barcode");
+                return;
+            }
+            if(products.some(p => p.barcode === newBarcode && p.id !== id)) {
+                alert("This barcode already exists on another product!");
+                return;
+            }
+        } else {
+            newBarcode = autoGenerateBarcode(product.sku);
+            let counter = 1;
+            while(products.some(p => p.barcode === newBarcode && p.id !== id)) {
+                newBarcode = autoGenerateBarcode(product.sku) + counter;
+                counter++;
+            }
+        }
+        
+        try {
+            await updateDoc(doc(db, "products", id), { barcode: newBarcode });
+            addLog(`Updated barcode for ${product.sku}: ${newBarcode}`);
+            alert(`Barcode updated to: ${newBarcode}`);
+            document.getElementById("regenCustomBarcode").value = "";
+        } catch(e) {
+            alert("Error updating barcode: " + e.message);
+        }
     };
     
     // Preview barcode
     document.getElementById("previewBtn").onclick = () => {
         const id = document.getElementById("barcodeSelect").value;
         const product = products.find(p => p.id === id);
-        if(!product) { alert("Select a product"); return; }
-        document.getElementById("barcodeSvg").innerHTML = `<svg id="previewSvg"></svg>`;
+        if(!product) {
+            alert("Select a product first");
+            return;
+        }
+        const container = document.getElementById("barcodeSvg");
+        container.innerHTML = `<svg id="previewSvg"></svg>`;
         JsBarcode("#previewSvg", product.barcode, { format: "CODE128", width: 2, height: 45, displayValue: true, fontSize: 11 });
         document.getElementById("barcodePreviewDiv").style.display = "block";
+        window.currentBarcodeProd = product;
     };
     
+    // Save barcode as PNG
     document.getElementById("savePngBtn").onclick = () => {
         const svg = document.querySelector("#barcodeSvg svg");
-        if(!svg) { alert("Preview first"); return; }
+        if(!svg) {
+            alert("Please preview a barcode first");
+            return;
+        }
         const svgData = new XMLSerializer().serializeToString(svg);
         const canvas = document.createElement("canvas");
         const img = new Image();
@@ -512,10 +549,10 @@ service cloud.firestore {<br>
             canvas.height = img.height;
             const ctx = canvas.getContext("2d");
             ctx.fillStyle = "white";
-            ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.drawImage(img,0,0);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
             const link = document.createElement("a");
-            link.download = "barcode.png";
+            link.download = `barcode_${window.currentBarcodeProd?.sku || "product"}.png`;
             link.href = canvas.toDataURL();
             link.click();
         };
@@ -527,28 +564,36 @@ service cloud.firestore {<br>
         const id = document.getElementById("editSelect").value;
         const product = products.find(p => p.id === id);
         if(!product) return;
+        
         const updates = {};
         if(document.getElementById("editName").value.trim()) updates.name = document.getElementById("editName").value.trim();
         if(document.getElementById("editCat").value.trim()) updates.cat = document.getElementById("editCat").value.trim();
         const newMin = parseInt(document.getElementById("editMin").value);
         if(!isNaN(newMin) && newMin >= 0) updates.minStock = newMin;
+        
         if(Object.keys(updates).length > 0) {
-            await updateDoc(doc(db, "products", id), updates);
-            addLog(`Updated: ${product.sku}`);
-            alert("Updated!");
+            try {
+                await updateDoc(doc(db, "products", id), updates);
+                addLog(`Updated product: ${product.sku}`);
+                alert("Product updated successfully!");
+            } catch(e) {
+                alert("Error updating: " + e.message);
+            }
         }
     };
     
+    // Delete product
     document.getElementById("deleteBtn").onclick = async () => {
         const id = document.getElementById("editSelect").value;
         const product = products.find(p => p.id === id);
-        if(product && confirm(`Delete ${product.name}?`)) {
+        if(product && confirm(`Delete "${product.name}" permanently?`)) {
             await deleteDoc(doc(db, "products", id));
-            addLog(`Deleted: ${product.sku}`);
-            alert("Deleted!");
+            addLog(`Deleted product: ${product.sku}`);
+            alert("Product deleted!");
         }
     };
     
+    // Load product into edit form
     document.getElementById("editSelect").onchange = () => {
         const id = document.getElementById("editSelect").value;
         const product = products.find(p => p.id === id);
@@ -560,12 +605,4 @@ service cloud.firestore {<br>
     };
     
     // Barcode lookup
-    document.getElementById("lookupBtn").onclick = () => {
-        const bc = document.getElementById("scannerInput").value.trim();
-        if(!bc) { alert("Enter barcode"); return; }
-        const product = products.find(p => p.barcode === bc);
-        const resultDiv = document.getElementById("lookupResult");
-        if(product) {
-            document.getElementById("lookupInfo").innerHTML = `<strong>${escapeHtml(product.name)}</strong> (${escapeHtml(product.sku)})<br>Stock: ${product.qty} | Min: ${product.minStock}`;
-            resultDiv.style.display = "block";
-           
+    document
