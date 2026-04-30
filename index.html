@@ -42,14 +42,14 @@
         .low-stock{background:#7f1d1d;color:#fca5a5;}
         .action-icons i{margin:0 3px;cursor:pointer;color:#94a3b8;font-size:0.9rem;}
         .action-icons i:hover{color:#34d399;}
-        .status-bar{background:#1e293b;padding:6px 14px;border-radius:30px;font-size:0.7rem;display:inline-flex;align-items:center;gap:6px;}
+        .status-bar{background:#064e3b;padding:6px 14px;border-radius:30px;font-size:0.7rem;display:inline-flex;align-items:center;gap:6px;}
         .flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;}
         .log-list{max-height:250px;overflow-y:auto;background:#0f172a;border-radius:12px;border:1px solid #334155;}
         .log-entry{padding:8px 12px;border-bottom:1px solid #1e293b;font-size:0.75rem;display:flex;gap:10px;color:#94a3b8;}
         .barcode-preview{background:#0f172a;border-radius:16px;padding:16px;text-align:center;border:2px dashed #334155;margin-top:12px;}
+        .success-msg{background:#064e3b;color:#34d399;padding:10px;border-radius:12px;margin-top:10px;display:none;}
+        .warning-msg{background:#713f12;color:#fbbf24;padding:10px;border-radius:12px;margin-top:10px;}
         @media(max-width:640px){body{padding:10px;}.panel{padding:12px;}}
-        .error-msg{background:#7f1d1d;color:#fca5a5;padding:10px;border-radius:12px;margin-bottom:16px;}
-        .success-msg{background:#064e3b;color:#34d399;padding:10px;border-radius:12px;margin-bottom:16px;display:none;}
     </style>
 </head>
 <body>
@@ -57,7 +57,7 @@
     <div class="header">
         <div class="logo">
             <h1><i class="fas fa-warehouse"></i> StockFlow WMS</h1>
-            <p>Firebase Cloud • Auto or Custom Barcodes</p>
+            <p>Local Storage Mode • Auto or Custom Barcodes</p>
         </div>
         <div class="stats">
             <div><span class="stat-num" id="totalProducts">0</span><div class="stat-label">Products</div></div>
@@ -76,24 +76,24 @@
         <div class="card">
             <div class="flex-between">
                 <h3><i class="fas fa-clipboard-list"></i> Stock Overview</h3>
-                <input type="text" id="searchInput" placeholder="🔍 Search..." style="width:200px;">
+                <input type="text" id="searchInput" placeholder="🔍 Search SKU/Name/Barcode" style="width:220px;">
             </div>
             <div class="flex-between" style="margin-top:12px;">
-                <div class="status-bar" id="statusBar"><i class="fas fa-spinner fa-pulse"></i> Connecting to Firebase...</div>
+                <div class="status-bar"><i class="fas fa-check-circle"></i> ✅ Local Storage Mode - Working!</div>
                 <button id="seedBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo Data</button>
             </div>
             <div style="overflow-x:auto; margin-top:16px;">
                 <table style="width:100%">
                     <thead><tr><th>Barcode</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Min</th><th>Status</th><th></th></tr></thead>
-                    <tbody id="tableBody"><tr><td colspan="8" style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-pulse"></i> Loading data...<br><span style="font-size:12px;">Make sure Firestore is in TEST MODE</span></td></tr></tbody>
+                    <tbody id="tableBody"><tr><td colspan="8" style="text-align:center;padding:40px;">Loading data...<br><span style="font-size:12px;">Click "Add Demo Data" to get started</span></td></tr></tbody>
                 </table>
             </div>
         </div>
         <div class="card">
             <h3>⚡ Quick Update</h3>
             <div class="form-row">
-                <div class="input-group"><label>Barcode</label><input type="text" id="quickBarcode" placeholder="Scan barcode"></div>
-                <div class="input-group"><label>Action</label><select id="quickAction"><option value="add">Add</option><option value="remove">Remove</option></select></div>
+                <div class="input-group"><label>Barcode</label><input type="text" id="quickBarcode" placeholder="Scan or enter barcode"></div>
+                <div class="input-group"><label>Action</label><select id="quickAction"><option value="add">➕ Add Stock</option><option value="remove">➖ Remove Stock</option></select></div>
                 <div class="input-group"><label>Qty</label><input type="number" id="quickQty" value="1" min="1"></div>
                 <button id="quickBtn"><i class="fas fa-bolt"></i> Apply</button>
             </div>
@@ -136,8 +136,8 @@
             </div>
             <div class="barcode-option">
                 <div class="radio-group">
-                    <label><input type="radio" name="barcodeType" value="auto" checked> 🔄 Auto-generate</label>
-                    <label><input type="radio" name="barcodeType" value="custom"> ✏️ Custom barcode</label>
+                    <label><input type="radio" name="barcodeType" value="auto" checked> 🔄 Auto-generate Barcode</label>
+                    <label><input type="radio" name="barcodeType" value="custom"> ✏️ Custom Barcode</label>
                 </div>
                 <div id="customBarcodeDiv" class="hidden">
                     <input type="text" id="customBarcode" placeholder="Enter custom barcode (e.g., 690123456789)" style="width:100%;">
@@ -186,46 +186,65 @@
     </div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    
-    // Your Firebase config
-    const firebaseConfig = {
-        apiKey: "AIzaSyD3W-j1l1gDH4m0RPHRnImQZjWvEA-XjMs",
-        authDomain: "warehouse-ccc23.firebaseapp.com",
-        projectId: "warehouse-ccc23",
-        storageBucket: "warehouse-ccc23.firebasestorage.app",
-        messagingSenderId: "946331303130",
-        appId: "1:946331303130:web:7bbddb616567a11eb079e3"
-    };
-    
-    let app, db, productsRef;
+<script>
+    // ========== LOCAL STORAGE MODE - NO FIREBASE NEEDED ==========
     let products = [];
     let logs = [];
     
-    // Initialize Firebase
-    try {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        productsRef = collection(db, "products");
-        console.log("Firebase initialized");
-    } catch(e) {
-        console.error("Firebase init error:", e);
-        document.getElementById("statusBar").innerHTML = '<i class="fas fa-exclamation-triangle"></i> Firebase config error';
+    // Load data from localStorage
+    function loadData() {
+        const savedProducts = localStorage.getItem("wms_products");
+        const savedLogs = localStorage.getItem("wms_logs");
+        
+        if(savedProducts) {
+            products = JSON.parse(savedProducts);
+        } else {
+            // Default demo products
+            products = [
+                { id: "p1", sku: "WH-1001", name: "Wireless Mouse", cat: "Electronics", qty: 42, minStock: 8, barcode: "690123456789" },
+                { id: "p2", sku: "WH-1002", name: "Mechanical Keyboard", cat: "Electronics", qty: 18, minStock: 5, barcode: "692837461025" },
+                { id: "p3", sku: "WH-2001", name: "Steel Shelf", cat: "Furniture", qty: 7, minStock: 4, barcode: "697215438902" },
+                { id: "p4", sku: "WH-3005", name: "Anti-static Mat", cat: "Safety", qty: 3, minStock: 5, barcode: "694178362501" },
+                { id: "p5", sku: "WH-4002", name: "Pallet Jack", cat: "Equipment", qty: 12, minStock: 2, barcode: "698234517890" }
+            ];
+        }
+        
+        if(savedLogs) {
+            logs = JSON.parse(savedLogs);
+        } else {
+            logs = [{ time: new Date().toLocaleString(), text: "System ready - Local Storage Mode" }];
+        }
+        
+        saveToLocalStorage();
+        renderAll();
     }
     
-    function escapeHtml(s) { if(!s) return ''; return String(s).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
+    function saveToLocalStorage() {
+        localStorage.setItem("wms_products", JSON.stringify(products));
+        localStorage.setItem("wms_logs", JSON.stringify(logs.slice(0, 100)));
+    }
     
-    function addLog(msg) {
-        logs.unshift({ time: new Date().toLocaleString(), text: msg });
+    function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+    }
+    
+    function autoGenerateBarcode(sku) {
+        let raw = sku.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        let timestamp = Date.now().toString().slice(-8);
+        let combined = (raw + timestamp).slice(0, 16);
+        if(!combined || combined.length < 4) combined = "WH" + timestamp;
+        return combined;
+    }
+    
+    function isBarcodeUnique(barcode, excludeId = null) {
+        return !products.some(p => p.barcode === barcode && p.id !== excludeId);
+    }
+    
+    function addLog(text) {
+        logs.unshift({ time: new Date().toLocaleString(), text: text });
         if(logs.length > 100) logs.pop();
-        localStorage.setItem("wms_logs", JSON.stringify(logs));
-        const container = document.getElementById("logsList");
-        if(container) {
-            if(logs.length === 0) container.innerHTML = '<div class="log-entry">No records</div>';
-            else container.innerHTML = logs.slice(0,50).map(l => `<div class="log-entry"><span>${escapeHtml(l.time)}</span><span>${escapeHtml(l.text)}</span></div>`).join('');
-        }
+        saveToLocalStorage();
+        renderLogs();
     }
     
     function updateStats() {
@@ -234,17 +253,7 @@
         document.getElementById("lowStockCount").innerText = products.filter(p => (p.qty || 0) <= (p.minStock || 0)).length;
     }
     
-    function autoGenerateBarcode(sku, id) {
-        let raw = sku.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-        let suffix = id ? id.slice(-6) : Date.now().toString().slice(-8);
-        let combined = (raw + suffix).slice(0, 16);
-        if(!combined || combined.length < 4) combined = "WH" + Date.now().toString().slice(-8);
-        return combined;
-    }
-    
-    function isBarcodeUnique(barcode, excludeId = null) {
-        return !products.some(p => p.barcode === barcode && p.id !== excludeId);
-    }
+    function escapeHtml(s) { if(!s) return ''; return String(s).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
     
     function renderTable() {
         const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
@@ -293,11 +302,18 @@
             };
         });
         document.querySelectorAll(".fa-trash-alt").forEach(icon => {
-            icon.onclick = async () => {
+            icon.onclick = () => {
                 let id = icon.getAttribute("data-id");
-                if(confirm("Delete permanently?")) {
-                    await deleteDoc(doc(db, "products", id));
-                    addLog(`Deleted product`);
+                if(confirm("Delete product permanently?")) {
+                    const idx = products.findIndex(p => p.id === id);
+                    if(idx !== -1) {
+                        const removed = products[idx];
+                        products.splice(idx, 1);
+                        addLog(`Deleted ${removed.sku} (${removed.name})`);
+                        saveToLocalStorage();
+                        renderTable();
+                        updateStats();
+                    }
                 }
             };
         });
@@ -322,50 +338,21 @@
         updateStats();
     }
     
-    // Load saved logs
-    const saved = localStorage.getItem("wms_logs");
-    if(saved) logs = JSON.parse(saved);
-    if(logs.length) {
-        document.getElementById("logsList").innerHTML = logs.slice(0,50).map(l => `<div class="log-entry"><span>${escapeHtml(l.time)}</span><span>${escapeHtml(l.text)}</span></div>`).join('');
+    function renderLogs() {
+        const container = document.getElementById("logsList");
+        if(container) {
+            if(logs.length === 0) container.innerHTML = '<div class="log-entry">No records</div>';
+            else container.innerHTML = logs.slice(0,50).map(l => `<div class="log-entry"><span>${escapeHtml(l.time)}</span><span>${escapeHtml(l.text)}</span></div>`).join('');
+        }
     }
     
-    // Set up real-time listener for Firestore
-    const statusBar = document.getElementById("statusBar");
-    let connectionAttempts = 0;
-    
-    if(db && productsRef) {
-        const unsubscribe = onSnapshot(productsRef, 
-            (snapshot) => {
-                products = [];
-                snapshot.forEach(doc => {
-                    products.push({ id: doc.id, ...doc.data() });
-                });
-                renderTable();
-                statusBar.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Connected to Firestore';
-                statusBar.style.background = "#064e3b";
-                console.log("Data loaded, products:", products.length);
-            },
-            (error) => {
-                console.error("Firestore error:", error);
-                connectionAttempts++;
-                if(error.code === 'permission-denied') {
-                    statusBar.innerHTML = '<i class="fas fa-lock"></i> ⚠️ Permission Denied! Go to Firebase Console → Firestore → Rules → Set to TEST MODE';
-                    statusBar.style.background = "#7f1d1d";
-                } else if(error.code === 'not-found') {
-                    statusBar.innerHTML = '<i class="fas fa-database"></i> ⚠️ Create Firestore database in Firebase Console (TEST MODE)';
-                    statusBar.style.background = "#713f12";
-                } else {
-                    statusBar.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${error.message.substring(0, 80)}`;
-                    statusBar.style.background = "#7f1d1d";
-                }
-            }
-        );
-    } else {
-        statusBar.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Firebase not initialized. Check config.';
+    function renderAll() {
+        renderTable();
+        renderLogs();
     }
     
-    // Demo data
-    document.getElementById("seedBtn").onclick = async () => {
+    // Add demo data
+    document.getElementById("seedBtn").onclick = () => {
         const demos = [
             { sku: "WH-1001", name: "Wireless Mouse", cat: "Electronics", qty: 42, minStock: 8, barcode: "690123456789" },
             { sku: "WH-1002", name: "Mechanical Keyboard", cat: "Electronics", qty: 18, minStock: 5, barcode: "692837461025" },
@@ -373,23 +360,24 @@
             { sku: "WH-3005", name: "Anti-static Mat", cat: "Safety", qty: 3, minStock: 5, barcode: "694178362501" },
             { sku: "WH-4002", name: "Pallet Jack", cat: "Equipment", qty: 12, minStock: 2, barcode: "698234517890" }
         ];
-        let added = 0;
+        
         for(const d of demos) {
-            try {
-                await addDoc(productsRef, d);
-                added++;
-            } catch(e) { console.error(e); }
+            if(!products.some(p => p.sku === d.sku)) {
+                products.push({ id: generateId(), ...d });
+            }
         }
-        alert(`✅ Added ${added} demo products to Firestore!`);
-        addLog(`Added ${added} demo products`);
+        saveToLocalStorage();
+        addLog("Added demo products");
+        renderTable();
+        alert("✅ Demo products added!");
     };
     
-    // Add product with barcode options
-    document.getElementById("addBtn").onclick = async () => {
+    // Add product
+    document.getElementById("addBtn").onclick = () => {
         const sku = document.getElementById("newSku").value.trim();
         const name = document.getElementById("newName").value.trim();
         if(!sku || !name) { alert("SKU and Name required"); return; }
-        if(products.some(p => p.sku === sku)) { alert("SKU exists!"); return; }
+        if(products.some(p => p.sku === sku)) { alert("SKU already exists!"); return; }
         
         const barcodeType = document.querySelector('input[name="barcodeType"]:checked').value;
         let barcode;
@@ -399,23 +387,28 @@
             if(!barcode) { alert("Enter custom barcode"); return; }
             if(!isBarcodeUnique(barcode)) { alert("Barcode already exists!"); return; }
         } else {
-            let newId = Date.now().toString(36);
-            barcode = autoGenerateBarcode(sku, newId);
+            barcode = autoGenerateBarcode(sku);
             let counter = 1;
             while(!isBarcodeUnique(barcode)) {
-                barcode = autoGenerateBarcode(sku, newId) + counter;
+                barcode = autoGenerateBarcode(sku) + counter;
                 counter++;
             }
         }
         
-        await addDoc(productsRef, {
-            sku, name, cat: document.getElementById("newCat").value.trim() || "General",
+        const newProduct = {
+            id: generateId(),
+            sku: sku,
+            name: name,
+            cat: document.getElementById("newCat").value.trim() || "General",
             qty: parseInt(document.getElementById("newQty").value) || 0,
             minStock: parseInt(document.getElementById("newMin").value) || 5,
             barcode: barcode
-        });
+        };
         
-        addLog(`Added ${sku} | Barcode: ${barcode}`);
+        products.push(newProduct);
+        saveToLocalStorage();
+        addLog(`Added product: ${sku} | Barcode: ${barcode} (${barcodeType === 'custom' ? 'custom' : 'auto'})`);
+        
         document.getElementById("newSku").value = "";
         document.getElementById("newName").value = "";
         document.getElementById("newCat").value = "";
@@ -426,9 +419,11 @@
         msg.style.display = "block";
         msg.innerHTML = `✅ Added! Barcode: ${barcode}`;
         setTimeout(() => msg.style.display = "none", 3000);
+        
+        renderTable();
     };
     
-    // Toggle custom barcode input visibility
+    // Toggle custom barcode input
     document.querySelectorAll('input[name="barcodeType"]').forEach(r => {
         r.onchange = () => {
             document.getElementById("customBarcodeDiv").classList.toggle("hidden", r.value !== "custom");
@@ -440,8 +435,8 @@
         };
     });
     
-    // Update barcode for existing product
-    document.getElementById("updateBarcodeBtn").onclick = async () => {
+    // Update barcode
+    document.getElementById("updateBarcodeBtn").onclick = () => {
         const id = document.getElementById("barcodeSelect").value;
         const prod = products.find(p => p.id === id);
         if(!prod) { alert("Select a product"); return; }
@@ -452,20 +447,22 @@
         if(regenType === 'custom') {
             newBarcode = document.getElementById("regenCustomBarcode").value.trim();
             if(!newBarcode) { alert("Enter custom barcode"); return; }
-            if(!isBarcodeUnique(newBarcode, id)) { alert("Barcode already exists on another product!"); return; }
+            if(!isBarcodeUnique(newBarcode, id)) { alert("Barcode already exists!"); return; }
         } else {
-            newBarcode = autoGenerateBarcode(prod.sku, prod.id);
+            newBarcode = autoGenerateBarcode(prod.sku);
             let counter = 1;
             while(!isBarcodeUnique(newBarcode, id)) {
-                newBarcode = autoGenerateBarcode(prod.sku, prod.id) + counter;
+                newBarcode = autoGenerateBarcode(prod.sku) + counter;
                 counter++;
             }
         }
         
-        await updateDoc(doc(db, "products", id), { barcode: newBarcode });
+        prod.barcode = newBarcode;
+        saveToLocalStorage();
         addLog(`Updated barcode for ${prod.sku}: ${newBarcode}`);
         alert(`Barcode updated to: ${newBarcode}`);
         document.getElementById("regenCustomBarcode").value = "";
+        renderTable();
     };
     
     // Preview barcode
@@ -503,29 +500,30 @@
     };
     
     // Update product
-    document.getElementById("updateBtn").onclick = async () => {
+    document.getElementById("updateBtn").onclick = () => {
         const id = document.getElementById("editSelect").value;
         const prod = products.find(p => p.id === id);
         if(!prod) return;
-        const updates = {};
-        if(document.getElementById("editName").value.trim()) updates.name = document.getElementById("editName").value.trim();
-        if(document.getElementById("editCat").value.trim()) updates.cat = document.getElementById("editCat").value.trim();
+        if(document.getElementById("editName").value.trim()) prod.name = document.getElementById("editName").value.trim();
+        if(document.getElementById("editCat").value.trim()) prod.cat = document.getElementById("editCat").value.trim();
         const newMin = parseInt(document.getElementById("editMin").value);
-        if(!isNaN(newMin) && newMin >= 0) updates.minStock = newMin;
-        if(Object.keys(updates).length) {
-            await updateDoc(doc(db, "products", id), updates);
-            addLog(`Updated ${prod.sku}`);
-            alert("Updated!");
-        }
+        if(!isNaN(newMin) && newMin >= 0) prod.minStock = newMin;
+        saveToLocalStorage();
+        addLog(`Updated ${prod.sku}`);
+        renderTable();
+        alert("Product updated!");
     };
     
-    document.getElementById("deleteBtn").onclick = async () => {
+    document.getElementById("deleteBtn").onclick = () => {
         const id = document.getElementById("editSelect").value;
         const prod = products.find(p => p.id === id);
         if(prod && confirm(`Delete ${prod.name}?`)) {
-            await deleteDoc(doc(db, "products", id));
+            const idx = products.findIndex(p => p.id === id);
+            products.splice(idx, 1);
+            saveToLocalStorage();
             addLog(`Deleted ${prod.sku}`);
-            alert("Deleted!");
+            renderTable();
+            alert("Product deleted!");
         }
     };
     
@@ -546,4 +544,42 @@
         const prod = products.find(p => p.barcode === bc);
         const resultDiv = document.getElementById("lookupResult");
         if(prod) {
-            document.getElementById("lookupInfo").innerHTML = `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<
+            document.getElementById("lookupInfo").innerHTML = `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Stock: ${prod.qty} | Min: ${prod.minStock}`;
+            resultDiv.style.display = "block";
+            resultDiv.setAttribute("data-id", prod.id);
+        } else {
+            alert("Product not found");
+            resultDiv.style.display = "none";
+        }
+    };
+    
+    document.getElementById("scanApplyBtn").onclick = () => {
+        const resultDiv = document.getElementById("lookupResult");
+        const id = resultDiv.getAttribute("data-id");
+        if(!id) return;
+        let qty = parseInt(document.getElementById("scanQty").value);
+        const type = document.getElementById("scanType").value;
+        if(isNaN(qty) || qty < 1) qty = 1;
+        const delta = type === "add" ? qty : -qty;
+        const prod = products.find(p => p.id === id);
+        if(prod) {
+            const newQty = (prod.qty || 0) + delta;
+            if(newQty < 0) { alert(`Only ${prod.qty} available`); return; }
+            prod.qty = newQty;
+            saveToLocalStorage();
+            addLog(`Scanner ${type === 'add' ? 'added' : 'removed'} ${qty}: ${prod.sku} → ${newQty}`);
+            renderTable();
+            document.getElementById("scannerInput").value = "";
+            resultDiv.style.display = "none";
+            alert(`Updated ${prod.name}: ${type === 'add' ? '+' : '-'}${qty} → ${newQty}`);
+        }
+    };
+    
+    // Quick action
+    document.getElementById("quickBtn").onclick = () => {
+        const bc = document.getElementById("quickBarcode").value.trim();
+        if(!bc) { alert("Enter barcode"); return; }
+        const prod = products.find(p => p.barcode === bc);
+        if(!prod) { alert("Product not found"); return; }
+        let qty = parseInt(document.getElementById("quickQty").value);
+        const action = document.getElementById("quickAction").value
