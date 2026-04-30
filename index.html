@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WMS | Firebase Warehouse System</title>
+    <title>WMS | Warehouse Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -35,11 +35,6 @@
         button.danger{background:#ef4444;color:white;}
         button.secondary{background:#334155;color:#e2e8f0;}
         button:hover{transform:translateY(-1px);opacity:0.9;}
-        .barcode-option-group{background:#0f172a;border-radius:12px;padding:15px;margin:15px 0;border:1px solid #334155;}
-        .radio-group{display:flex;gap:25px;margin-bottom:12px;flex-wrap:wrap;}
-        .radio-group label{display:flex;align-items:center;gap:8px;cursor:pointer;}
-        .hidden{display:none;}
-        .custom-input-area{padding:10px 0 5px 0;}
         table{width:100%;border-collapse:collapse;font-size:0.8rem;}
         th{text-align:left;padding:12px 10px;background:#0f172a;color:#94a3b8;border-bottom:2px solid #334155;}
         td{padding:10px;border-bottom:1px solid #1e293b;}
@@ -56,7 +51,6 @@
         .barcode-preview{background:#0f172a;border-radius:16px;padding:20px;text-align:center;border:2px dashed #334155;margin-top:15px;}
         .success-msg{background:#064e3b;color:#34d399;padding:10px;border-radius:12px;margin-top:12px;display:none;}
         .barcode-svg-container{background:white;padding:10px;display:inline-block;border-radius:12px;}
-        .help-text{font-size:11px;color:#64748b;margin-top:5px;}
     </style>
 </head>
 <body>
@@ -64,7 +58,7 @@
     <div class="header">
         <div class="logo">
             <h1><i class="fas fa-firebase"></i> StockFlow WMS</h1>
-            <p>Firebase Firestore • Auto or Custom Barcodes</p>
+            <p>Firebase Firestore • Real-time Cloud Database</p>
         </div>
         <div class="stats">
             <div><span class="stat-num" id="totalProducts">0</span><div class="stat-label">Products</div></div>
@@ -141,51 +135,22 @@
                 <div class="input-group"><label>Initial Quantity</label><input type="number" id="newQty" value="0"></div>
                 <div class="input-group"><label>Min Stock Alert</label><input type="number" id="newMin" value="5"></div>
             </div>
-            
-            <!-- Barcode Options -->
-            <div class="barcode-option-group">
-                <div class="radio-group">
-                    <label><input type="radio" name="barcodeOption" value="auto" checked> 🔄 Auto-generate Barcode</label>
-                    <label><input type="radio" name="barcodeOption" value="manual"> ✏️ Enter Barcode Manually</label>
-                </div>
-                <div id="manualBarcodeArea" class="custom-input-area hidden">
-                    <input type="text" id="manualBarcode" placeholder="Enter custom barcode (e.g., 690123456789)" style="width:100%;">
-                    <div class="help-text"><i class="fas fa-info-circle"></i> Must be unique. Code128 format, 4-20 characters.</div>
-                    <div id="barcodeError" style="color:#fca5a5; font-size:11px; margin-top:5px; display:none;"></div>
-                </div>
-                <div class="help-text"><i class="fas fa-robot"></i> Auto mode: Barcode generated from SKU + timestamp</div>
-            </div>
-            
             <button id="addBtn"><i class="fas fa-plus"></i> Create Product</button>
             <div id="addMsg" class="success-msg"></div>
         </div>
         
         <div class="card">
-            <h3>📷 Barcode Generator & Editor</h3>
+            <h3>📷 Barcode Generator</h3>
             <div class="form-row">
                 <div class="input-group"><label>Select Product</label><select id="barcodeSelect"></select></div>
             </div>
-            
-            <!-- Regenerate Barcode Options -->
-            <div class="barcode-option-group">
-                <div class="radio-group">
-                    <label><input type="radio" name="regenOption" value="auto" checked> 🔄 Auto-generate New Barcode</label>
-                    <label><input type="radio" name="regenOption" value="manual"> ✏️ Enter Barcode Manually</label>
-                </div>
-                <div id="manualRegenArea" class="custom-input-area hidden">
-                    <input type="text" id="manualRegenBarcode" placeholder="Enter new barcode" style="width:100%;">
-                    <div id="regenBarcodeError" style="color:#fca5a5; font-size:11px; margin-top:5px; display:none;"></div>
-                </div>
-                <button id="updateBarcodeBtn" class="secondary" style="margin-top:10px;"><i class="fas fa-sync-alt"></i> Update Barcode</button>
-            </div>
-            
             <div style="margin-top:15px; display:flex; gap:12px; flex-wrap:wrap;">
                 <button id="previewBtn" class="secondary"><i class="fas fa-eye"></i> Preview Barcode</button>
                 <button id="savePngBtn" class="secondary"><i class="fas fa-download"></i> Save as PNG</button>
             </div>
             <div id="barcodePreviewDiv" style="display:none;" class="barcode-preview">
                 <div id="barcodeSvg" class="barcode-svg-container"></div>
-                <p style="margin-top:10px; font-size:11px; color:#64748b;">Code 128 format - Scannable barcode</p>
+                <p style="margin-top:10px; font-size:11px; color:#64748b;">Code 128 format</p>
             </div>
         </div>
         
@@ -222,18 +187,6 @@
     let transactionLogs = [];
     
     // Helper functions
-    function autoGenerateBarcode(sku) {
-        let raw = sku.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-        let timestamp = Date.now().toString().slice(-8);
-        let combined = (raw + timestamp).slice(0, 16);
-        if(!combined || combined.length < 4) combined = "WH" + timestamp;
-        return combined;
-    }
-    
-    function isBarcodeUnique(barcode, excludeId = null) {
-        return !products.some(p => p.barcode === barcode && p.id !== excludeId);
-    }
-    
     function escapeHtml(s) { if(!s) return ''; return String(s).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
     
     function addLog(message) {
@@ -377,34 +330,6 @@
         addLog("Firestore connection error: " + error.message);
     });
     
-    // Toggle manual barcode input visibility for Add Product
-    document.querySelectorAll('input[name="barcodeOption"]').forEach(radio => {
-        radio.onchange = () => {
-            const manualArea = document.getElementById("manualBarcodeArea");
-            if(radio.value === "manual") {
-                manualArea.classList.remove("hidden");
-            } else {
-                manualArea.classList.add("hidden");
-                document.getElementById("manualBarcode").value = "";
-                document.getElementById("barcodeError").style.display = "none";
-            }
-        };
-    });
-    
-    // Toggle manual barcode input visibility for Regenerate
-    document.querySelectorAll('input[name="regenOption"]').forEach(radio => {
-        radio.onchange = () => {
-            const manualArea = document.getElementById("manualRegenArea");
-            if(radio.value === "manual") {
-                manualArea.classList.remove("hidden");
-            } else {
-                manualArea.classList.add("hidden");
-                document.getElementById("manualRegenBarcode").value = "";
-                document.getElementById("regenBarcodeError").style.display = "none";
-            }
-        };
-    });
-    
     // Add demo products
     document.getElementById("seedBtn").onclick = async () => {
         const demos = [
@@ -418,19 +343,15 @@
         let added = 0;
         for(const demo of demos) {
             try {
-                // Check if product already exists
-                const existing = products.find(p => p.sku === demo.sku);
-                if(!existing) {
-                    await db.collection("products").add(demo);
-                    added++;
-                }
+                await db.collection("products").add(demo);
+                added++;
             } catch(e) { console.error("Error adding demo:", e); }
         }
         addLog(`Added ${added} demo products to Firestore`);
         alert(`✅ Added ${added} demo products to Firestore!`);
     };
     
-    // Add product with barcode options
+    // Add product
     document.getElementById("addBtn").onclick = async () => {
         const sku = document.getElementById("newSku").value.trim();
         const name = document.getElementById("newName").value.trim();
@@ -445,37 +366,8 @@
             return;
         }
         
-        const barcodeOption = document.querySelector('input[name="barcodeOption"]:checked').value;
-        let barcode;
-        const errorDiv = document.getElementById("barcodeError");
-        
-        if(barcodeOption === "manual") {
-            barcode = document.getElementById("manualBarcode").value.trim();
-            if(!barcode) {
-                errorDiv.style.display = "block";
-                errorDiv.innerHTML = "❌ Please enter a barcode";
-                return;
-            }
-            if(barcode.length < 3) {
-                errorDiv.style.display = "block";
-                errorDiv.innerHTML = "❌ Barcode must be at least 3 characters";
-                return;
-            }
-            if(!isBarcodeUnique(barcode)) {
-                errorDiv.style.display = "block";
-                errorDiv.innerHTML = "❌ This barcode already exists! Please use a different one.";
-                return;
-            }
-            errorDiv.style.display = "none";
-        } else {
-            // Auto-generate barcode
-            barcode = autoGenerateBarcode(sku);
-            let counter = 1;
-            while(!isBarcodeUnique(barcode)) {
-                barcode = autoGenerateBarcode(sku) + counter;
-                counter++;
-            }
-        }
+        // Generate a simple barcode from SKU
+        const barcode = sku.replace(/[^A-Z0-9]/gi, '') + Date.now().toString().slice(-6);
         
         try {
             await db.collection("products").add({
@@ -488,80 +380,20 @@
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             
-            addLog(`Added product: ${sku} | Barcode: ${barcode} (${barcodeOption === 'manual' ? 'manual' : 'auto'})`);
+            addLog(`Added product: ${sku} | Barcode: ${barcode}`);
             
-            // Clear form
             document.getElementById("newSku").value = "";
             document.getElementById("newName").value = "";
             document.getElementById("newCat").value = "";
             document.getElementById("newQty").value = "0";
-            document.getElementById("manualBarcode").value = "";
-            
-            // Reset to auto option
-            document.querySelector('input[name="barcodeOption"][value="auto"]').checked = true;
-            document.getElementById("manualBarcodeArea").classList.add("hidden");
             
             const msgDiv = document.getElementById("addMsg");
             msgDiv.style.display = "block";
-            msgDiv.innerHTML = `✅ Product added! Barcode: ${barcode}`;
+            msgDiv.innerHTML = `✅ Product added to Firestore! Barcode: ${barcode}`;
             setTimeout(() => msgDiv.style.display = "none", 3000);
         } catch(e) {
             alert("Error adding product: " + e.message);
             console.error(e);
-        }
-    };
-    
-    // Update barcode for existing product
-    document.getElementById("updateBarcodeBtn").onclick = async () => {
-        const id = document.getElementById("barcodeSelect").value;
-        const product = products.find(p => p.id === id);
-        if(!product) {
-            alert("Select a product first");
-            return;
-        }
-        
-        const regenOption = document.querySelector('input[name="regenOption"]:checked').value;
-        let newBarcode;
-        const errorDiv = document.getElementById("regenBarcodeError");
-        
-        if(regenOption === "manual") {
-            newBarcode = document.getElementById("manualRegenBarcode").value.trim();
-            if(!newBarcode) {
-                errorDiv.style.display = "block";
-                errorDiv.innerHTML = "❌ Please enter a barcode";
-                return;
-            }
-            if(newBarcode.length < 3) {
-                errorDiv.style.display = "block";
-                errorDiv.innerHTML = "❌ Barcode must be at least 3 characters";
-                return;
-            }
-            if(!isBarcodeUnique(newBarcode, id)) {
-                errorDiv.style.display = "block";
-                errorDiv.innerHTML = "❌ This barcode already exists on another product!";
-                return;
-            }
-            errorDiv.style.display = "none";
-        } else {
-            newBarcode = autoGenerateBarcode(product.sku);
-            let counter = 1;
-            while(!isBarcodeUnique(newBarcode, id)) {
-                newBarcode = autoGenerateBarcode(product.sku) + counter;
-                counter++;
-            }
-        }
-        
-        try {
-            await db.collection("products").doc(id).update({ barcode: newBarcode });
-            addLog(`Updated barcode for ${product.sku}: ${product.barcode} → ${newBarcode}`);
-            alert(`Barcode updated to: ${newBarcode}`);
-            document.getElementById("manualRegenBarcode").value = "";
-            
-            // Reset to auto option
-            document.querySelector('input[name="regenOption"][value="auto"]').checked = true;
-            document.getElementById("manualRegenArea").classList.add("hidden");
-        } catch(e) {
-            alert("Error updating barcode: " + e.message);
         }
     };
     
@@ -597,7 +429,7 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0);
             const link = document.createElement("a");
-            link.download = `barcode_${Date.now()}.png`;
+            link.download = `barcode.png`;
             link.href = canvas.toDataURL();
             link.click();
         };
@@ -606,4 +438,152 @@
     
     // Update product
     document.getElementById("updateBtn").onclick = async () => {
-        const id = document.getElementById("edit
+        const id = document.getElementById("editSelect").value;
+        const product = products.find(p => p.id === id);
+        if(!product) return;
+        
+        const updates = {};
+        if(document.getElementById("editName").value.trim()) updates.name = document.getElementById("editName").value.trim();
+        if(document.getElementById("editCat").value.trim()) updates.cat = document.getElementById("editCat").value.trim();
+        const newMin = parseInt(document.getElementById("editMin").value);
+        if(!isNaN(newMin) && newMin >= 0) updates.minStock = newMin;
+        
+        if(Object.keys(updates).length > 0) {
+            try {
+                await db.collection("products").doc(id).update(updates);
+                addLog(`Updated product: ${product.sku}`);
+                alert("Product updated successfully!");
+            } catch(e) {
+                alert("Error updating: " + e.message);
+            }
+        }
+    };
+    
+    // Delete product
+    document.getElementById("deleteBtn").onclick = async () => {
+        const id = document.getElementById("editSelect").value;
+        const product = products.find(p => p.id === id);
+        if(product && confirm(`Delete "${product.name}" permanently?`)) {
+            await db.collection("products").doc(id).delete();
+            addLog(`Deleted product: ${product.sku}`);
+            alert("Product deleted!");
+        }
+    };
+    
+    // Load product into edit form
+    document.getElementById("editSelect").onchange = () => {
+        const id = document.getElementById("editSelect").value;
+        const product = products.find(p => p.id === id);
+        if(product) {
+            document.getElementById("editName").value = product.name || "";
+            document.getElementById("editCat").value = product.cat || "";
+            document.getElementById("editMin").value = product.minStock || 5;
+        }
+    };
+    
+    // Barcode lookup
+    document.getElementById("lookupBtn").onclick = () => {
+        const barcode = document.getElementById("scannerInput").value.trim();
+        if(!barcode) {
+            alert("Enter a barcode");
+            return;
+        }
+        const product = products.find(p => p.barcode === barcode);
+        const resultDiv = document.getElementById("lookupResult");
+        if(product) {
+            document.getElementById("lookupInfo").innerHTML = `<strong>${escapeHtml(product.name)}</strong> (${escapeHtml(product.sku)})<br>📊 Stock: ${product.qty} | Min: ${product.minStock}`;
+            resultDiv.style.display = "block";
+            resultDiv.setAttribute("data-id", product.id);
+        } else {
+            alert(`No product found with barcode: "${barcode}"`);
+            resultDiv.style.display = "none";
+        }
+    };
+    
+    // Scanner stock action
+    document.getElementById("scanApplyBtn").onclick = async () => {
+        const resultDiv = document.getElementById("lookupResult");
+        const productId = resultDiv.getAttribute("data-id");
+        if(!productId) return;
+        
+        let qty = parseInt(document.getElementById("scanQty").value);
+        const type = document.getElementById("scanType").value;
+        if(isNaN(qty) || qty < 1) qty = 1;
+        const delta = type === "add" ? qty : -qty;
+        
+        const product = products.find(p => p.id === productId);
+        if(product) {
+            const newQty = (product.qty || 0) + delta;
+            if(newQty < 0) {
+                alert(`Insufficient stock! Only ${product.qty} units available.`);
+                return;
+            }
+            await db.collection("products").doc(productId).update({ qty: newQty });
+            addLog(`Scanner ${type === 'add' ? 'added' : 'removed'} ${qty}: ${product.sku} → ${newQty}`);
+            document.getElementById("scannerInput").value = "";
+            resultDiv.style.display = "none";
+            alert(`Updated ${product.name}: ${type === 'add' ? '+' : '-'}${qty} → ${newQty}`);
+        }
+    };
+    
+    // Quick action
+    document.getElementById("quickBtn").onclick = async () => {
+        const barcode = document.getElementById("quickBarcode").value.trim();
+        if(!barcode) {
+            alert("Enter a barcode");
+            return;
+        }
+        const product = products.find(p => p.barcode === barcode);
+        if(!product) {
+            alert(`No product found with barcode: "${barcode}"`);
+            return;
+        }
+        
+        let qty = parseInt(document.getElementById("quickQty").value);
+        const action = document.getElementById("quickAction").value;
+        if(isNaN(qty) || qty < 1) qty = 1;
+        const delta = action === "add" ? qty : -qty;
+        const newQty = (product.qty || 0) + delta;
+        
+        if(newQty < 0) {
+            alert(`Insufficient stock! Only ${product.qty} units available.`);
+            return;
+        }
+        
+        await db.collection("products").doc(product.id).update({ qty: newQty });
+        addLog(`Quick ${action === 'add' ? 'addition' : 'removal'} of ${qty}: ${product.sku} → ${newQty}`);
+        document.getElementById("quickBarcode").value = "";
+        
+        const msgDiv = document.getElementById("quickMsg");
+        msgDiv.style.display = "block";
+        msgDiv.innerHTML = `✅ ${product.name}: ${action === 'add' ? '+' : '-'}${qty} → ${newQty}`;
+        setTimeout(() => msgDiv.style.display = "none", 2000);
+    };
+    
+    // Clear logs
+    document.getElementById("clearLogsBtn").onclick = () => {
+        transactionLogs = [];
+        addLog("Log cleared");
+    };
+    
+    // Search input
+    document.getElementById("searchInput").oninput = () => renderTable();
+    
+    // Tab switching
+    document.querySelectorAll(".tab").forEach(btn => {
+        btn.onclick = () => {
+            const tabId = btn.getAttribute("data-tab");
+            document.querySelectorAll(".panel").forEach(panel => panel.classList.remove("active"));
+            document.getElementById(tabId + "Panel").classList.add("active");
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            btn.classList.add("active");
+            if(tabId === "scanner") {
+                document.getElementById("scannerInput").focus();
+            }
+        };
+    });
+    
+    console.log("App ready. Firebase listener active.");
+</script>
+</body>
+</html>
