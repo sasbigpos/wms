@@ -336,6 +336,10 @@
             background: #334155;
             color: #e2e8f0;
         }
+        button.warning {
+            background: #f59e0b;
+            color: #0f172a;
+        }
         button:hover {
             opacity: 0.9;
         }
@@ -467,6 +471,14 @@
             margin-top: 8px;
             display: none;
         }
+        .error-msg {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 6px;
+            border-radius: 10px;
+            margin-top: 8px;
+            display: none;
+        }
         .serial-badge {
             background: #1e293b;
             padding: 2px 8px;
@@ -544,6 +556,77 @@
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
+        }
+        .serial-list-container {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 4px 8px;
+            border: 1px solid #334155;
+            margin-top: 4px;
+        }
+        .serial-list-container .serial-item {
+            display: inline-block;
+            background: #1e293b;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-family: monospace;
+            margin: 2px;
+            color: #94a3b8;
+        }
+        .serial-list-container .serial-item:hover {
+            background: #334155;
+        }
+        .issuance-type-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .issuance-type-selector label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            background: #0f172a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+        }
+        .issuance-type-selector label input[type="radio"] {
+            accent-color: #34d399;
+        }
+        .selected-serials-display {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-top: 6px;
+            border: 1px solid #334155;
+            min-height: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .selected-serials-display .serial-tag {
+            background: #1e293b;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-family: monospace;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .selected-serials-display .serial-tag .remove-serial {
+            cursor: pointer;
+            color: #fca5a5;
+            font-size: 0.6rem;
+        }
+        .selected-serials-display .serial-tag .remove-serial:hover {
+            color: #ef4444;
         }
         @media (max-width: 768px) {
             .login-box {
@@ -655,6 +738,7 @@
             <button class="tab active" data-tab="inventory"><i class="fas fa-boxes"></i> Inventory</button>
             <button class="tab" data-tab="scanner"><i class="fas fa-qrcode"></i> Scanner</button>
             <button class="tab" data-tab="receive"><i class="fas fa-arrow-down"></i> Receive Stock</button>
+            <button class="tab" data-tab="issue"><i class="fas fa-arrow-up"></i> Issue Stock</button>
             <button class="tab" data-tab="logs"><i class="fas fa-history"></i> Logs</button>
             <button class="tab" data-tab="manage"><i class="fas fa-plus-circle"></i> Manage</button>
             <button class="tab" data-tab="users" id="usersTab"><i class="fas fa-users-cog"></i> Users</button>
@@ -744,6 +828,62 @@
                 </div>
                 <button id="receiveBtn"><i class="fas fa-arrow-down"></i> Receive Stock</button>
                 <div id="receiveMsg" class="success-msg"></div>
+            </div>
+        </div>
+
+        <!-- ISSUE STOCK PANEL -->
+        <div id="issuePanel" class="panel">
+            <div class="card">
+                <h3><i class="fas fa-arrow-up"></i> Issue Stock with Serial Numbers</h3>
+                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:12px;">Select serial numbers to issue from stock. You can select individual serials or enter them manually.</p>
+
+                <div class="form-row">
+                    <div class="input-group"><label>Select Product</label><select id="issueProductSelect"></select></div>
+                    <div class="input-group"><label>Branch</label><select id="issueBranchSelect"></select></div>
+                </div>
+
+                <div style="margin:12px 0;">
+                    <label style="font-size:0.6rem;font-weight:700;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:6px;">Available Serials</label>
+                    <div id="availableSerialsDisplay" style="background:#0f172a;border-radius:8px;padding:8px;border:1px solid #334155;min-height:40px;max-height:120px;overflow-y:auto;">
+                        <span style="color:#64748b;font-size:0.75rem;">Select a product to view available serials</span>
+                    </div>
+                </div>
+
+                <div class="issuance-type-selector">
+                    <label><input type="radio" name="issueType" value="select" checked /> Select from list</label>
+                    <label><input type="radio" name="issueType" value="manual" /> Enter manually</label>
+                </div>
+
+                <div id="issueSelectArea">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <button id="selectAllSerialsBtn" class="secondary" style="font-size:0.7rem;"><i class="fas fa-check-double"></i> Select All</button>
+                        <button id="deselectAllSerialsBtn" class="secondary" style="font-size:0.7rem;"><i class="fas fa-times"></i> Deselect All</button>
+                        <span style="font-size:0.7rem;color:#94a3b8;" id="selectedCountDisplay">0 selected</span>
+                    </div>
+                    <div id="serialCheckboxList" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;max-height:120px;overflow-y:auto;background:#0f172a;border-radius:8px;padding:6px;border:1px solid #334155;">
+                        <span style="color:#64748b;font-size:0.75rem;">Select a product first</span>
+                    </div>
+                </div>
+
+                <div id="issueManualArea" class="hidden">
+                    <div class="form-row">
+                        <div class="input-group" style="flex:2;">
+                            <label>Serial Numbers to Issue (one per line)</label>
+                            <textarea id="issueSerials" placeholder="SN-2025-0001&#10;SN-2025-0002" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:12px;">
+                    <label style="font-size:0.6rem;font-weight:700;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:4px;">Selected Serials to Issue</label>
+                    <div id="selectedSerialsDisplay" class="selected-serials-display">
+                        <span style="color:#64748b;font-size:0.7rem;">No serials selected</span>
+                    </div>
+                </div>
+
+                <button id="issueBtn" style="margin-top:12px;background:#f59e0b;color:#0f172a;"><i class="fas fa-arrow-up"></i> Issue Stock</button>
+                <div id="issueMsg" class="success-msg"></div>
+                <div id="issueError" class="error-msg"></div>
             </div>
         </div>
 
@@ -893,6 +1033,7 @@
         let users = [];
         let transactionLogs = JSON.parse(localStorage.getItem("wms_logs") || "[]");
         let currentBranchFilter = 'all';
+        let selectedSerials = [];
 
         // ===== HELPERS =====
         function escapeHtml(s) {
@@ -1023,6 +1164,7 @@
             document.getElementById("editSelect").innerHTML = options || '<option>No products</option>';
             document.getElementById("barcodeSelect").innerHTML = options || '<option>No products</option>';
             document.getElementById("receiveProductSelect").innerHTML = options || '<option>No products</option>';
+            document.getElementById("issueProductSelect").innerHTML = options || '<option>No products</option>';
 
             // Stats
             const totalProducts = filtered.length;
@@ -1155,6 +1297,7 @@
             document.getElementById("newBranch").innerHTML = branchOptions;
             document.getElementById("editBranch").innerHTML = branchOptions;
             document.getElementById("receiveBranchSelect").innerHTML = branchOptions;
+            document.getElementById("issueBranchSelect").innerHTML = branchOptions;
 
             const filter = document.getElementById("branchFilter");
             const currentVal = filter.value;
@@ -1234,6 +1377,10 @@
                 products.push({ id: doc.id, ...data, serials: data.serials || [] });
             });
             renderTable();
+            // Update issue panel if open
+            if (document.getElementById("issuePanel").classList.contains("active")) {
+                updateIssuePanel();
+            }
             document.getElementById("connectionStatus").innerHTML = '✅ Connected to Firestore';
             document.getElementById("connectionStatus").className = "status-bar status-online";
         }, (error) => {
@@ -1251,6 +1398,214 @@
             snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
             renderUsers();
         });
+
+        // ===== ISSUE STOCK PANEL FUNCTIONS =====
+        function updateIssuePanel() {
+            const productId = document.getElementById("issueProductSelect").value;
+            const branchId = document.getElementById("issueBranchSelect").value;
+            const availableDiv = document.getElementById("availableSerialsDisplay");
+            const checkboxDiv = document.getElementById("serialCheckboxList");
+
+            if (!productId) {
+                availableDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Select a product to view available serials</span>';
+                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Select a product first</span>';
+                selectedSerials = [];
+                updateSelectedDisplay();
+                return;
+            }
+
+            const prod = products.find(p => p.id === productId);
+            if (!prod) {
+                availableDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Product not found</span>';
+                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Product not found</span>';
+                return;
+            }
+
+            if (!hasUserAccessToBranch(currentUser, branchId) && currentUser.role !== 'admin') {
+                availableDiv.innerHTML = '<span style="color:#fca5a5;font-size:0.75rem;">You don\'t have access to this branch</span>';
+                checkboxDiv.innerHTML = '';
+                return;
+            }
+
+            const serials = prod.serials || [];
+            if (serials.length === 0) {
+                availableDiv.innerHTML = '<span style="color:#fbbf24;font-size:0.75rem;">No serials available for this product</span>';
+                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">No serials available</span>';
+                selectedSerials = [];
+                updateSelectedDisplay();
+                return;
+            }
+
+            availableDiv.innerHTML = serials.map(s =>
+                `<span class="serial-item">${escapeHtml(s)}</span>`
+            ).join('');
+
+            // Build checkboxes
+            const issueType = document.querySelector('input[name="issueType"]:checked').value;
+            if (issueType === 'select') {
+                checkboxDiv.innerHTML = serials.map(s =>
+                    `<label style="display:inline-flex;align-items:center;gap:4px;background:#1e293b;padding:2px 10px;border-radius:8px;font-size:0.7rem;cursor:pointer;border:1px solid ${selectedSerials.includes(s) ? '#34d399' : '#334155'};">
+                        <input type="checkbox" value="${escapeHtml(s)}" ${selectedSerials.includes(s) ? 'checked' : ''} onchange="toggleSerial('${escapeHtml(s)}')" />
+                        ${escapeHtml(s)}
+                    </label>`
+                ).join('');
+            } else {
+                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Manual entry mode active</span>';
+            }
+
+            updateSelectedDisplay();
+        }
+
+        window.toggleSerial = function(serial) {
+            const idx = selectedSerials.indexOf(serial);
+            if (idx > -1) {
+                selectedSerials.splice(idx, 1);
+            } else {
+                selectedSerials.push(serial);
+            }
+            updateIssuePanel();
+        };
+
+        function updateSelectedDisplay() {
+            const display = document.getElementById("selectedSerialsDisplay");
+            const countDisplay = document.getElementById("selectedCountDisplay");
+            if (selectedSerials.length === 0) {
+                display.innerHTML = '<span style="color:#64748b;font-size:0.7rem;">No serials selected</span>';
+                if (countDisplay) countDisplay.textContent = '0 selected';
+                return;
+            }
+            display.innerHTML = selectedSerials.map(s =>
+                `<span class="serial-tag">${escapeHtml(s)} <span class="remove-serial" onclick="removeSerial('${escapeHtml(s)}')"><i class="fas fa-times"></i></span></span>`
+            ).join('');
+            if (countDisplay) countDisplay.textContent = `${selectedSerials.length} selected`;
+        }
+
+        window.removeSerial = function(serial) {
+            selectedSerials = selectedSerials.filter(s => s !== serial);
+            updateIssuePanel();
+        };
+
+        // ===== ISSUE STOCK EVENT LISTENERS =====
+        document.getElementById("issueProductSelect").onchange = function() {
+            selectedSerials = [];
+            updateIssuePanel();
+        };
+
+        document.getElementById("issueBranchSelect").onchange = function() {
+            selectedSerials = [];
+            updateIssuePanel();
+        };
+
+        document.querySelectorAll('input[name="issueType"]').forEach(radio => {
+            radio.onchange = function() {
+                const manualArea = document.getElementById("issueManualArea");
+                const selectArea = document.getElementById("issueSelectArea");
+                if (this.value === 'manual') {
+                    manualArea.classList.remove("hidden");
+                    selectArea.style.display = 'none';
+                    selectedSerials = [];
+                    updateSelectedDisplay();
+                } else {
+                    manualArea.classList.add("hidden");
+                    selectArea.style.display = 'block';
+                    updateIssuePanel();
+                }
+            };
+        });
+
+        document.getElementById("selectAllSerialsBtn").onclick = function() {
+            const prod = products.find(p => p.id === document.getElementById("issueProductSelect").value);
+            if (!prod) return;
+            const serials = prod.serials || [];
+            selectedSerials = [...serials];
+            updateIssuePanel();
+        };
+
+        document.getElementById("deselectAllSerialsBtn").onclick = function() {
+            selectedSerials = [];
+            updateIssuePanel();
+        };
+
+        // ===== ISSUE STOCK =====
+        document.getElementById("issueBtn").onclick = async () => {
+            if (!canUserEdit(currentUser)) {
+                alert("You don't have permission to issue stock.");
+                return;
+            }
+
+            const productId = document.getElementById("issueProductSelect").value;
+            const branchId = document.getElementById("issueBranchSelect").value;
+            const issueType = document.querySelector('input[name="issueType"]:checked').value;
+
+            if (!productId) { alert("Select a product."); return; }
+            if (!branchId) { alert("Select a branch."); return; }
+
+            const prod = products.find(p => p.id === productId);
+            if (!prod) { alert("Product not found."); return; }
+
+            if (!hasUserAccessToBranch(currentUser, branchId) && currentUser.role !== 'admin') {
+                alert("You don't have access to this branch.");
+                return;
+            }
+
+            let serialsToIssue = [];
+
+            if (issueType === 'manual') {
+                const serialsText = document.getElementById("issueSerials").value.trim();
+                if (!serialsText) { alert("Enter at least one serial number."); return; }
+                serialsToIssue = serialsText.split('\n')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                if (serialsToIssue.length === 0) {
+                    alert("No valid serial numbers found.");
+                    return;
+                }
+
+                // Check if serials exist
+                const existingSerials = prod.serials || [];
+                const missingSerials = serialsToIssue.filter(s => !existingSerials.includes(s));
+                if (missingSerials.length > 0) {
+                    if (!confirm(`Warning: ${missingSerials.length} serials not found. Continue with available ones?`)) {
+                        return;
+                    }
+                    serialsToIssue = serialsToIssue.filter(s => existingSerials.includes(s));
+                    if (serialsToIssue.length === 0) {
+                        alert("None of the entered serials exist.");
+                        return;
+                    }
+                }
+            } else {
+                // Selected from list
+                if (selectedSerials.length === 0) {
+                    alert("Select at least one serial to issue.");
+                    return;
+                }
+                serialsToIssue = [...selectedSerials];
+            }
+
+            // Remove serials from product
+            const currentSerials = prod.serials || [];
+            const updatedSerials = currentSerials.filter(s => !serialsToIssue.includes(s));
+
+            await db.collection("products").doc(productId).update({
+                serials: updatedSerials
+            });
+
+            addLog(`Issued ${serialsToIssue.length} serials from ${prod.sku} (${getBranchName(branchId)})`);
+
+            // Clear selections
+            selectedSerials = [];
+            document.getElementById("issueSerials").value = "";
+            document.getElementById("issueMsg").style.display = "block";
+            document.getElementById("issueMsg").innerHTML = `✅ Issued ${serialsToIssue.length} serial numbers from ${prod.sku}`;
+            document.getElementById("issueError").style.display = "none";
+            setTimeout(() => {
+                document.getElementById("issueMsg").style.display = "none";
+            }, 3000);
+
+            updateIssuePanel();
+        };
 
         // ===== AUTH / LOGIN =====
         function checkAuth() {
@@ -1493,7 +1848,7 @@
             const prod = products.find(p => p.id === productId);
             if (!prod) { alert("Product not found."); return; }
 
-            if (!hasUserAccessToBranch(currentUser, branchId)) {
+            if (!hasUserAccessToBranch(currentUser, branchId) && currentUser.role !== 'admin') {
                 alert("You don't have access to this branch.");
                 return;
             }
@@ -1709,7 +2064,7 @@
             const prod = products.find(p => p.barcode === bc);
             const resultDiv = document.getElementById("lookupResult");
             if (prod) {
-                if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
+                if (!hasUserAccessToBranch(currentUser, prod.branchId) && currentUser.role !== 'admin') {
                     alert("You don't have access to this product's branch.");
                     return;
                 }
@@ -1735,7 +2090,7 @@
             if (!id) return;
             const prod = products.find(p => p.id === id);
             if (!prod) return;
-            if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
+            if (!hasUserAccessToBranch(currentUser, prod.branchId) && currentUser.role !== 'admin') {
                 alert("You don't have access to this product's branch.");
                 return;
             }
@@ -1885,6 +2240,7 @@
                 if (target) target.classList.add("active");
                 document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
                 btn.classList.add("active");
+
                 if (tab === 'users' && !canUserManageUsers(currentUser)) {
                     alert("Only admins can access User Management.");
                     document.querySelector('[data-tab="inventory"]').click();
@@ -1892,6 +2248,10 @@
                 if (tab === 'branches' && !canUserManageBranches(currentUser)) {
                     alert("Only admins can access Branch Management.");
                     document.querySelector('[data-tab="inventory"]').click();
+                }
+                if (tab === 'issue') {
+                    selectedSerials = [];
+                    updateIssuePanel();
                 }
             };
         });
@@ -1904,8 +2264,12 @@
             renderAll();
         }
 
-        addLog("System initialized");
-        console.log("WMS Pro loaded successfully.");
+        // Initialize issue panel
+        document.querySelector('input[name="issueType"][value="select"]').checked = true;
+        document.getElementById("issueManualArea").classList.add("hidden");
+
+        addLog("System initialized with issuance feature");
+        console.log("WMS Pro loaded successfully with issuance feature.");
     </script>
 </body>
 </html>
