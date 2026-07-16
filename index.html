@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-    <title>WMS Pro | Serialized Inventory with Branches</title>
+    <title>WMS Pro | Serialized Inventory System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">
@@ -39,16 +39,14 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            backdrop-filter: blur(8px);
         }
         .login-box {
             background: #1e293b;
             border-radius: 24px;
             padding: 40px;
             width: 100%;
-            max-width: 440px;
+            max-width: 420px;
             border: 1px solid #334155;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
         .login-box h2 {
             font-size: 1.8rem;
@@ -57,9 +55,8 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 8px;
         }
-        .login-box p.sub {
+        .login-box .sub {
             color: #94a3b8;
             font-size: 0.85rem;
             margin-bottom: 24px;
@@ -100,32 +97,26 @@
             font-size: 1rem;
             color: #0f172a;
             cursor: pointer;
-            margin-top: 8px;
         }
         .login-box .login-btn:hover {
             opacity: 0.9;
-            transform: translateY(-1px);
         }
-        .login-box .login-error {
+        .login-error {
             color: #fca5a5;
             font-size: 0.85rem;
             margin-top: 12px;
             text-align: center;
             display: none;
         }
-        .login-box .register-link {
+        .register-link {
             text-align: center;
             margin-top: 16px;
             color: #94a3b8;
             font-size: 0.85rem;
         }
-        .login-box .register-link a {
+        .register-link a {
             color: #34d399;
             cursor: pointer;
-            text-decoration: none;
-        }
-        .login-box .register-link a:hover {
-            text-decoration: underline;
         }
 
         .app-container {
@@ -135,7 +126,6 @@
             background: #0f172a;
             border-radius: 24px;
             border: 1px solid #1e293b;
-            overflow: hidden;
             padding: 16px;
         }
         .app-container.active {
@@ -143,7 +133,7 @@
         }
 
         .header {
-            padding: 12px 20px;
+            padding: 12px 16px;
             background: #0f172a;
             border-bottom: 1px solid #1e293b;
             display: flex;
@@ -151,6 +141,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
+            margin-bottom: 16px;
         }
         .header .logo h1 {
             font-size: 1.3rem;
@@ -243,6 +234,7 @@
             gap: 2px;
             border-bottom: 1px solid #1e293b;
             flex-wrap: wrap;
+            margin-bottom: 16px;
         }
         .tab {
             background: none;
@@ -267,7 +259,7 @@
 
         .panel {
             display: none;
-            padding: 16px;
+            padding: 0;
         }
         .panel.active {
             display: block;
@@ -344,12 +336,7 @@
             background: #334155;
             color: #e2e8f0;
         }
-        button.warning {
-            background: #f59e0b;
-            color: #0f172a;
-        }
         button:hover {
-            transform: translateY(-1px);
             opacity: 0.9;
         }
 
@@ -496,34 +483,6 @@
             background: #334155;
             color: #94a3b8;
         }
-        .serial-list {
-            max-height: 120px;
-            overflow-y: auto;
-            background: #0f172a;
-            border-radius: 8px;
-            padding: 4px 8px;
-            border: 1px solid #334155;
-        }
-        .serial-list .serial-item {
-            display: inline-block;
-            background: #1e293b;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.6rem;
-            font-family: monospace;
-            margin: 2px;
-            color: #94a3b8;
-        }
-        .serial-list .serial-item:hover {
-            background: #334155;
-        }
-        .batch-input-area {
-            background: #0f172a;
-            border-radius: 10px;
-            padding: 10px;
-            margin-top: 8px;
-            border: 1px solid #334155;
-        }
         .role-badge {
             display: inline-block;
             padding: 1px 10px;
@@ -581,33 +540,10 @@
             border-radius: 10px;
             border: 1px solid #334155;
         }
-        .branch-selector-multi label input[type="checkbox"] {
-            accent-color: #34d399;
-        }
         .export-buttons {
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
-        }
-        .serial-count {
-            font-size: 0.6rem;
-            color: #94a3b8;
-            font-family: monospace;
-        }
-        .badge {
-            display: inline-block;
-            padding: 1px 8px;
-            border-radius: 10px;
-            font-size: 0.55rem;
-            font-weight: 600;
-        }
-        .badge-success {
-            background: #064e3b;
-            color: #34d399;
-        }
-        .badge-warning {
-            background: #713f12;
-            color: #fbbf24;
         }
         @media (max-width: 768px) {
             .login-box {
@@ -617,15 +553,9 @@
             .header .user-info {
                 gap: 6px;
             }
-            .stats-bar .stat-item {
-                font-size: 0.65rem;
-            }
             .tab {
                 padding: 6px 10px;
                 font-size: 0.65rem;
-            }
-            .panel {
-                padding: 10px;
             }
             .form-row {
                 gap: 6px;
@@ -783,8 +713,13 @@
                 <div id="lookupResult" style="display:none;margin-top:10px;background:#0f172a;border-radius:12px;padding:12px;border:1px solid #334155;">
                     <div id="lookupInfo"></div>
                     <div class="form-row" style="margin-top:8px;">
-                        <div class="input-group"><label>Qty</label><input type="number" id="scanQty" value="1" min="1" /></div>
-                        <div class="input-group"><label>Type</label><select id="scanType"><option value="add">Add</option><option value="remove">Remove</option></select></div>
+                        <div class="input-group"><label>Action</label>
+                            <select id="scanAction">
+                                <option value="add">Add Serial</option>
+                                <option value="remove">Remove Serial</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Serial Number</label><input type="text" id="scanSerial" placeholder="Enter serial number" /></div>
                         <button id="scanApplyBtn" class="secondary"><i class="fas fa-check"></i> Apply</button>
                     </div>
                 </div>
@@ -928,1140 +863,4 @@
                 <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:10px;">Create and manage branches for multi-location inventory.</p>
                 <div id="branchesList" style="margin-bottom:12px;"></div>
                 <div class="form-row">
-                    <div class="input-group" style="flex:2;"><label>Branch Name</label><input type="text" id="newBranchName" placeholder="e.g., Singapore Warehouse" /></div>
-                    <div class="input-group"><label>Location</label><input type="text" id="newBranchLocation" placeholder="City, Country" /></div>
-                    <button id="addBranchBtn"><i class="fas fa-plus"></i> Add Branch</button>
-                </div>
-                <div id="branchMsg" class="success-msg"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // ===== FIREBASE CONFIG =====
-        const firebaseConfig = {
-            apiKey: "AIzaSyD3W-j1l1gDH4m0RPHRnImQZjWvEA-XjMs",
-            authDomain: "warehouse-ccc23.firebaseapp.com",
-            projectId: "warehouse-ccc23",
-            storageBucket: "warehouse-ccc23.firebasestorage.app",
-            messagingSenderId: "946331303130",
-            appId: "1:946331303130:web:7bbddb616567a11eb079e3"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // ===== STATE =====
-        let currentUser = null;
-        let products = [];
-        let branches = [];
-        let users = [];
-        let transactionLogs = JSON.parse(localStorage.getItem("wms_logs") || "[]");
-        let currentBranchFilter = 'all';
-
-        // ===== HELPERS =====
-        function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
-                '>': '&gt;' })[m]); }
-
-        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2, 8); }
-
-        function autoGenerateBarcode(sku) {
-            let raw = sku.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-            let timestamp = Date.now().toString().slice(-8);
-            let combined = (raw + timestamp).slice(0, 16);
-            if (!combined || combined.length < 4) combined = "WH" + timestamp;
-            return combined;
-        }
-
-        function isBarcodeUnique(barcode, excludeId = null) {
-            return !products.some(p => p.barcode === barcode && p.id !== excludeId);
-        }
-
-        function getBranchName(id) {
-            const b = branches.find(x => x.id === id);
-            return b ? b.name : 'Unknown';
-        }
-
-        function hasUserAccessToBranch(user, branchId) {
-            if (!user) return false;
-            if (user.role === 'admin') return true;
-            const branches2 = user.branches || [];
-            return branches2.includes(branchId) || branchId === 'all';
-        }
-
-        function canUserEdit(user) {
-            return user && (user.role === 'admin' || user.role === 'manager');
-        }
-
-        function canUserManageUsers(user) { return user && user.role === 'admin'; }
-
-        function canUserManageBranches(user) { return user && user.role === 'admin'; }
-
-        // ===== LOGS =====
-        function addLog(msg) {
-            const user = currentUser || { email: 'system' };
-            const branch = currentBranchFilter || 'all';
-            transactionLogs.unshift({
-                time: new Date().toLocaleString(),
-                text: msg,
-                user: user.email || 'system',
-                branch: branch
-            });
-            if (transactionLogs.length > 200) transactionLogs.pop();
-            localStorage.setItem("wms_logs", JSON.stringify(transactionLogs));
-            renderLogs();
-        }
-
-        function renderLogs() {
-            const container = document.getElementById("logsList");
-            if (!container) return;
-            if (transactionLogs.length === 0) {
-                container.innerHTML = '<div class="log-entry">No transactions yet</div>';
-            } else {
-                container.innerHTML = transactionLogs.slice(0, 50).map(l =>
-                    `<div class="log-entry"><span>${escapeHtml(l.time)}</span><span>👤 ${escapeHtml(l.user)}</span><span>${escapeHtml(l.text)}</span></div>`
-                ).join('');
-            }
-        }
-
-        // ===== RENDER FUNCTIONS =====
-        function renderTable() {
-            const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
-            let filtered = products;
-
-            if (currentBranchFilter !== 'all') {
-                filtered = filtered.filter(p => p.branchId === currentBranchFilter);
-            }
-
-            filtered = filtered.filter(p =>
-                (p.sku || "").toLowerCase().includes(search) ||
-                (p.name || "").toLowerCase().includes(search) ||
-                (p.barcode || "").toLowerCase().includes(search) ||
-                (p.serials || []).some(s => s.toLowerCase().includes(search))
-            );
-
-            const tbody = document.getElementById("tableBody");
-            if (filtered.length === 0) {
-                tbody.innerHTML =
-                    `<tr><td colspan="10" style="text-align:center;padding:30px;">📦 No products in this branch</td></tr>`;
-            } else {
-                tbody.innerHTML = filtered.map(p => {
-                    const low = (p.serials || []).length <= (p.minStock || 0);
-                    const serialCount = (p.serials || []).length;
-                    const serialDisplay = serialCount > 0 ?
-                        `<span class="badge badge-success">${serialCount} units</span> ` +
-                        (serialCount <= 3 ? (p.serials || []).map(s => `<span class="serial-badge">${escapeHtml(s)}</span>`)
-                            .join(' ') :
-                            `<span class="serial-badge">+${serialCount} serials</span>`) :
-                        `<span class="badge badge-warning">No serials</span>`;
-                    return `<tr>
-                        <td><i class="fas fa-barcode"></i> ${escapeHtml(p.barcode)}</td>
-                        <td><strong>${escapeHtml(p.sku)}</strong></td>
-                        <td>${escapeHtml(p.name)}</td>
-                        <td>${escapeHtml(p.cat || "General")}</td>
-                        <td><span class="branch-tag">${escapeHtml(getBranchName(p.branchId))}</span></td>
-                        <td><span class="stock-badge ${low ? 'low-stock' : ''}">${serialCount}</span></td>
-                        <td style="max-width:150px;">${serialDisplay}</td>
-                        <td>${p.minStock || 5}</td>
-                        <td>${low ? '⚠️ Low' : '✅ OK'}</td>
-                        <td class="action-icons">
-                            <i class="fas fa-edit" data-id="${p.id}" title="Edit"></i>
-                            <i class="fas fa-trash-alt" data-id="${p.id}" title="Delete"></i>
-                            <i class="fas fa-barcode" data-id="${p.id}" title="Barcode"></i>
-                            <i class="fas fa-list-ul" data-id="${p.id}" title="View Serials" onclick="viewSerials('${p.id}')"></i>
-                        </td>
-                    </tr>`;
-                }).join('');
-            }
-
-            // Update dropdowns
-            const canEdit = canUserEdit(currentUser);
-            const options = products.filter(p => canEdit ? true : hasUserAccessToBranch(currentUser, p.branchId)).map(p =>
-                `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)}</option>`
-            ).join('');
-            document.getElementById("editSelect").innerHTML = options || '<option>No products</option>';
-            document.getElementById("barcodeSelect").innerHTML = options || '<option>No products</option>';
-            document.getElementById("receiveProductSelect").innerHTML = options || '<option>No products</option>';
-
-            // Stats
-            const totalProducts = filtered.length;
-            const totalUnits = filtered.reduce((s, p) => s + (p.serials || []).length, 0);
-            const lowCount = filtered.filter(p => (p.serials || []).length <= (p.minStock || 0)).length;
-            document.getElementById("totalProducts").innerText = totalProducts;
-            document.getElementById("totalUnits").innerText = totalUnits;
-            document.getElementById("lowStockCount").innerText = lowCount;
-
-            // Attach events
-            document.querySelectorAll(".fa-edit").forEach(icon => {
-                icon.onclick = () => {
-                    const id = icon.getAttribute("data-id");
-                    const prod = products.find(p => p.id === id);
-                    if (!prod) return;
-                    if (!canUserEdit(currentUser) && !hasUserAccessToBranch(currentUser, prod.branchId)) {
-                        alert("You don't have permission to edit this product.");
-                        return;
-                    }
-                    document.querySelector('[data-tab="manage"]').click();
-                    setTimeout(() => {
-                        document.getElementById("editSelect").value = id;
-                        document.getElementById("editSelect").dispatchEvent(new Event('change'));
-                    }, 100);
-                };
-            });
-
-            document.querySelectorAll(".fa-trash-alt").forEach(icon => {
-                icon.onclick = async () => {
-                    const id = icon.getAttribute("data-id");
-                    const prod = products.find(p => p.id === id);
-                    if (!prod) return;
-                    if (!canUserEdit(currentUser) && !hasUserAccessToBranch(currentUser, prod.branchId)) {
-                        alert("You don't have permission to delete this product.");
-                        return;
-                    }
-                    if (confirm(`Delete "${prod.name}" permanently? This will remove all serials.`)) {
-                        await db.collection("products").doc(id).delete();
-                        addLog(`Deleted ${prod.sku} (${(prod.serials || []).length} serials)`);
-                    }
-                };
-            });
-
-            document.querySelectorAll(".fa-barcode").forEach(icon => {
-                icon.onclick = () => {
-                    const id = icon.getAttribute("data-id");
-                    const prod = products.find(p => p.id === id);
-                    if (!prod) return;
-                    document.querySelector('[data-tab="manage"]').click();
-                    document.getElementById("barcodeSelect").value = id;
-                    setTimeout(() => {
-                        document.getElementById("barcodeSvg").innerHTML = `<svg id="previewSvg"></svg>`;
-                        JsBarcode("#previewSvg", prod.barcode, { format: "CODE128", width: 2,
-                            height: 45, displayValue: true, fontSize: 11 });
-                        document.getElementById("barcodePreviewDiv").style.display = "block";
-                    }, 100);
-                };
-            });
-        }
-
-        window.viewSerials = function(productId) {
-            const prod = products.find(p => p.id === productId);
-            if (!prod) return;
-            const serials = prod.serials || [];
-            if (serials.length === 0) {
-                alert(`No serial numbers for ${prod.sku}`);
-                return;
-            }
-            alert(`Serial numbers for ${prod.sku} (${prod.name}):\n\n${serials.join('\n')}\n\nTotal: ${serials.length} units`);
-        };
-
-        function renderUsers() {
-            const container = document.getElementById("usersList");
-            if (!container) return;
-            if (!canUserManageUsers(currentUser)) {
-                container.innerHTML =
-                '<p style="color:#94a3b8;">Only admins can manage users.</p>';
-                document.getElementById("adminAddUserBtn").style.display = 'none';
-                return;
-            }
-            document.getElementById("adminAddUserBtn").style.display = 'inline-flex';
-
-            if (users.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8;">No users registered yet.</p>';
-            } else {
-                container.innerHTML = users.map(u => `
-                    <div class="user-list-item">
-                        <div class="user-info">
-                            <strong>${escapeHtml(u.name || u.email)}</strong>
-                            <span style="color:#94a3b8;font-size:0.7rem;">${escapeHtml(u.email)}</span>
-                            <span class="role-badge ${u.role === 'admin' ? 'role-admin' : u.role === 'manager' ? 'role-manager' : 'role-user'}">${u.role}</span>
-                            <span style="font-size:0.65rem;color:#94a3b8;">Branches: ${(u.branches || []).map(b => getBranchName(b)).join(', ') || 'All (Admin)'}</span>
-                        </div>
-                        ${u.id !== currentUser?.id ? `
-                        <div class="user-actions">
-                            <button class="secondary" onclick="editUser('${u.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-edit"></i></button>
-                            <button class="danger" onclick="deleteUser('${u.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-trash"></i></button>
-                        </div>` : `
-                        <span style="font-size:0.6rem;color:#94a3b8;">(You)</span>`}
-                    </div>
-                `).join('');
-            }
-
-            const container2 = document.getElementById("adminRegBranchAccess");
-            if (container2) {
-                container2.innerHTML = branches.map(b =>
-                    `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
-                ).join('');
-            }
-        }
-
-        function renderBranches() {
-            const container = document.getElementById("branchesList");
-            if (!container) return;
-            if (!canUserManageBranches(currentUser)) {
-                container.innerHTML = '<p style="color:#94a3b8;">Only admins can manage branches.</p>';
-                document.getElementById("addBranchBtn").style.display = 'none';
-                return;
-            }
-            document.getElementById("addBranchBtn").style.display = 'inline-flex';
-
-            if (branches.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8;">No branches created yet.</p>';
-            } else {
-                container.innerHTML = branches.map(b => `
-                    <div class="user-list-item">
-                        <div class="user-info">
-                            <strong>${escapeHtml(b.name)}</strong>
-                            <span style="color:#94a3b8;font-size:0.7rem;">${escapeHtml(b.location || 'No location')}</span>
-                            <span style="font-size:0.6rem;color:#94a3b8;">ID: ${escapeHtml(b.id)}</span>
-                        </div>
-                        <div class="user-actions">
-                            <button class="danger" onclick="deleteBranch('${b.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            // Update all branch dropdowns
-            const branchOptions = branches.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
-            document.getElementById("newBranch").innerHTML = branchOptions;
-            document.getElementById("editBranch").innerHTML = branchOptions;
-            document.getElementById("receiveBranchSelect").innerHTML = branchOptions;
-
-            const filter = document.getElementById("branchFilter");
-            const currentVal = filter.value;
-            filter.innerHTML = `<option value="all">🏢 All Branches</option>` + branchOptions;
-            filter.value = currentVal;
-
-            const display = document.getElementById("headerBranchDisplay");
-            if (currentBranchFilter === 'all') {
-                display.textContent = 'All Branches';
-            } else {
-                const b = branches.find(x => x.id === currentBranchFilter);
-                display.textContent = b ? b.name : 'Unknown Branch';
-            }
-
-            const container3 = document.getElementById("adminRegBranchAccess");
-            if (container3) {
-                container3.innerHTML = branches.map(b =>
-                    `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
-                ).join('');
-            }
-        }
-
-        function renderAll() {
-            renderTable();
-            renderUsers();
-            renderBranches();
-            renderLogs();
-        }
-
-        // ===== USER MANAGEMENT FUNCTIONS =====
-        window.editUser = async function(userId) {
-            const user = users.find(u => u.id === userId);
-            if (!user) return;
-            const newRole = prompt(`Enter new role for ${user.email} (admin/manager/user):`, user.role);
-            if (!newRole || !['admin', 'manager', 'user'].includes(newRole)) return;
-
-            const branchList = branches.map(b => b.id);
-            const selectedBranches = [];
-            for (const b of branchList) {
-                if (confirm(`Allow access to ${getBranchName(b)}?`)) {
-                    selectedBranches.push(b);
-                }
-            }
-
-            await db.collection("users").doc(userId).update({
-                role: newRole,
-                branches: newRole === 'admin' ? [] : selectedBranches
-            });
-            addLog(`Updated user ${user.email} to ${newRole}`);
-        };
-
-        window.deleteUser = async function(userId) {
-            const user = users.find(u => u.id === userId);
-            if (!user) return;
-            if (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1) {
-                alert("Cannot delete the last admin user.");
-                return;
-            }
-            if (confirm(`Delete user ${user.email}?`)) {
-                await db.collection("users").doc(userId).delete();
-                addLog(`Deleted user ${user.email}`);
-            }
-        };
-
-        window.deleteBranch = async function(branchId) {
-            if (confirm(`Delete branch "${getBranchName(branchId)}"? Products in this branch will be orphaned.`)) {
-                await db.collection("branches").doc(branchId).delete();
-                addLog(`Deleted branch ${getBranchName(branchId)}`);
-            }
-        };
-
-        // ===== FIRESTORE LISTENERS =====
-        db.collection("products").onSnapshot((snapshot) => {
-            products = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                products.push({ id: doc.id, ...data, serials: data.serials || [] });
-            });
-            renderTable();
-            document.getElementById("connectionStatus").innerHTML = '✅ Connected to Firestore';
-            document.getElementById("connectionStatus").className = "status-bar status-online";
-        }, (error) => {
-            document.getElementById("connectionStatus").innerHTML = '⚠️ ' + error.message;
-        });
-
-        db.collection("branches").onSnapshot((snapshot) => {
-            branches = [];
-            snapshot.forEach(doc => branches.push({ id: doc.id, ...doc.data() }));
-            renderBranches();
-        });
-
-        db.collection("users").onSnapshot((snapshot) => {
-            users = [];
-            snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
-            renderUsers();
-        });
-
-        // ===== AUTH / LOGIN =====
-        function checkAuth() {
-            const saved = localStorage.getItem("wms_user");
-            if (saved) {
-                try {
-                    currentUser = JSON.parse(saved);
-                    showApp();
-                    return true;
-                } catch (e) { localStorage.removeItem("wms_user"); }
-            }
-            return false;
-        }
-
-        function showApp() {
-            document.getElementById("loginOverlay").style.display = "none";
-            document.getElementById("appContainer").classList.add("active");
-            document.getElementById("userNameDisplay").textContent = currentUser.name || currentUser.email;
-            document.getElementById("userAvatar").textContent = (currentUser.name || currentUser.email || 'U')[0]
-                .toUpperCase();
-            const roleEl = document.getElementById("userRoleDisplay");
-            roleEl.textContent = currentUser.role || 'user';
-            roleEl.className = `role-badge ${currentUser.role === 'admin' ? 'role-admin' : currentUser.role === 'manager' ? 'role-manager' : 'role-user'}`;
-
-            document.getElementById("usersTab").style.display = canUserManageUsers(currentUser) ? 'inline-flex' : 'none';
-            document.getElementById("branchesTab").style.display = canUserManageBranches(currentUser) ? 'inline-flex' :
-                'none';
-
-            const filter = document.getElementById("branchFilter");
-            filter.value = currentBranchFilter;
-            renderAll();
-        }
-
-        function showLogin() {
-            document.getElementById("loginOverlay").style.display = "flex";
-            document.getElementById("appContainer").classList.remove("active");
-            document.getElementById("loginForm").style.display = "block";
-            document.getElementById("registerForm").style.display = "none";
-            document.getElementById("loginError").style.display = "none";
-        }
-
-        document.getElementById("loginBtn").onclick = async () => {
-            const email = document.getElementById("loginEmail").value.trim();
-            const password = document.getElementById("loginPassword").value;
-            if (!email || !password) {
-                document.getElementById("loginError").textContent = "Please fill in all fields.";
-                document.getElementById("loginError").style.display = "block";
-                return;
-            }
-
-            const userRef = db.collection("users");
-            const query = await userRef.where("email", "==", email).get();
-            if (query.empty) {
-                document.getElementById("loginError").textContent = "User not found.";
-                document.getElementById("loginError").style.display = "block";
-                return;
-            }
-
-            const userDoc = query.docs[0];
-            const userData = userDoc.data();
-            if (userData.password !== password) {
-                document.getElementById("loginError").textContent = "Invalid password.";
-                document.getElementById("loginError").style.display = "block";
-                return;
-            }
-
-            currentUser = { id: userDoc.id, ...userData };
-            localStorage.setItem("wms_user", JSON.stringify(currentUser));
-            addLog(`User ${currentUser.email} logged in`);
-            showApp();
-        };
-
-        document.getElementById("showRegister").onclick = () => {
-            document.getElementById("loginForm").style.display = "none";
-            document.getElementById("registerForm").style.display = "block";
-            document.getElementById("loginError").style.display = "none";
-            const container = document.getElementById("regBranchAccess");
-            container.innerHTML = branches.map(b =>
-                `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
-            ).join('');
-        };
-
-        document.getElementById("showLogin").onclick = () => {
-            document.getElementById("loginForm").style.display = "block";
-            document.getElementById("registerForm").style.display = "none";
-            document.getElementById("registerError").style.display = "none";
-        };
-
-        document.getElementById("registerBtn").onclick = async () => {
-            const name = document.getElementById("regName").value.trim();
-            const email = document.getElementById("regEmail").value.trim();
-            const password = document.getElementById("regPassword").value;
-            const role = document.getElementById("regRole").value;
-
-            if (!name || !email || !password) {
-                document.getElementById("registerError").textContent = "All fields required.";
-                document.getElementById("registerError").style.display = "block";
-                return;
-            }
-
-            if (password.length < 6) {
-                document.getElementById("registerError").textContent = "Password must be at least 6 characters.";
-                document.getElementById("registerError").style.display = "block";
-                return;
-            }
-
-            const existing = await db.collection("users").where("email", "==", email).get();
-            if (!existing.empty) {
-                document.getElementById("registerError").textContent = "Email already registered.";
-                document.getElementById("registerError").style.display = "block";
-                return;
-            }
-
-            const branchCheckboxes = document.querySelectorAll('#regBranchAccess input[type="checkbox"]:checked');
-            const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
-
-            await db.collection("users").add({
-                name,
-                email,
-                password,
-                role,
-                branches: role === 'admin' ? [] : selectedBranches,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            document.getElementById("registerError").textContent = "✅ Registration successful! Please login.";
-            document.getElementById("registerError").style.color = "#34d399";
-            document.getElementById("registerError").style.display = "block";
-            setTimeout(() => {
-                document.getElementById("loginForm").style.display = "block";
-                document.getElementById("registerForm").style.display = "none";
-                document.getElementById("registerError").style.display = "none";
-                document.getElementById("loginEmail").value = email;
-            }, 1500);
-        };
-
-        document.getElementById("logoutBtn").onclick = () => {
-            addLog(`User ${currentUser?.email} logged out`);
-            localStorage.removeItem("wms_user");
-            currentUser = null;
-            showLogin();
-        };
-
-        // ===== BRANCH FILTER =====
-        document.getElementById("branchFilter").onchange = function() {
-            currentBranchFilter = this.value;
-            renderTable();
-            const b = branches.find(x => x.id === currentBranchFilter);
-            document.getElementById("headerBranchDisplay").textContent = currentBranchFilter === 'all' ? 'All Branches' :
-                b ? b.name : 'Unknown';
-        };
-
-        // ===== ADD BRANCH =====
-        document.getElementById("addBranchBtn").onclick = async () => {
-            const name = document.getElementById("newBranchName").value.trim();
-            const location = document.getElementById("newBranchLocation").value.trim();
-            if (!name) { alert("Branch name required"); return; }
-            await db.collection("branches").add({ name, location: location || "N/A" });
-            addLog(`Added branch: ${name}`);
-            document.getElementById("newBranchName").value = "";
-            document.getElementById("newBranchLocation").value = "";
-            const msg = document.getElementById("branchMsg");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ Branch "${name}" added!`;
-            setTimeout(() => msg.style.display = "none", 3000);
-        };
-
-        // ===== ADD DEMO PRODUCTS =====
-        document.getElementById("seedBtn").onclick = async () => {
-            if (branches.length === 0) {
-                alert("Please create a branch first.");
-                return;
-            }
-            const branchId = branches[0].id;
-            const demos = [
-                { sku: "WH-1001", name: "Wireless Mouse", cat: "Electronics", barcode: "690123456789",
-                    serials: ["SN-2025-0001", "SN-2025-0002", "SN-2025-0003"], minStock: 5, branchId },
-                { sku: "WH-1002", name: "Mechanical Keyboard", cat: "Electronics", barcode: "692837461025",
-                    serials: ["SN-2025-0010", "SN-2025-0011"], minStock: 5, branchId },
-                { sku: "WH-2001", name: "Steel Shelf", cat: "Furniture", barcode: "697215438902",
-                    serials: ["SN-2025-0020"], minStock: 4, branchId },
-                { sku: "WH-3005", name: "Anti-static Mat", cat: "Safety", barcode: "694178362501",
-                    serials: ["SN-2025-0030", "SN-2025-0031", "SN-2025-0032", "SN-2025-0033"], minStock: 5,
-                    branchId },
-                { sku: "WH-4002", name: "Pallet Jack", cat: "Equipment", barcode: "698234517890",
-                    serials: ["SN-2025-0040", "SN-2025-0041"], minStock: 2, branchId }
-            ];
-            let added = 0;
-            for (const d of demos) {
-                if (!products.some(p => p.sku === d.sku)) {
-                    await db.collection("products").add(d);
-                    added++;
-                }
-            }
-            addLog(`Added ${added} demo products to ${getBranchName(branchId)}`);
-            alert(`✅ Added ${added} demo products with serial numbers!`);
-        };
-
-        // ===== RECEIVE STOCK WITH SERIALS =====
-        document.getElementById("receiveBtn").onclick = async () => {
-            if (!canUserEdit(currentUser)) {
-                alert("You don't have permission to receive stock.");
-                return;
-            }
-            const productId = document.getElementById("receiveProductSelect").value;
-            const branchId = document.getElementById("receiveBranchSelect").value;
-            const serialsText = document.getElementById("receiveSerials").value.trim();
-
-            if (!productId) { alert("Select a product."); return; }
-            if (!branchId) { alert("Select a branch."); return; }
-            if (!serialsText) { alert("Enter at least one serial number."); return; }
-
-            const prod = products.find(p => p.id === productId);
-            if (!prod) { alert("Product not found."); return; }
-
-            if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
-                alert("You don't have access to this product's branch.");
-                return;
-            }
-
-            // Parse serials (one per line)
-            const newSerials = serialsText.split('\n')
-                .map(s => s.trim())
-                .filter(s => s.length > 0);
-
-            if (newSerials.length === 0) {
-                alert("No valid serial numbers found.");
-                return;
-            }
-
-            // Check for duplicates within the product
-            const existingSerials = prod.serials || [];
-            const duplicates = newSerials.filter(s => existingSerials.includes(s));
-            if (duplicates.length > 0) {
-                if (!confirm(`Warning: ${duplicates.length} serial numbers already exist. Continue?`)) {
-                    return;
-                }
-            }
-
-            // Add unique serials
-            const uniqueNew = newSerials.filter(s => !existingSerials.includes(s));
-            if (uniqueNew.length === 0) {
-                alert("All serial numbers already exist. No new serials added.");
-                return;
-            }
-
-            const updatedSerials = [...existingSerials, ...uniqueNew];
-
-            await db.collection("products").doc(productId).update({
-                serials: updatedSerials
-            });
-
-            addLog(`Received ${uniqueNew.length} serials for ${prod.sku} at ${getBranchName(branchId)}`);
-            document.getElementById("receiveSerials").value = "";
-            const msg = document.getElementById("receiveMsg");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ Received ${uniqueNew.length} serial numbers for ${prod.sku}`;
-            setTimeout(() => msg.style.display = "none", 3000);
-        };
-
-        // ===== ADD PRODUCT =====
-        document.getElementById("addBtn").onclick = async () => {
-            if (!canUserEdit(currentUser)) {
-                alert("You don't have permission to add products.");
-                return;
-            }
-            const sku = document.getElementById("newSku").value.trim();
-            const name = document.getElementById("newName").value.trim();
-            const branchId = document.getElementById("newBranch").value;
-            if (!sku || !name) { alert("SKU and Name required"); return; }
-            if (products.some(p => p.sku === sku)) { alert("SKU exists!"); return; }
-            if (!branchId) { alert("Please select a branch."); return; }
-            if (!hasUserAccessToBranch(currentUser, branchId)) {
-                alert("You don't have access to this branch.");
-                return;
-            }
-
-            const isManual = document.querySelector('input[name="barcodeOption"]:checked').value === "manual";
-            let barcode;
-            const errorDiv = document.getElementById("barcodeError");
-            if (isManual) {
-                barcode = document.getElementById("manualBarcode").value.trim();
-                if (!barcode) { errorDiv.style.display = "block";
-                    errorDiv.innerHTML = "Enter barcode"; return; }
-                if (!isBarcodeUnique(barcode)) { errorDiv.style.display = "block";
-                    errorDiv.innerHTML = "Barcode exists!"; return; }
-                errorDiv.style.display = "none";
-            } else {
-                barcode = autoGenerateBarcode(sku);
-                let c = 1;
-                while (!isBarcodeUnique(barcode)) { barcode = autoGenerateBarcode(sku) + c;
-                    c++; }
-            }
-
-            const minStock = parseInt(document.getElementById("newMin").value) || 5;
-
-            await db.collection("products").add({
-                sku,
-                name,
-                cat: document.getElementById("newCat").value.trim() || "General",
-                branchId,
-                minStock,
-                barcode,
-                serials: []
-            });
-
-            addLog(`Added product ${sku} to ${getBranchName(branchId)} | Barcode: ${barcode}`);
-            document.getElementById("newSku").value = "";
-            document.getElementById("newName").value = "";
-            document.getElementById("newCat").value = "";
-            document.getElementById("manualBarcode").value = "";
-            document.querySelector('input[name="barcodeOption"][value="auto"]').checked = true;
-            document.getElementById("manualBarcodeArea").classList.add("hidden");
-            const msg = document.getElementById("addMsg");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ Product added! Barcode: ${barcode}`;
-            setTimeout(() => msg.style.display = "none", 3000);
-        };
-
-        // ===== UPDATE PRODUCT =====
-        document.getElementById("updateBtn").onclick = async () => {
-            if (!canUserEdit(currentUser)) {
-                alert("You don't have permission to edit products.");
-                return;
-            }
-            const id = document.getElementById("editSelect").value;
-            const prod = products.find(p => p.id === id);
-            if (!prod) return;
-            if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
-                alert("You don't have access to this product's branch.");
-                return;
-            }
-
-            const updates = {};
-            if (document.getElementById("editName").value.trim()) updates.name = document.getElementById("editName").value
-                .trim();
-            if (document.getElementById("editCat").value.trim()) updates.cat = document.getElementById("editCat").value
-                .trim();
-            if (document.getElementById("editBranch").value) updates.branchId = document.getElementById("editBranch").value;
-            const newMin = parseInt(document.getElementById("editMin").value);
-            if (!isNaN(newMin) && newMin >= 0) updates.minStock = newMin;
-
-            if (Object.keys(updates).length) {
-                await db.collection("products").doc(id).update(updates);
-                addLog(`Updated ${prod.sku}`);
-                alert("✅ Updated!");
-            }
-        };
-
-        // ===== ADMIN ADD USER =====
-        document.getElementById("adminAddUserBtn").onclick = async () => {
-            if (!canUserManageUsers(currentUser)) {
-                alert("Only admins can add users.");
-                return;
-            }
-            const name = document.getElementById("adminRegName").value.trim();
-            const email = document.getElementById("adminRegEmail").value.trim();
-            const password = document.getElementById("adminRegPassword").value;
-            const role = document.getElementById("adminRegRole").value;
-
-            if (!name || !email || !password) { alert("All fields required."); return; }
-            if (password.length < 6) { alert("Password must be at least 6 chars."); return; }
-
-            const existing = await db.collection("users").where("email", "==", email).get();
-            if (!existing.empty) { alert("Email already registered."); return; }
-
-            const branchCheckboxes = document.querySelectorAll('#adminRegBranchAccess input[type="checkbox"]:checked');
-            const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
-
-            await db.collection("users").add({
-                name,
-                email,
-                password,
-                role,
-                branches: role === 'admin' ? [] : selectedBranches,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            document.getElementById("adminRegName").value = "";
-            document.getElementById("adminRegEmail").value = "";
-            document.getElementById("adminRegPassword").value = "";
-            const msg = document.getElementById("adminUserMsg");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ User "${email}" added!`;
-            setTimeout(() => msg.style.display = "none", 3000);
-            addLog(`Admin added user: ${email} (${role})`);
-        };
-
-        // ===== TOGGLE BARCODE INPUTS =====
-        document.querySelectorAll('input[name="barcodeOption"]').forEach(r => {
-            r.onchange = () => document.getElementById("manualBarcodeArea").classList.toggle("hidden", r.value !==
-                "manual");
-        });
-        document.querySelectorAll('input[name="regenOption"]').forEach(r => {
-            r.onchange = () => document.getElementById("manualRegenArea").classList.toggle("hidden", r.value !==
-                "manual");
-        });
-
-        // ===== UPDATE BARCODE =====
-        document.getElementById("updateBarcodeBtn").onclick = async () => {
-            if (!canUserEdit(currentUser)) {
-                alert("You don't have permission to update barcodes.");
-                return;
-            }
-            const id = document.getElementById("barcodeSelect").value;
-            const prod = products.find(p => p.id === id);
-            if (!prod) { alert("Select a product"); return; }
-            if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
-                alert("You don't have access to this product's branch.");
-                return;
-            }
-
-            const isManual = document.querySelector('input[name="regenOption"]:checked').value === "manual";
-            let newBarcode;
-            const errorDiv = document.getElementById("regenBarcodeError");
-            if (isManual) {
-                newBarcode = document.getElementById("manualRegenBarcode").value.trim();
-                if (!newBarcode) { errorDiv.style.display = "block";
-                    errorDiv.innerHTML = "Enter barcode"; return; }
-                if (!isBarcodeUnique(newBarcode, id)) { errorDiv.style.display = "block";
-                    errorDiv.innerHTML = "Barcode exists!"; return; }
-                errorDiv.style.display = "none";
-            } else {
-                newBarcode = autoGenerateBarcode(prod.sku);
-                let c = 1;
-                while (!isBarcodeUnique(newBarcode, id)) { newBarcode = autoGenerateBarcode(prod.sku) + c;
-                    c++; }
-            }
-            await db.collection("products").doc(id).update({ barcode: newBarcode });
-            addLog(`Updated barcode for ${prod.sku}: ${newBarcode}`);
-            alert(`Barcode updated to: ${newBarcode}`);
-            document.getElementById("manualRegenBarcode").value = "";
-            document.querySelector('input[name="regenOption"][value="auto"]').checked = true;
-            document.getElementById("manualRegenArea").classList.add("hidden");
-        };
-
-        // ===== PREVIEW BARCODE =====
-        document.getElementById("previewBtn").onclick = () => {
-            const id = document.getElementById("barcodeSelect").value;
-            const prod = products.find(p => p.id === id);
-            if (!prod) { alert("Select a product"); return; }
-            document.getElementById("barcodeSvg").innerHTML = `<svg id="previewSvg"></svg>`;
-            JsBarcode("#previewSvg", prod.barcode, { format: "CODE128", width: 2, height: 45, displayValue: true,
-                fontSize: 11 });
-            document.getElementById("barcodePreviewDiv").style.display = "block";
-        };
-
-        // ===== SAVE PNG =====
-        document.getElementById("savePngBtn").onclick = () => {
-            const svg = document.querySelector("#barcodeSvg svg");
-            if (!svg) { alert("Preview first"); return; }
-            const svgData = new XMLSerializer().serializeToString(svg);
-            const canvas = document.createElement("canvas");
-            const img = new Image();
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext("2d");
-                ctx.fillStyle = "white";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0);
-                const link = document.createElement("a");
-                link.download = `barcode_${Date.now()}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-            };
-            img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgData);
-        };
-
-        // ===== DELETE PRODUCT =====
-        document.getElementById("deleteBtn").onclick = async () => {
-            if (!canUserEdit(currentUser)) {
-                alert("You don't have permission to delete products.");
-                return;
-            }
-            const id = document.getElementById("editSelect").value;
-            const prod = products.find(p => p.id === id);
-            if (!prod) return;
-            if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
-                alert("You don't have access to this product's branch.");
-                return;
-            }
-            if (confirm(`Delete "${prod.name}" permanently? This will remove all serials.`)) {
-                await db.collection("products").doc(id).delete();
-                addLog(`Deleted ${prod.sku}`);
-                alert("✅ Deleted!");
-            }
-        };
-
-        // ===== LOAD PRODUCT INTO EDIT FORM =====
-        document.getElementById("editSelect").onchange = () => {
-            const id = document.getElementById("editSelect").value;
-            const prod = products.find(p => p.id === id);
-            if (prod) {
-                document.getElementById("editName").value = prod.name || "";
-                document.getElementById("editCat").value = prod.cat || "";
-                document.getElementById("editBranch").value = prod.branchId || "";
-                document.getElementById("editMin").value = prod.minStock || 5;
-            }
-        };
-
-        // ===== BARCODE LOOKUP =====
-        document.getElementById("lookupBtn").onclick = () => {
-            const bc = document.getElementById("scannerInput").value.trim();
-            if (!bc) { alert("Enter barcode"); return; }
-            const prod = products.find(p => p.barcode === bc);
-            const resultDiv = document.getElementById("lookupResult");
-            if (prod) {
-                if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
-                    alert("You don't have access to this product's branch.");
-                    return;
-                }
-                const serialCount = (prod.serials || []).length;
-                document.getElementById("lookupInfo").innerHTML =
-                    `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Stock: ${serialCount} units<br>Serials: ${(prod.serials || []).slice(0,5).join(', ')}${serialCount > 5 ? ` +${serialCount-5} more` : ''}`;
-                resultDiv.style.display = "block";
-                resultDiv.setAttribute("data-id", prod.id);
-            } else {
-                alert("Product not found");
-                resultDiv.style.display = "none";
-            }
-        };
-
-        // ===== SCAN APPLY =====
-        document.getElementById("scanApplyBtn").onclick = async () => {
-            if (!canUserEdit(currentUser)) {
-                alert("You don't have permission to modify stock.");
-                return;
-            }
-            const resultDiv = document.getElementById("lookupResult");
-            const id = resultDiv.getAttribute("data-id");
-            if (!id) return;
-            const prod = products.find(p => p.id === id);
-            if (!prod) return;
-            if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
-                alert("You don't have access to this product's branch.");
-                return;
-            }
-
-            // For serialized inventory, we need to add/remove individual serials
-            const serials = prod.serials || [];
-            if (serials.length === 0 && document.getElementById("scanType").value === "remove") {
-                alert("No serials to remove.");
-                return;
-            }
-
-            const type = document.getElementById("scanType").value;
-            if (type === "add") {
-                // Prompt for serial number to add
-                const newSerial = prompt("Enter serial number to add:");
-                if (!newSerial) return;
-                if (serials.includes(newSerial)) {
-                    alert("Serial already exists!");
-                    return;
-                }
-                await db.collection("products").doc(id).update({
-                    serials: [...serials, newSerial]
-                });
-                addLog(`Scanner added serial ${newSerial} to ${prod.sku}`);
-                document.getElementById("scannerInput").value = "";
-                resultDiv.style.display = "none";
-            } else {
-                // Remove: prompt for serial to remove
-                const serialToRemove = prompt(`Enter serial to remove from:\n${serials.join(', ')}`);
-                if (!serialToRemove) return;
-                if (!serials.includes(serialToRemove)) {
-                    alert("Serial not found!");
-                    return;
-                }
-                await db.collection("products").doc(id).update({
-                    serials: serials.filter(s => s !== serialToRemove)
-                });
-                addLog(`Scanner removed serial ${serialToRemove} from ${prod.sku}`);
-                document.getElementById("scannerInput").value = "";
-                resultDiv.style.display = "none";
-            }
-        };
-
-        // ===== QUICK UPDATE =====
-        document.getElementById("quickBtn").onclick = async () => {
-            if (!canUserEdit(currentUser)) {
-                alert("You don't have permission to modify stock.");
-                return;
-            }
-            const bc = document.getElementById("quickBarcode").value.trim();
-            if (!bc) { alert("Enter barcode"); return; }
-            const prod = products.find(p => p.barcode === bc);
-            if (!prod) { alert("Product not found"); return; }
-            if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
-                alert("You don't have access to this product's branch.");
-                return;
-            }
-
-            const action = document.getElementById("quickAction").value;
-            const serials = prod.serials || [];
-
-            if (action === "add") {
-                const newSerial = prompt("Enter serial number to add:");
-                if (!newSerial) return;
-                if (serials.includes(newSerial)) {
-                    alert("Serial already exists!");
-                    return;
-                }
-                await db.collection("products").doc(prod.id).update({
-                    serials: [...serials, newSerial]
-                });
-                addLog(`Quick add serial ${newSerial} to ${prod.sku}`);
-                document.getElementById("quickBarcode").value = "";
-                const msg = document.getElementById("quickMsg");
-                msg.style.display = "block";
-                msg.innerHTML = `✅ Added serial ${newSerial} to ${prod.name}`;
-                setTimeout(() => msg.style.display = "none", 2000);
-            } else {
-                if (serials.length === 0) {
-                    alert("No serials to remove.");
-                    return;
-                }
-                const serialToRemove = prompt(`Enter serial to remove from:\n${serials.join(', ')}`);
-                if (!serialToRemove) return;
-                if (!serials.includes(serialToRemove)) {
-                    alert("Serial not found!");
-                    return;
-                }
-                await db.collection("products").doc(prod.id).update({
-                    serials: serials.filter(s => s !== serialToRemove)
-                });
-                addLog(`Quick remove serial ${serialToRemove} from ${prod.sku}`);
-                document.getElementById("quickBarcode").value = "";
-                const msg = document.getElementById("quickMsg");
-                msg.style.display = "block";
-                msg.innerHTML = `✅ Removed serial ${serialToRemove} from ${prod.name}`;
-                setTimeout(() => msg.style.display = "none", 2000);
-            }
-        };
-
-        // ===== EXPORT PDF =====
-        document.getElementById("exportPdfBtn").onclick = () => {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('landscape', 'mm', 'a4');
-            doc.setFontSize(14);
-            doc.text('Inventory Report - StockFlow WMS', 14, 20);
-
-            const filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
-            const tableData = filtered.map(p => [
-                p.barcode || '',
-                p.sku || '',
-                p.name || '',
-                p.cat || 'General',
-                getBranchName(p.branchId),
-                String((p.serials || []).length),
-                String(p.minStock || 5),
-                (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK'
-            ]);
-
-            doc.autoTable({
-                head: [
-                    ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Min', 'Status']
-                ],
-                body: tableData,
-                startY: 25,
-                styles: { fontSize: 7, cellPadding: 2 },
-                headStyles: { fillColor: [52, 211, 153], textColor: [15, 23, 42] }
-            });
-
-            doc.save(`inventory_report_${new Date().toISOString().slice(0,10)}.pdf`);
-            addLog("Exported inventory to PDF");
-        };
-
-        // ===== EXPORT CSV =====
-        document.getElementById("exportCsvBtn").onclick = () => {
-            const headers = ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Min', 'Status', 'Serials'];
-            const filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
-            const data = filtered.map(p => [
-                p.barcode || '',
-                p.sku || '',
-                p.name || '',
-                p.cat || 'General',
-                getBranchName(p.branchId),
-                String((p.serials || []).length),
-                String(p.minStock || 5),
-                (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK',
-                (p.serials || []).join('; ')
-            ]);
-
-            let csv = headers.join(',') + '\n';
-            data.forEach(row => {
-                csv += row.map(cell => `"${cell}"`).join(',') + '\n';
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `inventory_report_${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
-            addLog("Exported inventory to CSV");
-        };
-
-        // ===== CLEAR LOGS =====
-        document.getElementById("clearLogsBtn").onclick = () => { transactionLogs = [];
-            addLog("Log cleared"); };
-
-        // ===== SEARCH =====
-        document.getElementById("searchInput").oninput = () => renderTable();
-
-        // ===== TAB SWITCHING =====
-        document.querySelectorAll(".tab").forEach(btn => {
-            btn.onclick = () => {
-                const tab = btn.getAttribute("data-tab");
-                document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-                const target = document.getElementById(tab + "Panel");
-                if (target) target.classList.add("active");
-                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-                btn.classList.add("active");
-                if (tab === 'users' && !canUserManageUsers(currentUser)) {
-                    alert("Only admins can access User Management.");
-                    document.querySelector('[data-tab="inventory"]').click();
-                }
-                if (tab === 'branches' && !canUserManageBranches(currentUser)) {
-                    alert("Only admins can access Branch Management.");
-                    document.querySelector('[data-tab="inventory"]').click();
-                }
-                if (tab === 'receive') {
-                    // Populate receive dropdowns
-                    const options = products.map(p =>
-                        `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)}</option>`
-                    ).join('');
-                    document.getElementById("receiveProductSelect").innerHTML = options || '<option>No products</option>';
-                }
-            };
-        });
-
-        // ===== INIT =====
-        if (!checkAuth()) {
-            showLogin();
-        } else {
-            document.getElementById("branchFilter").value = 'all';
-            renderAll();
-        }
-
-        addLog("System initialized with serialized inventory");
-        console.log("WMS Pro loaded with serialized inventory, branches, and user management.");
-    </script>
-</body>
-</html>
+                    <div class="input-group" style="flex
