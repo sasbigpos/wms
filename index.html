@@ -660,6 +660,45 @@
             height: 14px;
             cursor: pointer;
         }
+        .remark-badge {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 0.55rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .remark-demo {
+            background: #713f12;
+            color: #fbbf24;
+        }
+        .remark-refurbished {
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+        .remark-new {
+            background: #064e3b;
+            color: #34d399;
+        }
+        .remark-normal {
+            background: #334155;
+            color: #94a3b8;
+        }
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group select,
+        .filter-group input {
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 0.75rem;
+        }
         @media (max-width: 768px) {
             .login-box {
                 padding: 24px;
@@ -681,6 +720,9 @@
             .serial-checkbox-list label {
                 font-size: 0.6rem;
                 padding: 2px 6px;
+            }
+            .filter-group {
+                gap: 6px;
             }
         }
     </style>
@@ -787,7 +829,16 @@
                 <div class="flex-between">
                     <h3><i class="fas fa-clipboard-list"></i> Stock Overview</h3>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                        <input type="text" id="searchInput" placeholder="Search SKU/Name/Barcode/Serial" style="width:180px;padding:4px 10px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;" />
+                        <input type="text" id="searchInput" placeholder="Search SKU/Name/Barcode/Serial" style="width:160px;padding:4px 10px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;" />
+                        <div class="filter-group">
+                            <select id="remarkFilter" style="padding:4px 10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;">
+                                <option value="all">📋 All Remarks</option>
+                                <option value="new">🆕 New</option>
+                                <option value="demo">🎮 Demo</option>
+                                <option value="refurbished">🔧 Refurbished</option>
+                                <option value="normal">📦 Normal</option>
+                            </select>
+                        </div>
                         <div class="export-buttons">
                             <button id="exportPdfBtn" class="secondary"><i class="fas fa-file-pdf"></i> PDF</button>
                             <button id="exportCsvBtn" class="secondary"><i class="fas fa-file-csv"></i> CSV</button>
@@ -808,7 +859,7 @@
                                 <th>Category</th>
                                 <th>Branch</th>
                                 <th>Qty</th>
-                                <th>Serials</th>
+                                <th>Remark</th>
                                 <th>Min</th>
                                 <th>Status</th>
                                 <th></th>
@@ -854,6 +905,14 @@
                 <div class="form-row">
                     <div class="input-group"><label>Select Product</label><select id="receiveProductSelect"></select></div>
                     <div class="input-group"><label>Branch</label><select id="receiveBranchSelect"></select></div>
+                    <div class="input-group"><label>Remark</label>
+                        <select id="receiveRemark">
+                            <option value="new">🆕 New</option>
+                            <option value="demo">🎮 Demo</option>
+                            <option value="refurbished">🔧 Refurbished</option>
+                            <option value="normal">📦 Normal</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="input-group" style="flex:2;">
@@ -936,6 +995,14 @@
                     <div class="input-group"><label>Name *</label><input type="text" id="newName" placeholder="Product name" /></div>
                     <div class="input-group"><label>Category</label><input type="text" id="newCat" placeholder="Category" /></div>
                     <div class="input-group"><label>Branch</label><select id="newBranch"></select></div>
+                    <div class="input-group"><label>Remark</label>
+                        <select id="newRemark">
+                            <option value="new">🆕 New</option>
+                            <option value="demo">🎮 Demo</option>
+                            <option value="refurbished">🔧 Refurbished</option>
+                            <option value="normal">📦 Normal</option>
+                        </select>
+                    </div>
                     <div class="input-group"><label>Min Stock</label><input type="number" id="newMin" value="5" /></div>
                 </div>
                 <div class="barcode-option-group">
@@ -984,6 +1051,14 @@
                     <div class="input-group"><label>New Name</label><input type="text" id="editName" /></div>
                     <div class="input-group"><label>Category</label><input type="text" id="editCat" /></div>
                     <div class="input-group"><label>Branch</label><select id="editBranch"></select></div>
+                    <div class="input-group"><label>Remark</label>
+                        <select id="editRemark">
+                            <option value="new">🆕 New</option>
+                            <option value="demo">🎮 Demo</option>
+                            <option value="refurbished">🔧 Refurbished</option>
+                            <option value="normal">📦 Normal</option>
+                        </select>
+                    </div>
                     <div class="input-group"><label>Min Stock</label><input type="number" id="editMin" /></div>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
@@ -1062,6 +1137,7 @@
         let users = [];
         let transactionLogs = JSON.parse(localStorage.getItem("wms_logs") || "[]");
         let currentBranchFilter = 'all';
+        let currentRemarkFilter = 'all';
         let selectedSerials = [];
 
         // ===== HELPERS =====
@@ -1101,6 +1177,22 @@
         function canUserManageUsers(user) { return user && user.role === 'admin'; }
 
         function canUserManageBranches(user) { return user && user.role === 'admin'; }
+
+        function getRemarkBadge(remark) {
+            const classes = {
+                'new': 'remark-new',
+                'demo': 'remark-demo',
+                'refurbished': 'remark-refurbished',
+                'normal': 'remark-normal'
+            };
+            const labels = {
+                'new': '🆕 New',
+                'demo': '🎮 Demo',
+                'refurbished': '🔧 Refurbished',
+                'normal': '📦 Normal'
+            };
+            return `<span class="remark-badge ${classes[remark] || 'remark-normal'}">${labels[remark] || remark || 'Normal'}</span>`;
+        }
 
         // ===== LOGS =====
         function addLog(msg) {
@@ -1142,10 +1234,17 @@
         // ===== RENDER TABLE =====
         function renderTable() {
             const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
+            const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
+            currentRemarkFilter = remarkFilter;
+
             let filtered = products;
 
             if (currentBranchFilter !== 'all') {
                 filtered = filtered.filter(p => p.branchId === currentBranchFilter);
+            }
+
+            if (remarkFilter !== 'all') {
+                filtered = filtered.filter(p => (p.remark || 'normal') === remarkFilter);
             }
 
             filtered = filtered.filter(p =>
@@ -1174,7 +1273,7 @@
                         <td>${escapeHtml(p.cat || "General")}</td>
                         <td><span class="branch-tag">${escapeHtml(getBranchName(p.branchId))}</span></td>
                         <td><span class="stock-badge ${low ? 'low-stock' : ''}">${qty}</span></td>
-                        <td>${serialDisplay}</td>
+                        <td>${getRemarkBadge(p.remark || 'normal')}</td>
                         <td>${p.minStock || 5}</td>
                         <td>${low ? '⚠️ Low' : '✅ OK'}</td>
                         <td class="action-icons">
@@ -1771,6 +1870,11 @@
                 b ? b.name : 'Unknown';
         };
 
+        // ===== REMARK FILTER =====
+        document.getElementById("remarkFilter").onchange = function() {
+            renderTable();
+        };
+
         // ===== ADD BRANCH =====
         document.getElementById("addBranchBtn").onclick = async () => {
             const name = document.getElementById("newBranchName").value.trim();
@@ -1800,7 +1904,8 @@
                 barcode: "690123456789",
                 serials: ["SN-2025-0001", "SN-2025-0002", "SN-2025-0003"],
                 minStock: 5,
-                branchId
+                branchId,
+                remark: "new"
             }, {
                 sku: "WH-1002",
                 name: "Mechanical Keyboard",
@@ -1808,7 +1913,8 @@
                 barcode: "692837461025",
                 serials: ["SN-2025-0010", "SN-2025-0011"],
                 minStock: 5,
-                branchId
+                branchId,
+                remark: "demo"
             }, {
                 sku: "WH-2001",
                 name: "Steel Shelf",
@@ -1816,7 +1922,8 @@
                 barcode: "697215438902",
                 serials: ["SN-2025-0020"],
                 minStock: 4,
-                branchId
+                branchId,
+                remark: "refurbished"
             }, {
                 sku: "WH-3005",
                 name: "Anti-static Mat",
@@ -1824,7 +1931,8 @@
                 barcode: "694178362501",
                 serials: ["SN-2025-0030", "SN-2025-0031", "SN-2025-0032", "SN-2025-0033"],
                 minStock: 5,
-                branchId
+                branchId,
+                remark: "normal"
             }, {
                 sku: "WH-4002",
                 name: "Pallet Jack",
@@ -1832,7 +1940,8 @@
                 barcode: "698234517890",
                 serials: ["SN-2025-0040", "SN-2025-0041"],
                 minStock: 2,
-                branchId
+                branchId,
+                remark: "new"
             }];
             let added = 0;
             for (const d of demos) {
@@ -1841,8 +1950,8 @@
                     added++;
                 }
             }
-            addLog(`Added ${added} demo products`);
-            alert(`✅ Added ${added} demo products!`);
+            addLog(`Added ${added} demo products with remarks`);
+            alert(`✅ Added ${added} demo products with remarks!`);
         };
 
         // ===== RECEIVE STOCK =====
@@ -1853,6 +1962,7 @@
             }
             const productId = document.getElementById("receiveProductSelect").value;
             const branchId = document.getElementById("receiveBranchSelect").value;
+            const remark = document.getElementById("receiveRemark").value;
             const serialsText = document.getElementById("receiveSerials").value.trim();
 
             if (!productId) { alert("Select a product."); return; }
@@ -1883,15 +1993,17 @@
                 return;
             }
 
+            // Update both serials and remark
             await db.collection("products").doc(productId).update({
-                serials: [...existingSerials, ...uniqueNew]
+                serials: [...existingSerials, ...uniqueNew],
+                remark: remark
             });
 
-            addLog(`Received ${uniqueNew.length} serials for ${prod.sku}`);
+            addLog(`Received ${uniqueNew.length} serials for ${prod.sku} as ${remark}`);
             document.getElementById("receiveSerials").value = "";
             const msg = document.getElementById("receiveMsg");
             msg.style.display = "block";
-            msg.innerHTML = `✅ Received ${uniqueNew.length} serial numbers!`;
+            msg.innerHTML = `✅ Received ${uniqueNew.length} serial numbers as ${remark}!`;
             setTimeout(() => msg.style.display = "none", 3000);
         };
 
@@ -1904,6 +2016,7 @@
             const sku = document.getElementById("newSku").value.trim();
             const name = document.getElementById("newName").value.trim();
             const branchId = document.getElementById("newBranch").value;
+            const remark = document.getElementById("newRemark").value;
             if (!sku || !name) { alert("SKU and Name required"); return; }
             if (products.some(p => p.sku === sku)) { alert("SKU exists!"); return; }
             if (!branchId) { alert("Please select a branch."); return; }
@@ -1928,10 +2041,11 @@
                 branchId,
                 minStock: parseInt(document.getElementById("newMin").value) || 5,
                 barcode,
-                serials: []
+                serials: [],
+                remark: remark
             });
 
-            addLog(`Added product ${sku}`);
+            addLog(`Added product ${sku} as ${remark}`);
             document.getElementById("newSku").value = "";
             document.getElementById("newName").value = "";
             document.getElementById("newCat").value = "";
@@ -1940,7 +2054,7 @@
             document.getElementById("manualBarcodeArea").classList.add("hidden");
             const msg = document.getElementById("addMsg");
             msg.style.display = "block";
-            msg.innerHTML = `✅ Product "${sku}" added!`;
+            msg.innerHTML = `✅ Product "${sku}" added as ${remark}!`;
             setTimeout(() => msg.style.display = "none", 3000);
         };
 
@@ -2033,6 +2147,7 @@
             if (document.getElementById("editCat").value.trim()) updates.cat = document.getElementById("editCat").value
                 .trim();
             if (document.getElementById("editBranch").value) updates.branchId = document.getElementById("editBranch").value;
+            if (document.getElementById("editRemark").value) updates.remark = document.getElementById("editRemark").value;
             const newMin = parseInt(document.getElementById("editMin").value);
             if (!isNaN(newMin) && newMin >= 0) updates.minStock = newMin;
 
@@ -2067,6 +2182,7 @@
                 document.getElementById("editName").value = prod.name || "";
                 document.getElementById("editCat").value = prod.cat || "";
                 document.getElementById("editBranch").value = prod.branchId || "";
+                document.getElementById("editRemark").value = prod.remark || "normal";
                 document.getElementById("editMin").value = prod.minStock || 5;
             }
         };
@@ -2083,8 +2199,14 @@
                     return;
                 }
                 const serialCount = (prod.serials || []).length;
+                const remarkLabels = {
+                    'new': '🆕 New',
+                    'demo': '🎮 Demo',
+                    'refurbished': '🔧 Refurbished',
+                    'normal': '📦 Normal'
+                };
                 document.getElementById("lookupInfo").innerHTML =
-                    `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Stock: ${serialCount} units<br>Serials: ${(prod.serials || []).slice(0,5).join(', ')}${serialCount > 5 ? ` +${serialCount-5} more` : ''}`;
+                    `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Remark: ${remarkLabels[prod.remark] || 'Normal'}<br>Stock: ${serialCount} units<br>Serials: ${(prod.serials || []).slice(0,5).join(', ')}${serialCount > 5 ? ` +${serialCount-5} more` : ''}`;
                 resultDiv.style.display = "block";
                 resultDiv.setAttribute("data-id", prod.id);
             } else {
@@ -2144,7 +2266,19 @@
             doc.setFontSize(14);
             doc.text('Inventory Report - StockFlow WMS', 14, 20);
 
-            const filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
+            const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
+            let filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
+            if (remarkFilter !== 'all') {
+                filtered = filtered.filter(p => (p.remark || 'normal') === remarkFilter);
+            }
+
+            const remarkLabels = {
+                'new': 'New',
+                'demo': 'Demo',
+                'refurbished': 'Refurbished',
+                'normal': 'Normal'
+            };
+
             const tableData = filtered.map(p => [
                 p.barcode || '',
                 p.sku || '',
@@ -2152,13 +2286,14 @@
                 p.cat || 'General',
                 getBranchName(p.branchId),
                 String((p.serials || []).length),
+                remarkLabels[p.remark] || 'Normal',
                 String(p.minStock || 5),
                 (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK'
             ]);
 
             doc.autoTable({
                 head: [
-                    ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Min', 'Status']
+                    ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status']
                 ],
                 body: tableData,
                 startY: 25,
@@ -2166,14 +2301,27 @@
                 headStyles: { fillColor: [52, 211, 153], textColor: [15, 23, 42] }
             });
 
-            doc.save(`inventory_report_${new Date().toISOString().slice(0, 10)}.pdf`);
-            addLog("Exported inventory to PDF");
+            const filterLabel = remarkFilter === 'all' ? 'all' : remarkFilter;
+            doc.save(`inventory_report_${filterLabel}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            addLog(`Exported ${filterLabel} inventory to PDF`);
         };
 
         // ===== EXPORT CSV =====
         document.getElementById("exportCsvBtn").onclick = () => {
-            const headers = ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Min', 'Status', 'Serials'];
-            const filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
+            const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
+            let filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
+            if (remarkFilter !== 'all') {
+                filtered = filtered.filter(p => (p.remark || 'normal') === remarkFilter);
+            }
+
+            const remarkLabels = {
+                'new': 'New',
+                'demo': 'Demo',
+                'refurbished': 'Refurbished',
+                'normal': 'Normal'
+            };
+
+            const headers = ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status', 'Serials'];
             const data = filtered.map(p => [
                 p.barcode || '',
                 p.sku || '',
@@ -2181,6 +2329,7 @@
                 p.cat || 'General',
                 getBranchName(p.branchId),
                 String((p.serials || []).length),
+                remarkLabels[p.remark] || 'Normal',
                 String(p.minStock || 5),
                 (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK',
                 (p.serials || []).join('; ')
@@ -2194,9 +2343,10 @@
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `inventory_report_${new Date().toISOString().slice(0, 10)}.csv`;
+            const filterLabel = remarkFilter === 'all' ? 'all' : remarkFilter;
+            link.download = `inventory_report_${filterLabel}_${new Date().toISOString().slice(0, 10)}.csv`;
             link.click();
-            addLog("Exported inventory to CSV");
+            addLog(`Exported ${filterLabel} inventory to CSV`);
         };
 
         // ===== ADMIN ADD USER =====
@@ -2281,8 +2431,8 @@
         document.querySelector('input[name="issueType"][value="select"]').checked = true;
         document.getElementById("issueManualArea").classList.add("hidden");
 
-        addLog("System initialized with issuance feature");
-        console.log("WMS Pro loaded successfully.");
+        addLog("System initialized with remark filtering");
+        console.log("WMS Pro loaded successfully with remark field.");
     </script>
 </body>
 </html>
