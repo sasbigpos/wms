@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-    <title>WMS Pro | Multi-Branch Inventory System</title>
+    <title>WMS Pro | Serialized Inventory with Branches</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">
@@ -46,7 +46,7 @@
             border-radius: 24px;
             padding: 40px;
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             border: 1px solid #334155;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
@@ -127,26 +127,6 @@
         .login-box .register-link a:hover {
             text-decoration: underline;
         }
-        .login-box .role-badge {
-            display: inline-block;
-            padding: 2px 12px;
-            border-radius: 20px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .role-admin {
-            background: #34d399;
-            color: #0f172a;
-        }
-        .role-manager {
-            background: #60a5fa;
-            color: #0f172a;
-        }
-        .role-user {
-            background: #64748b;
-            color: #e2e8f0;
-        }
 
         .app-container {
             display: none;
@@ -187,7 +167,7 @@
         .header .user-info {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             flex-wrap: wrap;
         }
         .header .user-info .user-badge {
@@ -199,39 +179,40 @@
             border-radius: 30px;
         }
         .header .user-info .user-badge .avatar {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             background: #34d399;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
+            font-size: 0.8rem;
             color: #0f172a;
         }
         .header .user-info .branch-selector select {
-            padding: 6px 12px;
+            padding: 4px 10px;
             border-radius: 12px;
             border: 1px solid #334155;
             background: #0f172a;
             color: #e2e8f0;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
         .header .user-info .logout-btn {
             background: transparent;
             border: 1px solid #ef4444;
             color: #ef4444;
-            padding: 6px 16px;
+            padding: 4px 14px;
             border-radius: 30px;
             cursor: pointer;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }
         .header .user-info .logout-btn:hover {
             background: #ef4444;
             color: #0f172a;
         }
 
-        .stats {
+        .stats-bar {
             display: flex;
             gap: 16px;
             background: #1e293b;
@@ -239,17 +220,17 @@
             border-radius: 40px;
             flex-wrap: wrap;
         }
-        .stats .stat-item {
+        .stats-bar .stat-item {
             display: flex;
             align-items: baseline;
             gap: 4px;
         }
-        .stats .stat-num {
+        .stats-bar .stat-num {
             font-weight: 800;
             font-size: 1.1rem;
             color: #34d399;
         }
-        .stats .stat-label {
+        .stats-bar .stat-label {
             font-size: 0.6rem;
             color: #94a3b8;
             text-transform: uppercase;
@@ -258,7 +239,7 @@
         .tabs {
             display: flex;
             background: #0f172a;
-            padding: 0 16px;
+            padding: 0 12px;
             gap: 2px;
             border-bottom: 1px solid #1e293b;
             flex-wrap: wrap;
@@ -267,14 +248,14 @@
             background: none;
             border: none;
             font-weight: 600;
-            padding: 10px 18px;
-            font-size: 0.8rem;
+            padding: 8px 14px;
+            font-size: 0.75rem;
             cursor: pointer;
             color: #94a3b8;
-            border-radius: 16px 16px 0 0;
+            border-radius: 12px 12px 0 0;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
         .tab.active {
             color: #34d399;
@@ -286,7 +267,7 @@
 
         .panel {
             display: none;
-            padding: 20px;
+            padding: 16px;
         }
         .panel.active {
             display: block;
@@ -294,21 +275,21 @@
 
         .card {
             background: #1e293b;
-            border-radius: 16px;
+            border-radius: 14px;
             border: 1px solid #334155;
-            padding: 18px;
-            margin-bottom: 18px;
+            padding: 16px;
+            margin-bottom: 16px;
         }
         .form-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
             align-items: flex-end;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
         .input-group {
             flex: 1;
-            min-width: 130px;
+            min-width: 120px;
         }
         .input-group label {
             font-size: 0.6rem;
@@ -319,17 +300,24 @@
             text-transform: uppercase;
         }
         .input-group input,
-        .input-group select {
+        .input-group select,
+        .input-group textarea {
             width: 100%;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 10px;
             border: 1px solid #334155;
             font-size: 0.8rem;
             background: #0f172a;
             color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+        }
+        .input-group textarea {
+            resize: vertical;
+            min-height: 60px;
         }
         .input-group input:focus,
-        .input-group select:focus {
+        .input-group select:focus,
+        .input-group textarea:focus {
             outline: none;
             border-color: #34d399;
         }
@@ -337,14 +325,14 @@
         button {
             background: #34d399;
             border: none;
-            padding: 8px 18px;
+            padding: 6px 16px;
             border-radius: 30px;
             font-weight: 600;
             color: #0f172a;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             font-size: 0.75rem;
             transition: 0.2s;
         }
@@ -364,53 +352,52 @@
             transform: translateY(-1px);
             opacity: 0.9;
         }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
 
         .barcode-option-group {
             background: #0f172a;
-            border-radius: 12px;
-            padding: 12px;
-            margin: 12px 0;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
             border: 1px solid #334155;
         }
         .radio-group {
             display: flex;
-            gap: 20px;
-            margin-bottom: 10px;
+            gap: 16px;
+            margin-bottom: 8px;
             flex-wrap: wrap;
         }
         .radio-group label {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
         .hidden {
             display: none !important;
         }
 
+        .table-wrapper {
+            overflow-x: auto;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }
         th {
             text-align: left;
-            padding: 8px 8px;
+            padding: 6px 8px;
             background: #0f172a;
             color: #94a3b8;
             border-bottom: 2px solid #334155;
             font-weight: 600;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
             white-space: nowrap;
         }
         td {
-            padding: 8px;
+            padding: 6px 8px;
             border-bottom: 1px solid #1e293b;
             vertical-align: middle;
         }
@@ -419,7 +406,7 @@
             color: #34d399;
             border-radius: 20px;
             padding: 2px 10px;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             display: inline-block;
         }
         .low-stock {
@@ -430,19 +417,19 @@
             margin: 0 3px;
             cursor: pointer;
             color: #94a3b8;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         .action-icons i:hover {
             color: #34d399;
         }
         .status-bar {
             background: #1e293b;
-            padding: 4px 14px;
+            padding: 4px 12px;
             border-radius: 30px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
         .status-online {
             background: #064e3b;
@@ -453,128 +440,174 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 8px;
+            margin-bottom: 10px;
         }
         .log-list {
-            max-height: 250px;
+            max-height: 200px;
             overflow-y: auto;
             background: #0f172a;
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid #334155;
         }
         .log-entry {
-            padding: 8px 12px;
+            padding: 6px 12px;
             border-bottom: 1px solid #1e293b;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             display: flex;
             gap: 10px;
             color: #94a3b8;
         }
         .barcode-preview {
             background: #0f172a;
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 14px;
+            padding: 14px;
             text-align: center;
             border: 2px dashed #334155;
-            margin-top: 12px;
+            margin-top: 10px;
         }
         .barcode-svg-container {
             background: white;
-            padding: 8px;
+            padding: 6px;
             display: inline-block;
-            border-radius: 10px;
+            border-radius: 8px;
         }
         .success-msg {
             background: #064e3b;
             color: #34d399;
-            padding: 8px;
+            padding: 6px;
             border-radius: 10px;
-            margin-top: 10px;
+            margin-top: 8px;
             display: none;
         }
         .serial-badge {
             background: #1e293b;
             padding: 2px 8px;
             border-radius: 10px;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: #94a3b8;
             font-family: monospace;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-        }
-        .export-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .user-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: #0f172a;
-            border-radius: 10px;
-            margin-bottom: 6px;
-            border: 1px solid #334155;
-        }
-        .user-list-item .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .user-list-item .user-actions {
-            display: flex;
-            gap: 6px;
         }
         .branch-tag {
             display: inline-block;
             padding: 1px 8px;
             border-radius: 10px;
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             background: #334155;
             color: #94a3b8;
         }
-        .permission-tag {
+        .serial-list {
+            max-height: 120px;
+            overflow-y: auto;
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 4px 8px;
+            border: 1px solid #334155;
+        }
+        .serial-list .serial-item {
             display: inline-block;
-            padding: 1px 8px;
+            background: #1e293b;
+            padding: 2px 8px;
             border-radius: 10px;
             font-size: 0.6rem;
+            font-family: monospace;
+            margin: 2px;
+            color: #94a3b8;
+        }
+        .serial-list .serial-item:hover {
+            background: #334155;
+        }
+        .batch-input-area {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 8px;
+            border: 1px solid #334155;
+        }
+        .role-badge {
+            display: inline-block;
+            padding: 1px 10px;
+            border-radius: 20px;
+            font-size: 0.6rem;
             font-weight: 600;
+            text-transform: uppercase;
         }
-        .perm-view {
-            background: #60a5fa;
-            color: #0f172a;
-        }
-        .perm-edit {
+        .role-admin {
             background: #34d399;
             color: #0f172a;
         }
-        .perm-admin {
-            background: #f59e0b;
+        .role-manager {
+            background: #60a5fa;
             color: #0f172a;
+        }
+        .role-user {
+            background: #64748b;
+            color: #e2e8f0;
+        }
+        .user-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 12px;
+            background: #0f172a;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            border: 1px solid #334155;
+        }
+        .user-list-item .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .user-list-item .user-actions {
+            display: flex;
+            gap: 4px;
         }
         .branch-selector-multi {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
-            margin: 6px 0;
+            gap: 4px;
+            margin: 4px 0;
         }
         .branch-selector-multi label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             cursor: pointer;
             background: #0f172a;
-            padding: 2px 10px;
-            border-radius: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
             border: 1px solid #334155;
         }
         .branch-selector-multi label input[type="checkbox"] {
             accent-color: #34d399;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .serial-count {
+            font-size: 0.6rem;
+            color: #94a3b8;
+            font-family: monospace;
+        }
+        .badge {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 0.55rem;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #064e3b;
+            color: #34d399;
+        }
+        .badge-warning {
+            background: #713f12;
+            color: #fbbf24;
         }
         @media (max-width: 768px) {
             .login-box {
@@ -582,23 +615,23 @@
                 margin: 16px;
             }
             .header .user-info {
-                gap: 8px;
+                gap: 6px;
             }
-            .stats .stat-item {
-                font-size: 0.7rem;
+            .stats-bar .stat-item {
+                font-size: 0.65rem;
             }
             .tab {
-                padding: 8px 12px;
-                font-size: 0.7rem;
+                padding: 6px 10px;
+                font-size: 0.65rem;
             }
             .panel {
-                padding: 12px;
+                padding: 10px;
             }
             .form-row {
-                gap: 8px;
+                gap: 6px;
             }
             .input-group {
-                min-width: 100px;
+                min-width: 80px;
             }
         }
     </style>
@@ -609,7 +642,7 @@
     <div class="login-overlay" id="loginOverlay">
         <div class="login-box">
             <h2><i class="fas fa-warehouse"></i> StockFlow WMS</h2>
-            <p class="sub">Multi-branch inventory management</p>
+            <p class="sub">Serialized Inventory • Multi-Branch</p>
             <div id="loginForm">
                 <div class="form-group">
                     <label>Email</label>
@@ -643,12 +676,12 @@
                     <select id="regRole">
                         <option value="user">User (View Only)</option>
                         <option value="manager">Manager (Edit)</option>
-                        <option value="admin">Admin (Full Control)</option>
+                        <option value="admin">Admin (Full)</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Branch Access</label>
-                    <div id="regBranchAccess" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
+                    <div id="regBranchAccess" class="branch-selector-multi"></div>
                 </div>
                 <button class="login-btn" id="registerBtn"><i class="fas fa-user-plus"></i> Register</button>
                 <div class="login-error" id="registerError" style="display:none;color:#fca5a5;text-align:center;margin-top:10px;"></div>
@@ -665,13 +698,13 @@
         <div class="header">
             <div class="logo">
                 <h1><i class="fas fa-firebase"></i> StockFlow WMS</h1>
-                <p>Multi-branch • Real-time • <span id="headerBranchDisplay">All Branches</span></p>
+                <p>Serialized • Multi-Branch • <span id="headerBranchDisplay">All Branches</span></p>
             </div>
             <div class="user-info">
-                <div class="stats">
+                <div class="stats-bar">
                     <div class="stat-item"><span class="stat-num" id="totalProducts">0</span><span class="stat-label">Products</span></div>
                     <div class="stat-item"><span class="stat-num" id="totalUnits">0</span><span class="stat-label">Units</span></div>
-                    <div class="stat-item"><span class="stat-num" id="lowStockCount">0</span><span class="stat-label">Low Stock</span></div>
+                    <div class="stat-item"><span class="stat-num" id="lowStockCount">0</span><span class="stat-label">Low</span></div>
                 </div>
                 <div class="branch-selector">
                     <select id="branchFilter">
@@ -691,6 +724,7 @@
         <div class="tabs">
             <button class="tab active" data-tab="inventory"><i class="fas fa-boxes"></i> Inventory</button>
             <button class="tab" data-tab="scanner"><i class="fas fa-qrcode"></i> Scanner</button>
+            <button class="tab" data-tab="receive"><i class="fas fa-arrow-down"></i> Receive Stock</button>
             <button class="tab" data-tab="logs"><i class="fas fa-history"></i> Logs</button>
             <button class="tab" data-tab="manage"><i class="fas fa-plus-circle"></i> Manage</button>
             <button class="tab" data-tab="users" id="usersTab"><i class="fas fa-users-cog"></i> Users</button>
@@ -702,29 +736,29 @@
             <div class="card">
                 <div class="flex-between">
                     <h3><i class="fas fa-clipboard-list"></i> Stock Overview</h3>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <input type="text" id="searchInput" placeholder="Search SKU/Name/Barcode/Serial" style="width:200px;padding:6px 12px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;" />
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                        <input type="text" id="searchInput" placeholder="Search SKU/Name/Barcode/Serial" style="width:180px;padding:4px 10px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;" />
                         <div class="export-buttons">
                             <button id="exportPdfBtn" class="secondary"><i class="fas fa-file-pdf"></i> PDF</button>
                             <button id="exportCsvBtn" class="secondary"><i class="fas fa-file-csv"></i> CSV</button>
                         </div>
                     </div>
                 </div>
-                <div class="flex-between" style="margin-top:8px;">
+                <div class="flex-between" style="margin-top:6px;">
                     <div class="status-bar" id="connectionStatus">Connecting to Firestore...</div>
-                    <button id="seedBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo Products</button>
+                    <button id="seedBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo</button>
                 </div>
-                <div class="table-wrapper" style="margin-top:12px;">
+                <div class="table-wrapper" style="margin-top:10px;">
                     <table>
                         <thead>
                             <tr>
                                 <th>Barcode</th>
-                                <th>Serial #</th>
                                 <th>SKU</th>
                                 <th>Name</th>
                                 <th>Category</th>
                                 <th>Branch</th>
                                 <th>Qty</th>
+                                <th>Serials</th>
                                 <th>Min</th>
                                 <th>Status</th>
                                 <th></th>
@@ -736,16 +770,6 @@
                     </table>
                 </div>
             </div>
-            <div class="card">
-                <h3><i class="fas fa-bolt"></i> Quick Stock Update</h3>
-                <div class="form-row">
-                    <div class="input-group"><label>Barcode</label><input type="text" id="quickBarcode" placeholder="Scan or enter barcode" /></div>
-                    <div class="input-group"><label>Action</label><select id="quickAction"><option value="add">Add Stock</option><option value="remove">Remove Stock</option></select></div>
-                    <div class="input-group"><label>Quantity</label><input type="number" id="quickQty" value="1" min="1" /></div>
-                    <button id="quickBtn"><i class="fas fa-play"></i> Apply</button>
-                </div>
-                <div id="quickMsg" class="success-msg"></div>
-            </div>
         </div>
 
         <!-- SCANNER PANEL -->
@@ -756,9 +780,9 @@
                     <div class="input-group" style="flex:3;"><label>Scan Barcode</label><input type="text" id="scannerInput" placeholder="Scan or type barcode..." /></div>
                     <button id="lookupBtn"><i class="fas fa-search"></i> Lookup</button>
                 </div>
-                <div id="lookupResult" style="display:none;margin-top:12px;background:#0f172a;border-radius:12px;padding:14px;border:1px solid #334155;">
+                <div id="lookupResult" style="display:none;margin-top:10px;background:#0f172a;border-radius:12px;padding:12px;border:1px solid #334155;">
                     <div id="lookupInfo"></div>
-                    <div class="form-row" style="margin-top:10px;">
+                    <div class="form-row" style="margin-top:8px;">
                         <div class="input-group"><label>Qty</label><input type="number" id="scanQty" value="1" min="1" /></div>
                         <div class="input-group"><label>Type</label><select id="scanType"><option value="add">Add</option><option value="remove">Remove</option></select></div>
                         <button id="scanApplyBtn" class="secondary"><i class="fas fa-check"></i> Apply</button>
@@ -767,10 +791,31 @@
             </div>
         </div>
 
+        <!-- RECEIVE STOCK PANEL -->
+        <div id="receivePanel" class="panel">
+            <div class="card">
+                <h3><i class="fas fa-arrow-down"></i> Receive Stock with Serial Numbers</h3>
+                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:12px;">Add multiple serial numbers when receiving stock. Each serial must be unique per product.</p>
+                <div class="form-row">
+                    <div class="input-group"><label>Select Product</label><select id="receiveProductSelect"></select></div>
+                    <div class="input-group"><label>Branch</label><select id="receiveBranchSelect"></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group" style="flex:2;">
+                        <label>Serial Numbers (one per line)</label>
+                        <textarea id="receiveSerials" placeholder="SN-2025-0001&#10;SN-2025-0002&#10;SN-2025-0003" rows="4"></textarea>
+                        <div style="font-size:0.6rem;color:#64748b;margin-top:3px;">Enter each serial number on a new line. Duplicates will be ignored.</div>
+                    </div>
+                </div>
+                <button id="receiveBtn"><i class="fas fa-arrow-down"></i> Receive Stock</button>
+                <div id="receiveMsg" class="success-msg"></div>
+            </div>
+        </div>
+
         <!-- LOGS PANEL -->
         <div id="logsPanel" class="panel">
             <div class="flex-between">
-                <h3><i class="fas fa-history"></i> Movement History</h3>
+                <h3><i class="fas fa-history"></i> Activity Log</h3>
                 <button id="clearLogsBtn" class="secondary"><i class="fas fa-broom"></i> Clear</button>
             </div>
             <div class="card">
@@ -786,14 +831,8 @@
                     <div class="input-group"><label>SKU *</label><input type="text" id="newSku" placeholder="WH-1001" /></div>
                     <div class="input-group"><label>Name *</label><input type="text" id="newName" placeholder="Product name" /></div>
                     <div class="input-group"><label>Category</label><input type="text" id="newCat" placeholder="Category" /></div>
-                    <div class="input-group"><label>Branch</label>
-                        <select id="newBranch"></select>
-                    </div>
-                    <div class="input-group"><label>Qty</label><input type="number" id="newQty" value="0" /></div>
+                    <div class="input-group"><label>Branch</label><select id="newBranch"></select></div>
                     <div class="input-group"><label>Min Stock</label><input type="number" id="newMin" value="5" /></div>
-                </div>
-                <div class="form-row">
-                    <div class="input-group"><label>Serial Number</label><input type="text" id="newSerial" placeholder="e.g., SN-2025-001" /></div>
                 </div>
                 <div class="barcode-option-group">
                     <div class="radio-group">
@@ -823,9 +862,9 @@
                         <input type="text" id="manualRegenBarcode" placeholder="Enter new barcode" style="width:100%;" />
                         <div id="regenBarcodeError" style="color:#fca5a5;font-size:11px;margin-top:4px;display:none;"></div>
                     </div>
-                    <button id="updateBarcodeBtn" class="secondary" style="margin-top:8px;"><i class="fas fa-sync-alt"></i> Update Barcode</button>
+                    <button id="updateBarcodeBtn" class="secondary" style="margin-top:6px;"><i class="fas fa-sync-alt"></i> Update Barcode</button>
                 </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
                     <button id="previewBtn" class="secondary"><i class="fas fa-eye"></i> Preview</button>
                     <button id="savePngBtn" class="secondary"><i class="fas fa-download"></i> Save PNG</button>
                 </div>
@@ -843,10 +882,7 @@
                     <div class="input-group"><label>Branch</label><select id="editBranch"></select></div>
                     <div class="input-group"><label>Min Stock</label><input type="number" id="editMin" /></div>
                 </div>
-                <div class="form-row">
-                    <div class="input-group"><label>Serial</label><input type="text" id="editSerial" /></div>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
                     <button id="updateBtn" class="secondary"><i class="fas fa-save"></i> Save</button>
                     <button id="deleteBtn" class="danger"><i class="fas fa-trash"></i> Delete</button>
                 </div>
@@ -857,10 +893,10 @@
         <div id="usersPanel" class="panel">
             <div class="card">
                 <h3><i class="fas fa-users"></i> User Management</h3>
-                <p style="color:#94a3b8;font-size:0.8rem;margin-bottom:12px;">Manage user access to branches and permissions.</p>
+                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:10px;">Manage user access to branches and permissions.</p>
                 <div id="usersList"></div>
-                <div style="margin-top:16px;">
-                    <h4 style="margin-bottom:8px;">Add New User</h4>
+                <div style="margin-top:14px;">
+                    <h4 style="margin-bottom:6px;font-size:0.85rem;">Add New User</h4>
                     <div class="form-row">
                         <div class="input-group"><label>Name</label><input type="text" id="adminRegName" placeholder="Full name" /></div>
                         <div class="input-group"><label>Email</label><input type="email" id="adminRegEmail" placeholder="user@company.com" /></div>
@@ -889,8 +925,8 @@
         <div id="branchesPanel" class="panel">
             <div class="card">
                 <h3><i class="fas fa-store"></i> Branch Management</h3>
-                <p style="color:#94a3b8;font-size:0.8rem;margin-bottom:12px;">Create and manage branches for multi-location inventory.</p>
-                <div id="branchesList" style="margin-bottom:16px;"></div>
+                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:10px;">Create and manage branches for multi-location inventory.</p>
+                <div id="branchesList" style="margin-bottom:12px;"></div>
                 <div class="form-row">
                     <div class="input-group" style="flex:2;"><label>Branch Name</label><input type="text" id="newBranchName" placeholder="e.g., Singapore Warehouse" /></div>
                     <div class="input-group"><label>Location</label><input type="text" id="newBranchLocation" placeholder="City, Country" /></div>
@@ -941,43 +977,25 @@
             return !products.some(p => p.barcode === barcode && p.id !== excludeId);
         }
 
-        function generateSerial() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-            return `SN-${year}${month}${day}-${random}`;
-        }
-
         function getBranchName(id) {
             const b = branches.find(x => x.id === id);
             return b ? b.name : 'Unknown';
         }
 
-        function getUserBranchIds(user) {
-            if (!user) return [];
-            return user.branches || [];
-        }
-
         function hasUserAccessToBranch(user, branchId) {
             if (!user) return false;
             if (user.role === 'admin') return true;
-            const branches = user.branches || [];
-            return branches.includes(branchId) || branchId === 'all';
+            const branches2 = user.branches || [];
+            return branches2.includes(branchId) || branchId === 'all';
         }
 
         function canUserEdit(user) {
             return user && (user.role === 'admin' || user.role === 'manager');
         }
 
-        function canUserManageUsers(user) {
-            return user && user.role === 'admin';
-        }
+        function canUserManageUsers(user) { return user && user.role === 'admin'; }
 
-        function canUserManageBranches(user) {
-            return user && user.role === 'admin';
-        }
+        function canUserManageBranches(user) { return user && user.role === 'admin'; }
 
         // ===== LOGS =====
         function addLog(msg) {
@@ -1001,7 +1019,7 @@
                 container.innerHTML = '<div class="log-entry">No transactions yet</div>';
             } else {
                 container.innerHTML = transactionLogs.slice(0, 50).map(l =>
-                    `<div class="log-entry"><span>${escapeHtml(l.time)}</span><span>👤 ${escapeHtml(l.user)}</span><span>📦 ${escapeHtml(l.text)}</span></div>`
+                    `<div class="log-entry"><span>${escapeHtml(l.time)}</span><span>👤 ${escapeHtml(l.user)}</span><span>${escapeHtml(l.text)}</span></div>`
                 ).join('');
             }
         }
@@ -1011,17 +1029,15 @@
             const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
             let filtered = products;
 
-            // Apply branch filter
             if (currentBranchFilter !== 'all') {
                 filtered = filtered.filter(p => p.branchId === currentBranchFilter);
             }
 
-            // Apply search
             filtered = filtered.filter(p =>
                 (p.sku || "").toLowerCase().includes(search) ||
                 (p.name || "").toLowerCase().includes(search) ||
                 (p.barcode || "").toLowerCase().includes(search) ||
-                (p.serial || "").toLowerCase().includes(search)
+                (p.serials || []).some(s => s.toLowerCase().includes(search))
             );
 
             const tbody = document.getElementById("tableBody");
@@ -1030,21 +1046,29 @@
                     `<tr><td colspan="10" style="text-align:center;padding:30px;">📦 No products in this branch</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map(p => {
-                    const low = (p.qty || 0) <= (p.minStock || 0);
+                    const low = (p.serials || []).length <= (p.minStock || 0);
+                    const serialCount = (p.serials || []).length;
+                    const serialDisplay = serialCount > 0 ?
+                        `<span class="badge badge-success">${serialCount} units</span> ` +
+                        (serialCount <= 3 ? (p.serials || []).map(s => `<span class="serial-badge">${escapeHtml(s)}</span>`)
+                            .join(' ') :
+                            `<span class="serial-badge">+${serialCount} serials</span>`) :
+                        `<span class="badge badge-warning">No serials</span>`;
                     return `<tr>
                         <td><i class="fas fa-barcode"></i> ${escapeHtml(p.barcode)}</td>
-                        <td><span class="serial-badge">${escapeHtml(p.serial || '—')}</span></td>
                         <td><strong>${escapeHtml(p.sku)}</strong></td>
                         <td>${escapeHtml(p.name)}</td>
                         <td>${escapeHtml(p.cat || "General")}</td>
                         <td><span class="branch-tag">${escapeHtml(getBranchName(p.branchId))}</span></td>
-                        <td><span class="stock-badge ${low ? 'low-stock' : ''}">${p.qty || 0}</span></td>
+                        <td><span class="stock-badge ${low ? 'low-stock' : ''}">${serialCount}</span></td>
+                        <td style="max-width:150px;">${serialDisplay}</td>
                         <td>${p.minStock || 5}</td>
                         <td>${low ? '⚠️ Low' : '✅ OK'}</td>
                         <td class="action-icons">
                             <i class="fas fa-edit" data-id="${p.id}" title="Edit"></i>
                             <i class="fas fa-trash-alt" data-id="${p.id}" title="Delete"></i>
                             <i class="fas fa-barcode" data-id="${p.id}" title="Barcode"></i>
+                            <i class="fas fa-list-ul" data-id="${p.id}" title="View Serials" onclick="viewSerials('${p.id}')"></i>
                         </td>
                     </tr>`;
                 }).join('');
@@ -1057,12 +1081,15 @@
             ).join('');
             document.getElementById("editSelect").innerHTML = options || '<option>No products</option>';
             document.getElementById("barcodeSelect").innerHTML = options || '<option>No products</option>';
+            document.getElementById("receiveProductSelect").innerHTML = options || '<option>No products</option>';
 
             // Stats
-            document.getElementById("totalProducts").innerText = filtered.length;
-            document.getElementById("totalUnits").innerText = filtered.reduce((s, p) => s + (p.qty || 0), 0);
-            document.getElementById("lowStockCount").innerText = filtered.filter(p => (p.qty || 0) <= (p.minStock || 0))
-                .length;
+            const totalProducts = filtered.length;
+            const totalUnits = filtered.reduce((s, p) => s + (p.serials || []).length, 0);
+            const lowCount = filtered.filter(p => (p.serials || []).length <= (p.minStock || 0)).length;
+            document.getElementById("totalProducts").innerText = totalProducts;
+            document.getElementById("totalUnits").innerText = totalUnits;
+            document.getElementById("lowStockCount").innerText = lowCount;
 
             // Attach events
             document.querySelectorAll(".fa-edit").forEach(icon => {
@@ -1091,9 +1118,9 @@
                         alert("You don't have permission to delete this product.");
                         return;
                     }
-                    if (confirm(`Delete "${prod.name}" permanently?`)) {
+                    if (confirm(`Delete "${prod.name}" permanently? This will remove all serials.`)) {
                         await db.collection("products").doc(id).delete();
-                        addLog(`Deleted ${prod.sku}`);
+                        addLog(`Deleted ${prod.sku} (${(prod.serials || []).length} serials)`);
                     }
                 };
             });
@@ -1115,17 +1142,26 @@
             });
         }
 
+        window.viewSerials = function(productId) {
+            const prod = products.find(p => p.id === productId);
+            if (!prod) return;
+            const serials = prod.serials || [];
+            if (serials.length === 0) {
+                alert(`No serial numbers for ${prod.sku}`);
+                return;
+            }
+            alert(`Serial numbers for ${prod.sku} (${prod.name}):\n\n${serials.join('\n')}\n\nTotal: ${serials.length} units`);
+        };
+
         function renderUsers() {
             const container = document.getElementById("usersList");
             if (!container) return;
             if (!canUserManageUsers(currentUser)) {
                 container.innerHTML =
-                    '<p style="color:#94a3b8;">Only admins can manage users.</p>';
-                document.getElementById("usersPanel").querySelector('.form-row').style.display = 'none';
+                '<p style="color:#94a3b8;">Only admins can manage users.</p>';
                 document.getElementById("adminAddUserBtn").style.display = 'none';
                 return;
             }
-            document.getElementById("usersPanel").querySelector('.form-row').style.display = 'flex';
             document.getElementById("adminAddUserBtn").style.display = 'inline-flex';
 
             if (users.length === 0) {
@@ -1135,21 +1171,20 @@
                     <div class="user-list-item">
                         <div class="user-info">
                             <strong>${escapeHtml(u.name || u.email)}</strong>
-                            <span style="color:#94a3b8;font-size:0.75rem;">${escapeHtml(u.email)}</span>
+                            <span style="color:#94a3b8;font-size:0.7rem;">${escapeHtml(u.email)}</span>
                             <span class="role-badge ${u.role === 'admin' ? 'role-admin' : u.role === 'manager' ? 'role-manager' : 'role-user'}">${u.role}</span>
-                            <span style="font-size:0.7rem;color:#94a3b8;">Branches: ${(u.branches || []).map(b => getBranchName(b)).join(', ') || 'All (Admin)'}</span>
+                            <span style="font-size:0.65rem;color:#94a3b8;">Branches: ${(u.branches || []).map(b => getBranchName(b)).join(', ') || 'All (Admin)'}</span>
                         </div>
                         ${u.id !== currentUser?.id ? `
                         <div class="user-actions">
-                            <button class="secondary" onclick="editUser('${u.id}')" style="padding:4px 12px;font-size:0.7rem;"><i class="fas fa-edit"></i></button>
-                            <button class="danger" onclick="deleteUser('${u.id}')" style="padding:4px 12px;font-size:0.7rem;"><i class="fas fa-trash"></i></button>
+                            <button class="secondary" onclick="editUser('${u.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-edit"></i></button>
+                            <button class="danger" onclick="deleteUser('${u.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-trash"></i></button>
                         </div>` : `
-                        <span style="font-size:0.65rem;color:#94a3b8;">(You)</span>`}
+                        <span style="font-size:0.6rem;color:#94a3b8;">(You)</span>`}
                     </div>
                 `).join('');
             }
 
-            // Update branch access checkboxes in admin registration
             const container2 = document.getElementById("adminRegBranchAccess");
             if (container2) {
                 container2.innerHTML = branches.map(b =>
@@ -1175,11 +1210,11 @@
                     <div class="user-list-item">
                         <div class="user-info">
                             <strong>${escapeHtml(b.name)}</strong>
-                            <span style="color:#94a3b8;font-size:0.75rem;">${escapeHtml(b.location || 'No location')}</span>
-                            <span style="font-size:0.7rem;color:#94a3b8;">ID: ${escapeHtml(b.id)}</span>
+                            <span style="color:#94a3b8;font-size:0.7rem;">${escapeHtml(b.location || 'No location')}</span>
+                            <span style="font-size:0.6rem;color:#94a3b8;">ID: ${escapeHtml(b.id)}</span>
                         </div>
                         <div class="user-actions">
-                            <button class="danger" onclick="deleteBranch('${b.id}')" style="padding:4px 12px;font-size:0.7rem;"><i class="fas fa-trash"></i></button>
+                            <button class="danger" onclick="deleteBranch('${b.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 `).join('');
@@ -1189,28 +1224,26 @@
             const branchOptions = branches.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
             document.getElementById("newBranch").innerHTML = branchOptions;
             document.getElementById("editBranch").innerHTML = branchOptions;
+            document.getElementById("receiveBranchSelect").innerHTML = branchOptions;
 
-            // Update branch filter
             const filter = document.getElementById("branchFilter");
             const currentVal = filter.value;
             filter.innerHTML = `<option value="all">🏢 All Branches</option>` + branchOptions;
             filter.value = currentVal;
 
-            // Update user branch access checkboxes
-            const container3 = document.getElementById("adminRegBranchAccess");
-            if (container3) {
-                container3.innerHTML = branches.map(b =>
-                    `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
-                ).join('');
-            }
-
-            // Update branch filter display
             const display = document.getElementById("headerBranchDisplay");
             if (currentBranchFilter === 'all') {
                 display.textContent = 'All Branches';
             } else {
                 const b = branches.find(x => x.id === currentBranchFilter);
                 display.textContent = b ? b.name : 'Unknown Branch';
+            }
+
+            const container3 = document.getElementById("adminRegBranchAccess");
+            if (container3) {
+                container3.innerHTML = branches.map(b =>
+                    `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
+                ).join('');
             }
         }
 
@@ -1228,7 +1261,6 @@
             const newRole = prompt(`Enter new role for ${user.email} (admin/manager/user):`, user.role);
             if (!newRole || !['admin', 'manager', 'user'].includes(newRole)) return;
 
-            // Get branch selection
             const branchList = branches.map(b => b.id);
             const selectedBranches = [];
             for (const b of branchList) {
@@ -1267,7 +1299,10 @@
         // ===== FIRESTORE LISTENERS =====
         db.collection("products").onSnapshot((snapshot) => {
             products = [];
-            snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                products.push({ id: doc.id, ...data, serials: data.serials || [] });
+            });
             renderTable();
             document.getElementById("connectionStatus").innerHTML = '✅ Connected to Firestore';
             document.getElementById("connectionStatus").className = "status-bar status-online";
@@ -1310,14 +1345,13 @@
             roleEl.textContent = currentUser.role || 'user';
             roleEl.className = `role-badge ${currentUser.role === 'admin' ? 'role-admin' : currentUser.role === 'manager' ? 'role-manager' : 'role-user'}`;
 
-            // Show/hide tabs based on permissions
             document.getElementById("usersTab").style.display = canUserManageUsers(currentUser) ? 'inline-flex' : 'none';
             document.getElementById("branchesTab").style.display = canUserManageBranches(currentUser) ? 'inline-flex' :
                 'none';
 
-            // Set branch filter access
             const filter = document.getElementById("branchFilter");
             filter.value = currentBranchFilter;
+            renderAll();
         }
 
         function showLogin() {
@@ -1363,7 +1397,6 @@
             document.getElementById("loginForm").style.display = "none";
             document.getElementById("registerForm").style.display = "block";
             document.getElementById("loginError").style.display = "none";
-            // Populate branch access checkboxes
             const container = document.getElementById("regBranchAccess");
             container.innerHTML = branches.map(b =>
                 `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
@@ -1394,7 +1427,6 @@
                 return;
             }
 
-            // Check if user exists
             const existing = await db.collection("users").where("email", "==", email).get();
             if (!existing.empty) {
                 document.getElementById("registerError").textContent = "Email already registered.";
@@ -1402,7 +1434,6 @@
                 return;
             }
 
-            // Get selected branches
             const branchCheckboxes = document.querySelectorAll('#regBranchAccess input[type="checkbox"]:checked');
             const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
 
@@ -1465,16 +1496,17 @@
             }
             const branchId = branches[0].id;
             const demos = [
-                { sku: "WH-1001", name: "Wireless Mouse", cat: "Electronics", qty: 42, minStock: 8,
-                    barcode: "690123456789", serial: "SN-2025-0001", branchId },
-                { sku: "WH-1002", name: "Mechanical Keyboard", cat: "Electronics", qty: 18, minStock: 5,
-                    barcode: "692837461025", serial: "SN-2025-0002", branchId },
-                { sku: "WH-2001", name: "Steel Shelf", cat: "Furniture", qty: 7, minStock: 4,
-                    barcode: "697215438902", serial: "SN-2025-0003", branchId },
-                { sku: "WH-3005", name: "Anti-static Mat", cat: "Safety", qty: 3, minStock: 5,
-                    barcode: "694178362501", serial: "SN-2025-0004", branchId },
-                { sku: "WH-4002", name: "Pallet Jack", cat: "Equipment", qty: 12, minStock: 2,
-                    barcode: "698234517890", serial: "SN-2025-0005", branchId }
+                { sku: "WH-1001", name: "Wireless Mouse", cat: "Electronics", barcode: "690123456789",
+                    serials: ["SN-2025-0001", "SN-2025-0002", "SN-2025-0003"], minStock: 5, branchId },
+                { sku: "WH-1002", name: "Mechanical Keyboard", cat: "Electronics", barcode: "692837461025",
+                    serials: ["SN-2025-0010", "SN-2025-0011"], minStock: 5, branchId },
+                { sku: "WH-2001", name: "Steel Shelf", cat: "Furniture", barcode: "697215438902",
+                    serials: ["SN-2025-0020"], minStock: 4, branchId },
+                { sku: "WH-3005", name: "Anti-static Mat", cat: "Safety", barcode: "694178362501",
+                    serials: ["SN-2025-0030", "SN-2025-0031", "SN-2025-0032", "SN-2025-0033"], minStock: 5,
+                    branchId },
+                { sku: "WH-4002", name: "Pallet Jack", cat: "Equipment", barcode: "698234517890",
+                    serials: ["SN-2025-0040", "SN-2025-0041"], minStock: 2, branchId }
             ];
             let added = 0;
             for (const d of demos) {
@@ -1484,7 +1516,69 @@
                 }
             }
             addLog(`Added ${added} demo products to ${getBranchName(branchId)}`);
-            alert(`✅ Added ${added} demo products!`);
+            alert(`✅ Added ${added} demo products with serial numbers!`);
+        };
+
+        // ===== RECEIVE STOCK WITH SERIALS =====
+        document.getElementById("receiveBtn").onclick = async () => {
+            if (!canUserEdit(currentUser)) {
+                alert("You don't have permission to receive stock.");
+                return;
+            }
+            const productId = document.getElementById("receiveProductSelect").value;
+            const branchId = document.getElementById("receiveBranchSelect").value;
+            const serialsText = document.getElementById("receiveSerials").value.trim();
+
+            if (!productId) { alert("Select a product."); return; }
+            if (!branchId) { alert("Select a branch."); return; }
+            if (!serialsText) { alert("Enter at least one serial number."); return; }
+
+            const prod = products.find(p => p.id === productId);
+            if (!prod) { alert("Product not found."); return; }
+
+            if (!hasUserAccessToBranch(currentUser, prod.branchId)) {
+                alert("You don't have access to this product's branch.");
+                return;
+            }
+
+            // Parse serials (one per line)
+            const newSerials = serialsText.split('\n')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            if (newSerials.length === 0) {
+                alert("No valid serial numbers found.");
+                return;
+            }
+
+            // Check for duplicates within the product
+            const existingSerials = prod.serials || [];
+            const duplicates = newSerials.filter(s => existingSerials.includes(s));
+            if (duplicates.length > 0) {
+                if (!confirm(`Warning: ${duplicates.length} serial numbers already exist. Continue?`)) {
+                    return;
+                }
+            }
+
+            // Add unique serials
+            const uniqueNew = newSerials.filter(s => !existingSerials.includes(s));
+            if (uniqueNew.length === 0) {
+                alert("All serial numbers already exist. No new serials added.");
+                return;
+            }
+
+            const updatedSerials = [...existingSerials, ...uniqueNew];
+
+            await db.collection("products").doc(productId).update({
+                serials: updatedSerials
+            });
+
+            addLog(`Received ${uniqueNew.length} serials for ${prod.sku} at ${getBranchName(branchId)}`);
+            document.getElementById("receiveSerials").value = "";
+            const msg = document.getElementById("receiveMsg");
+            msg.style.display = "block";
+            msg.innerHTML = `✅ Received ${uniqueNew.length} serial numbers for ${prod.sku}`;
+            setTimeout(() => msg.style.display = "none", 3000);
         };
 
         // ===== ADD PRODUCT =====
@@ -1521,31 +1615,28 @@
                     c++; }
             }
 
-            const serial = document.getElementById("newSerial").value.trim() || generateSerial();
+            const minStock = parseInt(document.getElementById("newMin").value) || 5;
 
             await db.collection("products").add({
                 sku,
                 name,
                 cat: document.getElementById("newCat").value.trim() || "General",
                 branchId,
-                qty: parseInt(document.getElementById("newQty").value) || 0,
-                minStock: parseInt(document.getElementById("newMin").value) || 5,
+                minStock,
                 barcode,
-                serial
+                serials: []
             });
 
-            addLog(`Added ${sku} to ${getBranchName(branchId)} | Barcode: ${barcode}`);
+            addLog(`Added product ${sku} to ${getBranchName(branchId)} | Barcode: ${barcode}`);
             document.getElementById("newSku").value = "";
             document.getElementById("newName").value = "";
             document.getElementById("newCat").value = "";
-            document.getElementById("newQty").value = "0";
             document.getElementById("manualBarcode").value = "";
-            document.getElementById("newSerial").value = "";
             document.querySelector('input[name="barcodeOption"][value="auto"]').checked = true;
             document.getElementById("manualBarcodeArea").classList.add("hidden");
             const msg = document.getElementById("addMsg");
             msg.style.display = "block";
-            msg.innerHTML = `✅ Added! Barcode: ${barcode} | Serial: ${serial}`;
+            msg.innerHTML = `✅ Product added! Barcode: ${barcode}`;
             setTimeout(() => msg.style.display = "none", 3000);
         };
 
@@ -1569,8 +1660,6 @@
             if (document.getElementById("editCat").value.trim()) updates.cat = document.getElementById("editCat").value
                 .trim();
             if (document.getElementById("editBranch").value) updates.branchId = document.getElementById("editBranch").value;
-            if (document.getElementById("editSerial").value.trim()) updates.serial = document.getElementById("editSerial")
-                .value.trim();
             const newMin = parseInt(document.getElementById("editMin").value);
             if (!isNaN(newMin) && newMin >= 0) updates.minStock = newMin;
 
@@ -1714,7 +1803,7 @@
                 alert("You don't have access to this product's branch.");
                 return;
             }
-            if (confirm(`Delete "${prod.name}" permanently?`)) {
+            if (confirm(`Delete "${prod.name}" permanently? This will remove all serials.`)) {
                 await db.collection("products").doc(id).delete();
                 addLog(`Deleted ${prod.sku}`);
                 alert("✅ Deleted!");
@@ -1730,7 +1819,6 @@
                 document.getElementById("editCat").value = prod.cat || "";
                 document.getElementById("editBranch").value = prod.branchId || "";
                 document.getElementById("editMin").value = prod.minStock || 5;
-                document.getElementById("editSerial").value = prod.serial || "";
             }
         };
 
@@ -1745,8 +1833,9 @@
                     alert("You don't have access to this product's branch.");
                     return;
                 }
+                const serialCount = (prod.serials || []).length;
                 document.getElementById("lookupInfo").innerHTML =
-                    `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Serial: ${escapeHtml(prod.serial || '—')}<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Stock: ${prod.qty}`;
+                    `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Stock: ${serialCount} units<br>Serials: ${(prod.serials || []).slice(0,5).join(', ')}${serialCount > 5 ? ` +${serialCount-5} more` : ''}`;
                 resultDiv.style.display = "block";
                 resultDiv.setAttribute("data-id", prod.id);
             } else {
@@ -1771,16 +1860,43 @@
                 return;
             }
 
-            let qty = parseInt(document.getElementById("scanQty").value);
+            // For serialized inventory, we need to add/remove individual serials
+            const serials = prod.serials || [];
+            if (serials.length === 0 && document.getElementById("scanType").value === "remove") {
+                alert("No serials to remove.");
+                return;
+            }
+
             const type = document.getElementById("scanType").value;
-            if (isNaN(qty) || qty < 1) qty = 1;
-            const delta = type === "add" ? qty : -qty;
-            const newQty = (prod.qty || 0) + delta;
-            if (newQty < 0) { alert(`Only ${prod.qty} available`); return; }
-            await db.collection("products").doc(id).update({ qty: newQty });
-            addLog(`Scanner ${type}: ${prod.sku} ${delta > 0 ? '+' : ''}${delta} → ${newQty} (${getBranchName(prod.branchId)})`);
-            document.getElementById("scannerInput").value = "";
-            resultDiv.style.display = "none";
+            if (type === "add") {
+                // Prompt for serial number to add
+                const newSerial = prompt("Enter serial number to add:");
+                if (!newSerial) return;
+                if (serials.includes(newSerial)) {
+                    alert("Serial already exists!");
+                    return;
+                }
+                await db.collection("products").doc(id).update({
+                    serials: [...serials, newSerial]
+                });
+                addLog(`Scanner added serial ${newSerial} to ${prod.sku}`);
+                document.getElementById("scannerInput").value = "";
+                resultDiv.style.display = "none";
+            } else {
+                // Remove: prompt for serial to remove
+                const serialToRemove = prompt(`Enter serial to remove from:\n${serials.join(', ')}`);
+                if (!serialToRemove) return;
+                if (!serials.includes(serialToRemove)) {
+                    alert("Serial not found!");
+                    return;
+                }
+                await db.collection("products").doc(id).update({
+                    serials: serials.filter(s => s !== serialToRemove)
+                });
+                addLog(`Scanner removed serial ${serialToRemove} from ${prod.sku}`);
+                document.getElementById("scannerInput").value = "";
+                resultDiv.style.display = "none";
+            }
         };
 
         // ===== QUICK UPDATE =====
@@ -1798,39 +1914,66 @@
                 return;
             }
 
-            let qty = parseInt(document.getElementById("quickQty").value);
             const action = document.getElementById("quickAction").value;
-            if (isNaN(qty) || qty < 1) qty = 1;
-            const delta = action === "add" ? qty : -qty;
-            const newQty = (prod.qty || 0) + delta;
-            if (newQty < 0) { alert(`Only ${prod.qty} available`); return; }
-            await db.collection("products").doc(prod.id).update({ qty: newQty });
-            addLog(`Quick ${action}: ${prod.sku} ${delta > 0 ? '+' : ''}${delta} → ${newQty} (${getBranchName(prod.branchId)})`);
-            document.getElementById("quickBarcode").value = "";
-            const msg = document.getElementById("quickMsg");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ ${prod.name}: ${action === 'add' ? '+' : '-'}${qty} → ${newQty}`;
-            setTimeout(() => msg.style.display = "none", 2000);
+            const serials = prod.serials || [];
+
+            if (action === "add") {
+                const newSerial = prompt("Enter serial number to add:");
+                if (!newSerial) return;
+                if (serials.includes(newSerial)) {
+                    alert("Serial already exists!");
+                    return;
+                }
+                await db.collection("products").doc(prod.id).update({
+                    serials: [...serials, newSerial]
+                });
+                addLog(`Quick add serial ${newSerial} to ${prod.sku}`);
+                document.getElementById("quickBarcode").value = "";
+                const msg = document.getElementById("quickMsg");
+                msg.style.display = "block";
+                msg.innerHTML = `✅ Added serial ${newSerial} to ${prod.name}`;
+                setTimeout(() => msg.style.display = "none", 2000);
+            } else {
+                if (serials.length === 0) {
+                    alert("No serials to remove.");
+                    return;
+                }
+                const serialToRemove = prompt(`Enter serial to remove from:\n${serials.join(', ')}`);
+                if (!serialToRemove) return;
+                if (!serials.includes(serialToRemove)) {
+                    alert("Serial not found!");
+                    return;
+                }
+                await db.collection("products").doc(prod.id).update({
+                    serials: serials.filter(s => s !== serialToRemove)
+                });
+                addLog(`Quick remove serial ${serialToRemove} from ${prod.sku}`);
+                document.getElementById("quickBarcode").value = "";
+                const msg = document.getElementById("quickMsg");
+                msg.style.display = "block";
+                msg.innerHTML = `✅ Removed serial ${serialToRemove} from ${prod.name}`;
+                setTimeout(() => msg.style.display = "none", 2000);
+            }
         };
 
         // ===== EXPORT PDF =====
         document.getElementById("exportPdfBtn").onclick = () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape', 'mm', 'a4');
-            doc.setFontSize(16);
+            doc.setFontSize(14);
             doc.text('Inventory Report - StockFlow WMS', 14, 20);
 
-            const tableData = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter)
-                .map(p => [
-                    p.barcode || '',
-                    p.sku || '',
-                    p.name || '',
-                    p.cat || 'General',
-                    getBranchName(p.branchId),
-                    String(p.qty || 0),
-                    String(p.minStock || 5),
-                    (p.qty || 0) <= (p.minStock || 0) ? 'Low Stock' : 'OK'
-                ]);
+            const filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
+            const tableData = filtered.map(p => [
+                p.barcode || '',
+                p.sku || '',
+                p.name || '',
+                p.cat || 'General',
+                getBranchName(p.branchId),
+                String((p.serials || []).length),
+                String(p.minStock || 5),
+                (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK'
+            ]);
 
             doc.autoTable({
                 head: [
@@ -1838,7 +1981,7 @@
                 ],
                 body: tableData,
                 startY: 25,
-                styles: { fontSize: 8, cellPadding: 2 },
+                styles: { fontSize: 7, cellPadding: 2 },
                 headStyles: { fillColor: [52, 211, 153], textColor: [15, 23, 42] }
             });
 
@@ -1848,18 +1991,19 @@
 
         // ===== EXPORT CSV =====
         document.getElementById("exportCsvBtn").onclick = () => {
-            const headers = ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Min', 'Status'];
-            const data = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter)
-                .map(p => [
-                    p.barcode || '',
-                    p.sku || '',
-                    p.name || '',
-                    p.cat || 'General',
-                    getBranchName(p.branchId),
-                    String(p.qty || 0),
-                    String(p.minStock || 5),
-                    (p.qty || 0) <= (p.minStock || 0) ? 'Low Stock' : 'OK'
-                ]);
+            const headers = ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Min', 'Status', 'Serials'];
+            const filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
+            const data = filtered.map(p => [
+                p.barcode || '',
+                p.sku || '',
+                p.name || '',
+                p.cat || 'General',
+                getBranchName(p.branchId),
+                String((p.serials || []).length),
+                String(p.minStock || 5),
+                (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK',
+                (p.serials || []).join('; ')
+            ]);
 
             let csv = headers.join(',') + '\n';
             data.forEach(row => {
@@ -1890,7 +2034,6 @@
                 if (target) target.classList.add("active");
                 document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
                 btn.classList.add("active");
-                // If users or branches tab, ensure admin only
                 if (tab === 'users' && !canUserManageUsers(currentUser)) {
                     alert("Only admins can access User Management.");
                     document.querySelector('[data-tab="inventory"]').click();
@@ -1899,6 +2042,13 @@
                     alert("Only admins can access Branch Management.");
                     document.querySelector('[data-tab="inventory"]').click();
                 }
+                if (tab === 'receive') {
+                    // Populate receive dropdowns
+                    const options = products.map(p =>
+                        `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)}</option>`
+                    ).join('');
+                    document.getElementById("receiveProductSelect").innerHTML = options || '<option>No products</option>';
+                }
             };
         });
 
@@ -1906,13 +2056,12 @@
         if (!checkAuth()) {
             showLogin();
         } else {
-            // Set initial branch filter
             document.getElementById("branchFilter").value = 'all';
             renderAll();
         }
 
-        addLog("System initialized");
-        console.log("WMS Pro loaded with user management, branches, and export features.");
+        addLog("System initialized with serialized inventory");
+        console.log("WMS Pro loaded with serialized inventory, branches, and user management.");
     </script>
 </body>
 </html>
