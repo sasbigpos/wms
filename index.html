@@ -628,6 +628,38 @@
         .selected-serials-display .serial-tag .remove-serial:hover {
             color: #ef4444;
         }
+        .serial-checkbox-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 6px;
+            border: 1px solid #334155;
+        }
+        .serial-checkbox-list label {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #1e293b;
+            padding: 2px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            border: 1px solid #334155;
+        }
+        .serial-checkbox-list label:hover {
+            border-color: #34d399;
+        }
+        .serial-checkbox-list label input[type="checkbox"] {
+            accent-color: #34d399;
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
         @media (max-width: 768px) {
             .login-box {
                 padding: 24px;
@@ -645,6 +677,10 @@
             }
             .input-group {
                 min-width: 80px;
+            }
+            .serial-checkbox-list label {
+                font-size: 0.6rem;
+                padding: 2px 6px;
             }
         }
     </style>
@@ -842,13 +878,6 @@
                     <div class="input-group"><label>Branch</label><select id="issueBranchSelect"></select></div>
                 </div>
 
-                <div style="margin:12px 0;">
-                    <label style="font-size:0.6rem;font-weight:700;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:6px;">Available Serials</label>
-                    <div id="availableSerialsDisplay" style="background:#0f172a;border-radius:8px;padding:8px;border:1px solid #334155;min-height:40px;max-height:120px;overflow-y:auto;">
-                        <span style="color:#64748b;font-size:0.75rem;">Select a product to view available serials</span>
-                    </div>
-                </div>
-
                 <div class="issuance-type-selector">
                     <label><input type="radio" name="issueType" value="select" checked /> Select from list</label>
                     <label><input type="radio" name="issueType" value="manual" /> Enter manually</label>
@@ -860,8 +889,8 @@
                         <button id="deselectAllSerialsBtn" class="secondary" style="font-size:0.7rem;"><i class="fas fa-times"></i> Deselect All</button>
                         <span style="font-size:0.7rem;color:#94a3b8;" id="selectedCountDisplay">0 selected</span>
                     </div>
-                    <div id="serialCheckboxList" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;max-height:120px;overflow-y:auto;background:#0f172a;border-radius:8px;padding:6px;border:1px solid #334155;">
-                        <span style="color:#64748b;font-size:0.75rem;">Select a product first</span>
+                    <div id="serialCheckboxList" class="serial-checkbox-list">
+                        <span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Select a product first</span>
                     </div>
                 </div>
 
@@ -1377,7 +1406,6 @@
                 products.push({ id: doc.id, ...data, serials: data.serials || [] });
             });
             renderTable();
-            // Update issue panel if open
             if (document.getElementById("issuePanel").classList.contains("active")) {
                 updateIssuePanel();
             }
@@ -1403,12 +1431,10 @@
         function updateIssuePanel() {
             const productId = document.getElementById("issueProductSelect").value;
             const branchId = document.getElementById("issueBranchSelect").value;
-            const availableDiv = document.getElementById("availableSerialsDisplay");
             const checkboxDiv = document.getElementById("serialCheckboxList");
 
             if (!productId) {
-                availableDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Select a product to view available serials</span>';
-                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Select a product first</span>';
+                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Select a product first</span>';
                 selectedSerials = [];
                 updateSelectedDisplay();
                 return;
@@ -1416,31 +1442,23 @@
 
             const prod = products.find(p => p.id === productId);
             if (!prod) {
-                availableDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Product not found</span>';
-                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Product not found</span>';
+                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Product not found</span>';
                 return;
             }
 
             if (!hasUserAccessToBranch(currentUser, branchId) && currentUser.role !== 'admin') {
-                availableDiv.innerHTML = '<span style="color:#fca5a5;font-size:0.75rem;">You don\'t have access to this branch</span>';
-                checkboxDiv.innerHTML = '';
+                checkboxDiv.innerHTML = '<span style="color:#fca5a5;font-size:0.75rem;width:100%;text-align:center;">You don\'t have access to this branch</span>';
                 return;
             }
 
             const serials = prod.serials || [];
             if (serials.length === 0) {
-                availableDiv.innerHTML = '<span style="color:#fbbf24;font-size:0.75rem;">No serials available for this product</span>';
-                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">No serials available</span>';
+                checkboxDiv.innerHTML = '<span style="color:#fbbf24;font-size:0.75rem;width:100%;text-align:center;">No serials available for this product</span>';
                 selectedSerials = [];
                 updateSelectedDisplay();
                 return;
             }
 
-            availableDiv.innerHTML = serials.map(s =>
-                `<span class="serial-item">${escapeHtml(s)}</span>`
-            ).join('');
-
-            // Build checkboxes
             const issueType = document.querySelector('input[name="issueType"]:checked').value;
             if (issueType === 'select') {
                 checkboxDiv.innerHTML = serials.map(s =>
@@ -1450,7 +1468,7 @@
                     </label>`
                 ).join('');
             } else {
-                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">Manual entry mode active</span>';
+                checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Manual entry mode active</span>';
             }
 
             updateSelectedDisplay();
@@ -1562,7 +1580,6 @@
                     return;
                 }
 
-                // Check if serials exist
                 const existingSerials = prod.serials || [];
                 const missingSerials = serialsToIssue.filter(s => !existingSerials.includes(s));
                 if (missingSerials.length > 0) {
@@ -1576,7 +1593,6 @@
                     }
                 }
             } else {
-                // Selected from list
                 if (selectedSerials.length === 0) {
                     alert("Select at least one serial to issue.");
                     return;
@@ -1584,7 +1600,6 @@
                 serialsToIssue = [...selectedSerials];
             }
 
-            // Remove serials from product
             const currentSerials = prod.serials || [];
             const updatedSerials = currentSerials.filter(s => !serialsToIssue.includes(s));
 
@@ -1594,7 +1609,6 @@
 
             addLog(`Issued ${serialsToIssue.length} serials from ${prod.sku} (${getBranchName(branchId)})`);
 
-            // Clear selections
             selectedSerials = [];
             document.getElementById("issueSerials").value = "";
             document.getElementById("issueMsg").style.display = "block";
@@ -1625,7 +1639,7 @@
             document.getElementById("appContainer").classList.add("active");
             document.getElementById("userNameDisplay").textContent = currentUser.name || currentUser.email;
             document.getElementById("userAvatar").textContent = (currentUser.name || currentUser.email || 'U')[0]
-            .toUpperCase();
+                .toUpperCase();
             const roleEl = document.getElementById("userRoleDisplay");
             roleEl.textContent = currentUser.role || 'user';
             roleEl.className =
@@ -2264,12 +2278,11 @@
             renderAll();
         }
 
-        // Initialize issue panel
         document.querySelector('input[name="issueType"][value="select"]').checked = true;
         document.getElementById("issueManualArea").classList.add("hidden");
 
         addLog("System initialized with issuance feature");
-        console.log("WMS Pro loaded successfully with issuance feature.");
+        console.log("WMS Pro loaded successfully.");
     </script>
 </body>
 </html>
