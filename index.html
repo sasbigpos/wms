@@ -680,10 +680,6 @@
             background: #064e3b;
             color: #34d399;
         }
-        .remark-normal {
-            background: #334155;
-            color: #94a3b8;
-        }
         .filter-group {
             display: flex;
             gap: 10px;
@@ -698,6 +694,76 @@
             background: #0f172a;
             color: #e2e8f0;
             font-size: 0.75rem;
+        }
+        .invoice-badge {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            background: #1e3a5f;
+            color: #60a5fa;
+            font-family: monospace;
+        }
+        .serial-clickable {
+            cursor: pointer;
+            color: #34d399;
+            text-decoration: underline dotted;
+            transition: 0.2s;
+        }
+        .serial-clickable:hover {
+            color: #60a5fa;
+        }
+        .serial-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .serial-modal.active {
+            display: flex;
+        }
+        .serial-modal-content {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid #334155;
+        }
+        .serial-modal-content h3 {
+            margin-bottom: 12px;
+            color: #34d399;
+        }
+        .serial-modal-content .close-modal {
+            float: right;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .serial-modal-content .close-modal:hover {
+            color: #fca5a5;
+        }
+        .serial-modal-content .serial-item {
+            display: inline-block;
+            background: #0f172a;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            margin: 4px;
+            color: #e2e8f0;
+            border: 1px solid #334155;
         }
         @media (max-width: 768px) {
             .login-box {
@@ -723,6 +789,9 @@
             }
             .filter-group {
                 gap: 6px;
+            }
+            .serial-modal-content {
+                padding: 16px;
             }
         }
     </style>
@@ -783,6 +852,15 @@
         </div>
     </div>
 
+    <!-- ===== SERIAL MODAL ===== -->
+    <div class="serial-modal" id="serialModal">
+        <div class="serial-modal-content">
+            <button class="close-modal" id="closeModalBtn">&times;</button>
+            <h3 id="serialModalTitle">Serial Numbers</h3>
+            <div id="serialModalBody"></div>
+        </div>
+    </div>
+
     <!-- ===== MAIN APP ===== -->
     <div class="app-container" id="appContainer">
         <!-- HEADER -->
@@ -829,14 +907,13 @@
                 <div class="flex-between">
                     <h3><i class="fas fa-clipboard-list"></i> Stock Overview</h3>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                        <input type="text" id="searchInput" placeholder="Search SKU/Name/Barcode/Serial" style="width:160px;padding:4px 10px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;" />
+                        <input type="text" id="searchInput" placeholder="🔍 Search SKU/Name/Serial" style="width:160px;padding:4px 10px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;" />
                         <div class="filter-group">
                             <select id="remarkFilter" style="padding:4px 10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;">
                                 <option value="all">📋 All Remarks</option>
                                 <option value="new">🆕 New</option>
                                 <option value="demo">🎮 Demo</option>
                                 <option value="refurbished">🔧 Refurbished</option>
-                                <option value="normal">📦 Normal</option>
                             </select>
                         </div>
                         <div class="export-buttons">
@@ -853,12 +930,12 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Barcode</th>
                                 <th>SKU</th>
                                 <th>Name</th>
                                 <th>Category</th>
                                 <th>Branch</th>
                                 <th>Qty</th>
+                                <th>Serials</th>
                                 <th>Remark</th>
                                 <th>Min</th>
                                 <th>Status</th>
@@ -910,7 +987,6 @@
                             <option value="new">🆕 New</option>
                             <option value="demo">🎮 Demo</option>
                             <option value="refurbished">🔧 Refurbished</option>
-                            <option value="normal">📦 Normal</option>
                         </select>
                     </div>
                 </div>
@@ -935,6 +1011,9 @@
                 <div class="form-row">
                     <div class="input-group"><label>Select Product</label><select id="issueProductSelect"></select></div>
                     <div class="input-group"><label>Branch</label><select id="issueBranchSelect"></select></div>
+                    <div class="input-group"><label>Invoice No.</label>
+                        <input type="text" id="issueInvoiceNo" placeholder="e.g., INV-2025-001" />
+                    </div>
                 </div>
 
                 <div class="issuance-type-selector">
@@ -958,6 +1037,7 @@
                         <div class="input-group" style="flex:2;">
                             <label>Serial Numbers to Issue (one per line)</label>
                             <textarea id="issueSerials" placeholder="SN-2025-0001&#10;SN-2025-0002" rows="3"></textarea>
+                            <div style="font-size:0.6rem;color:#64748b;margin-top:3px;">Enter each serial number on a new line.</div>
                         </div>
                     </div>
                 </div>
@@ -1000,7 +1080,6 @@
                             <option value="new">🆕 New</option>
                             <option value="demo">🎮 Demo</option>
                             <option value="refurbished">🔧 Refurbished</option>
-                            <option value="normal">📦 Normal</option>
                         </select>
                     </div>
                     <div class="input-group"><label>Min Stock</label><input type="number" id="newMin" value="5" /></div>
@@ -1056,7 +1135,6 @@
                             <option value="new">🆕 New</option>
                             <option value="demo">🎮 Demo</option>
                             <option value="refurbished">🔧 Refurbished</option>
-                            <option value="normal">📦 Normal</option>
                         </select>
                     </div>
                     <div class="input-group"><label>Min Stock</label><input type="number" id="editMin" /></div>
@@ -1182,17 +1260,50 @@
             const classes = {
                 'new': 'remark-new',
                 'demo': 'remark-demo',
-                'refurbished': 'remark-refurbished',
-                'normal': 'remark-normal'
+                'refurbished': 'remark-refurbished'
             };
             const labels = {
                 'new': '🆕 New',
                 'demo': '🎮 Demo',
-                'refurbished': '🔧 Refurbished',
-                'normal': '📦 Normal'
+                'refurbished': '🔧 Refurbished'
             };
-            return `<span class="remark-badge ${classes[remark] || 'remark-normal'}">${labels[remark] || remark || 'Normal'}</span>`;
+            return `<span class="remark-badge ${classes[remark] || 'remark-new'}">${labels[remark] || remark || 'New'}</span>`;
         }
+
+        // ===== SERIAL MODAL =====
+        function showSerialModal(productId) {
+            const prod = products.find(p => p.id === productId);
+            if (!prod) {
+                alert("Product not found.");
+                return;
+            }
+            const serials = prod.serials || [];
+            const modal = document.getElementById("serialModal");
+            const title = document.getElementById("serialModalTitle");
+            const body = document.getElementById("serialModalBody");
+
+            title.textContent = `${prod.sku} - ${prod.name} (${serials.length} serials)`;
+
+            if (serials.length === 0) {
+                body.innerHTML = '<p style="color:#94a3b8;">No serial numbers for this product.</p>';
+            } else {
+                body.innerHTML = serials.map(s =>
+                    `<span class="serial-item">${escapeHtml(s)}</span>`
+                ).join('') + `<p style="margin-top:12px;color:#94a3b8;font-size:0.7rem;">Total: ${serials.length} units</p>`;
+            }
+
+            modal.classList.add("active");
+        }
+
+        document.getElementById("closeModalBtn").onclick = function() {
+            document.getElementById("serialModal").classList.remove("active");
+        };
+
+        document.getElementById("serialModal").onclick = function(e) {
+            if (e.target === this) {
+                this.classList.remove("active");
+            }
+        };
 
         // ===== LOGS =====
         function addLog(msg) {
@@ -1219,18 +1330,6 @@
             }
         }
 
-        // ===== VIEW SERIALS =====
-        window.viewSerials = function(productId) {
-            const prod = products.find(p => p.id === productId);
-            if (!prod) return;
-            const serials = prod.serials || [];
-            if (serials.length === 0) {
-                alert(`No serial numbers for ${prod.sku}`);
-                return;
-            }
-            alert(`Serial numbers for ${prod.sku} (${prod.name}):\n\n${serials.join('\n')}\n\nTotal: ${serials.length} units`);
-        };
-
         // ===== RENDER TABLE =====
         function renderTable() {
             const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
@@ -1244,13 +1343,12 @@
             }
 
             if (remarkFilter !== 'all') {
-                filtered = filtered.filter(p => (p.remark || 'normal') === remarkFilter);
+                filtered = filtered.filter(p => (p.remark || 'new') === remarkFilter);
             }
 
             filtered = filtered.filter(p =>
                 (p.sku || "").toLowerCase().includes(search) ||
                 (p.name || "").toLowerCase().includes(search) ||
-                (p.barcode || "").toLowerCase().includes(search) ||
                 (p.serials || []).some(s => s.toLowerCase().includes(search))
             );
 
@@ -1263,17 +1361,19 @@
                     const serials = p.serials || [];
                     const qty = serials.length;
                     const low = qty <= (p.minStock || 0);
+
                     const serialDisplay = qty > 0 ?
-                        `<span style="cursor:pointer;color:#34d399;" onclick="viewSerials('${p.id}')">${qty} units <i class="fas fa-list-ul"></i></span>` :
+                        `<span class="serial-clickable" onclick="showSerialModal('${p.id}')">${qty} units <i class="fas fa-list-ul"></i></span>` :
                         `<span style="color:#64748b;">No serials</span>`;
+
                     return `<tr>
-                        <td><i class="fas fa-barcode"></i> ${escapeHtml(p.barcode)}</td>
                         <td><strong>${escapeHtml(p.sku)}</strong></td>
                         <td>${escapeHtml(p.name)}</td>
                         <td>${escapeHtml(p.cat || "General")}</td>
                         <td><span class="branch-tag">${escapeHtml(getBranchName(p.branchId))}</span></td>
                         <td><span class="stock-badge ${low ? 'low-stock' : ''}">${qty}</span></td>
-                        <td>${getRemarkBadge(p.remark || 'normal')}</td>
+                        <td>${serialDisplay}</td>
+                        <td>${getRemarkBadge(p.remark || 'new')}</td>
                         <td>${p.minStock || 5}</td>
                         <td>${low ? '⚠️ Low' : '✅ OK'}</td>
                         <td class="action-icons">
@@ -1652,6 +1752,7 @@
 
             const productId = document.getElementById("issueProductSelect").value;
             const branchId = document.getElementById("issueBranchSelect").value;
+            const invoiceNo = document.getElementById("issueInvoiceNo").value.trim() || 'N/A';
             const issueType = document.querySelector('input[name="issueType"]:checked').value;
 
             if (!productId) { alert("Select a product."); return; }
@@ -1706,12 +1807,13 @@
                 serials: updatedSerials
             });
 
-            addLog(`Issued ${serialsToIssue.length} serials from ${prod.sku} (${getBranchName(branchId)})`);
+            addLog(`Issued ${serialsToIssue.length} serials from ${prod.sku} (${getBranchName(branchId)}) | Invoice: ${invoiceNo}`);
 
             selectedSerials = [];
             document.getElementById("issueSerials").value = "";
+            document.getElementById("issueInvoiceNo").value = "";
             document.getElementById("issueMsg").style.display = "block";
-            document.getElementById("issueMsg").innerHTML = `✅ Issued ${serialsToIssue.length} serial numbers from ${prod.sku}`;
+            document.getElementById("issueMsg").innerHTML = `✅ Issued ${serialsToIssue.length} serial numbers from ${prod.sku} | Invoice: ${invoiceNo}`;
             document.getElementById("issueError").style.display = "none";
             setTimeout(() => {
                 document.getElementById("issueMsg").style.display = "none";
@@ -1932,7 +2034,7 @@
                 serials: ["SN-2025-0030", "SN-2025-0031", "SN-2025-0032", "SN-2025-0033"],
                 minStock: 5,
                 branchId,
-                remark: "normal"
+                remark: "new"
             }, {
                 sku: "WH-4002",
                 name: "Pallet Jack",
@@ -1941,7 +2043,7 @@
                 serials: ["SN-2025-0040", "SN-2025-0041"],
                 minStock: 2,
                 branchId,
-                remark: "new"
+                remark: "refurbished"
             }];
             let added = 0;
             for (const d of demos) {
@@ -1993,7 +2095,6 @@
                 return;
             }
 
-            // Update both serials and remark
             await db.collection("products").doc(productId).update({
                 serials: [...existingSerials, ...uniqueNew],
                 remark: remark
@@ -2182,7 +2283,7 @@
                 document.getElementById("editName").value = prod.name || "";
                 document.getElementById("editCat").value = prod.cat || "";
                 document.getElementById("editBranch").value = prod.branchId || "";
-                document.getElementById("editRemark").value = prod.remark || "normal";
+                document.getElementById("editRemark").value = prod.remark || "new";
                 document.getElementById("editMin").value = prod.minStock || 5;
             }
         };
@@ -2202,11 +2303,10 @@
                 const remarkLabels = {
                     'new': '🆕 New',
                     'demo': '🎮 Demo',
-                    'refurbished': '🔧 Refurbished',
-                    'normal': '📦 Normal'
+                    'refurbished': '🔧 Refurbished'
                 };
                 document.getElementById("lookupInfo").innerHTML =
-                    `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Remark: ${remarkLabels[prod.remark] || 'Normal'}<br>Stock: ${serialCount} units<br>Serials: ${(prod.serials || []).slice(0,5).join(', ')}${serialCount > 5 ? ` +${serialCount-5} more` : ''}`;
+                    `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Remark: ${remarkLabels[prod.remark] || 'New'}<br>Stock: ${serialCount} units<br>Serials: ${(prod.serials || []).slice(0,5).join(', ')}${serialCount > 5 ? ` +${serialCount-5} more` : ''}`;
                 resultDiv.style.display = "block";
                 resultDiv.setAttribute("data-id", prod.id);
             } else {
@@ -2269,31 +2369,29 @@
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
             let filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
             if (remarkFilter !== 'all') {
-                filtered = filtered.filter(p => (p.remark || 'normal') === remarkFilter);
+                filtered = filtered.filter(p => (p.remark || 'new') === remarkFilter);
             }
 
             const remarkLabels = {
                 'new': 'New',
                 'demo': 'Demo',
-                'refurbished': 'Refurbished',
-                'normal': 'Normal'
+                'refurbished': 'Refurbished'
             };
 
             const tableData = filtered.map(p => [
-                p.barcode || '',
                 p.sku || '',
                 p.name || '',
                 p.cat || 'General',
                 getBranchName(p.branchId),
                 String((p.serials || []).length),
-                remarkLabels[p.remark] || 'Normal',
+                remarkLabels[p.remark] || 'New',
                 String(p.minStock || 5),
                 (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK'
             ]);
 
             doc.autoTable({
                 head: [
-                    ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status']
+                    ['SKU', 'Name', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status']
                 ],
                 body: tableData,
                 startY: 25,
@@ -2311,25 +2409,23 @@
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
             let filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
             if (remarkFilter !== 'all') {
-                filtered = filtered.filter(p => (p.remark || 'normal') === remarkFilter);
+                filtered = filtered.filter(p => (p.remark || 'new') === remarkFilter);
             }
 
             const remarkLabels = {
                 'new': 'New',
                 'demo': 'Demo',
-                'refurbished': 'Refurbished',
-                'normal': 'Normal'
+                'refurbished': 'Refurbished'
             };
 
-            const headers = ['Barcode', 'SKU', 'Name', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status', 'Serials'];
+            const headers = ['SKU', 'Name', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status', 'Serials'];
             const data = filtered.map(p => [
-                p.barcode || '',
                 p.sku || '',
                 p.name || '',
                 p.cat || 'General',
                 getBranchName(p.branchId),
                 String((p.serials || []).length),
-                remarkLabels[p.remark] || 'Normal',
+                remarkLabels[p.remark] || 'New',
                 String(p.minStock || 5),
                 (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK',
                 (p.serials || []).join('; ')
@@ -2431,8 +2527,8 @@
         document.querySelector('input[name="issueType"][value="select"]').checked = true;
         document.getElementById("issueManualArea").classList.add("hidden");
 
-        addLog("System initialized with remark filtering");
-        console.log("WMS Pro loaded successfully with remark field.");
+        addLog("System initialized");
+        console.log("WMS Pro loaded successfully.");
     </script>
 </body>
 </html>
