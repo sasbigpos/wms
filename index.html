@@ -17,6 +17,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js">
     </script>
     <style>
+        /* ===== COMPLETE STYLES ===== */
         * {
             margin: 0;
             padding: 0;
@@ -1594,7 +1595,7 @@
             }
         }
 
-        // ===== RENDER TABLE - Show ALL fields for EVERY row =====
+        // ===== RENDER TABLE =====
         function renderTable() {
             const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
@@ -1631,7 +1632,6 @@
             } else {
                 let allRows = [];
 
-                // Sort products by SKU then remark
                 filtered.sort((a, b) => {
                     const skuCompare = (a.sku || '').localeCompare(b.sku || '');
                     if (skuCompare !== 0) return skuCompare;
@@ -1642,24 +1642,21 @@
                 filtered.forEach((p, index) => {
                     const serials = p.serials || [];
                     let qty;
-                    
-                    // Get quantity from either field
+
                     if (p.quantity && p.quantity > 0) {
                         qty = p.quantity || 0;
                     } else {
                         qty = serials.length;
                     }
-                    
-                    // If still 0 but has serials, use serials count
+
                     if (qty === 0 && serials.length > 0) {
                         qty = serials.length;
                     }
-                    
+
                     const low = qty <= (p.minStock || 0);
 
                     let serialDisplay;
                     if (qty > 0) {
-                        // Check if it's non-serialized (has quantity but no serials)
                         if ((p.quantity && p.quantity > 0) && (p.serials || []).length === 0) {
                             serialDisplay = `<span>${qty} units (non-serialized)</span>`;
                         } else if ((p.serials || []).length > 0) {
@@ -1695,7 +1692,7 @@
                 tbody.innerHTML = allRows.join('');
             }
 
-            // Update dropdowns - clean names without remark appended
+            // Update dropdowns
             const options = products.map(p =>
                 `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)}</option>`
             ).join('');
@@ -1704,7 +1701,7 @@
             document.getElementById("receiveProductSelect").innerHTML = options || '<option>No products</option>';
             document.getElementById("issueProductSelect").innerHTML = options || '<option>No products</option>';
 
-            // Stats - count products with stock > 0
+            // Stats
             const activeProducts = products.filter(p => {
                 const hasSerials = (p.serials || []).length > 0;
                 const hasQuantity = (p.quantity || 0) > 0;
@@ -1845,7 +1842,6 @@
                     `).join('');
             }
 
-            // Update all branch dropdowns
             const branchOptions = branches.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
             document.getElementById("newBranch").innerHTML = branchOptions;
             document.getElementById("editBranch").innerHTML = branchOptions;
@@ -2072,7 +2068,7 @@
             updateIssuePanel();
         };
 
-        // ===== RECEIVE STOCK TOGGLE - Serialized / Non-Serialized =====
+        // ===== RECEIVE STOCK TOGGLE =====
         document.querySelectorAll('input[name="receiveType"]').forEach(radio => {
             radio.onchange = function() {
                 const serializedSection = document.getElementById("receiveSerializedSection");
@@ -2087,7 +2083,7 @@
             };
         });
 
-        // ===== ISSUE STOCK TOGGLE - Serialized / Non-Serialized =====
+        // ===== ISSUE STOCK TOGGLE =====
         document.querySelectorAll('input[name="issueTypeMain"]').forEach(radio => {
             radio.onchange = function() {
                 const serializedSection = document.getElementById("issueSerializedSection");
@@ -2098,13 +2094,12 @@
                 } else {
                     serializedSection.classList.add("hidden");
                     nonSerializedSection.classList.remove("hidden");
-                    // Update current stock display
                     updateIssueCurrentStock();
                 }
             };
         });
 
-        // ===== Update current stock display for non-serialized issue =====
+        // ===== Update current stock display =====
         function updateIssueCurrentStock() {
             const productId = document.getElementById("issueProductSelect").value;
             const prod = products.find(p => p.id === productId);
@@ -2121,7 +2116,7 @@
             }
         }
 
-        // ===== ISSUE STOCK - Supports both Serialized and Non-Serialized =====
+        // ===== ISSUE STOCK =====
         document.getElementById("issueBtn").onclick = async () => {
             if (!canUserEdit(currentUser)) {
                 alert("You don't have permission to issue stock.");
@@ -2152,28 +2147,24 @@
                     return;
                 }
 
-                // Get current stock - check both quantity and serials
                 let currentQty = 0;
                 if (prod.quantity && prod.quantity > 0) {
                     currentQty = prod.quantity;
                 } else if (prod.serials && prod.serials.length > 0) {
                     currentQty = prod.serials.length;
                 }
-                
+
                 if (quantity > currentQty) {
                     alert(`Insufficient stock! Available: ${currentQty} units`);
                     return;
                 }
 
-                // Update the product
                 if (prod.quantity !== undefined && prod.quantity > 0) {
-                    // Product has quantity field (non-serialized)
                     await db.collection("products").doc(productId).update({
                         quantity: currentQty - quantity,
                         lastUpdated: new Date().toISOString()
                     });
                 } else {
-                    // Product has serials (serialized) - remove last N serials
                     const serials = prod.serials || [];
                     const updatedSerials = serials.slice(0, serials.length - quantity);
                     await db.collection("products").doc(productId).update({
@@ -2183,7 +2174,7 @@
                 }
 
                 addLog(`Issued ${quantity} units from ${prod.sku} (${getBranchName(branchId)}) | Invoice: ${invoiceNo}`);
-                
+
                 document.getElementById("issueQuantity").value = "1";
                 document.getElementById("issueMsg").style.display = "block";
                 document.getElementById("issueMsg").innerHTML = `✅ Issued ${quantity} units from ${prod.sku} | Invoice: ${invoiceNo}`;
@@ -2195,7 +2186,7 @@
                 return;
             }
 
-            // Handle Serialized Issue (existing code)
+            // Handle Serialized Issue
             const issueType = document.querySelector('input[name="issueType"]:checked').value;
             let serialsToIssue = [];
             let serialsList = [];
@@ -2258,13 +2249,13 @@
             updateIssueCurrentStock();
         };
 
-        // ===== RECEIVE STOCK - Supports both Serialized and Non-Serialized =====
+        // ===== RECEIVE STOCK =====
         document.getElementById("receiveBtn").onclick = async () => {
             if (!canUserEdit(currentUser)) {
                 alert("You don't have permission to receive stock.");
                 return;
             }
-            
+
             const productId = document.getElementById("receiveProductSelect").value;
             const branchId = document.getElementById("receiveBranchSelect").value;
             const remark = document.getElementById("receiveRemark").value;
@@ -2289,13 +2280,11 @@
                     return;
                 }
 
-                // Check if there's already a product with same SKU and same remark
-                const existingProductWithSameRemark = products.find(p => 
+                const existingProductWithSameRemark = products.find(p =>
                     p.sku === prod.sku && p.remark === remark
                 );
 
                 if (existingProductWithSameRemark) {
-                    // Update existing product
                     const currentQty = existingProductWithSameRemark.quantity || 0;
                     await db.collection("products").doc(existingProductWithSameRemark.id).update({
                         quantity: currentQty + quantity,
@@ -2303,7 +2292,6 @@
                     });
                     addLog(`Added ${quantity} units to existing ${prod.sku} (${remark}) - Non-Serialized`);
                 } else {
-                    // Create new product document
                     const newProduct = {
                         sku: prod.sku,
                         name: prod.name,
@@ -2331,7 +2319,7 @@
                 return;
             }
 
-            // Handle Serialized Receive (existing code)
+            // Handle Serialized Receive
             const serialsText = document.getElementById("receiveSerials").value.trim();
             if (!serialsText) { alert("Enter at least one serial number."); return; }
 
@@ -2344,15 +2332,14 @@
                 return;
             }
 
-            // Check if there's already a product with same SKU and same remark
-            const existingProductWithSameRemark = products.find(p => 
+            const existingProductWithSameRemark = products.find(p =>
                 p.sku === prod.sku && p.remark === remark
             );
 
             if (existingProductWithSameRemark) {
                 const existingSerials = existingProductWithSameRemark.serials || [];
                 const uniqueNew = newSerials.filter(s => !existingSerials.includes(s));
-                
+
                 if (uniqueNew.length === 0) {
                     alert("All serial numbers already exist for this remark.");
                     return;
@@ -2445,7 +2432,7 @@
             setTimeout(() => msg.style.display = "none", 3000);
         };
 
-        // ===== ADD DEMO PRODUCTS - COMPLETE RESET =====
+        // ===== ADD DEMO PRODUCTS =====
         document.getElementById("seedBtn").onclick = async () => {
             if (branches.length === 0) {
                 alert("Please create a branch first.");
@@ -2459,13 +2446,11 @@
             const branchId = branches[0].id;
 
             try {
-                // Delete ALL existing products
                 const snapshot = await db.collection("products").get();
                 for (const doc of snapshot.docs) {
                     await db.collection("products").doc(doc.id).delete();
                 }
 
-                // Add new demo products - EACH AS SEPARATE DOCUMENT
                 const demos = [{
                     sku: "WH-1001",
                     name: "Wireless Mouse",
@@ -2542,8 +2527,6 @@
 
                 addLog(`Reset data: Added ${added} demo products`);
                 alert(`✅ Reset complete! Added ${added} demo products.\n\nWH-1001 now has TWO separate lines:\n- NEW (3 units)\n- OLD MODEL (2 units)`);
-
-                // Refresh the products list
                 renderTable();
 
             } catch (error) {
@@ -2765,284 +2748,6 @@
             alert(`✅ Serial ${action === 'add' ? 'added' : 'removed'}!`);
         };
 
-        // ===== EXPORT FUNCTIONS =====
-        // (export functions remain the same)
-
-        // ===== TAB SWITCHING =====
-        document.querySelectorAll(".tab").forEach(btn => {
-            btn.onclick = () => {
-                const tab = btn.getAttribute("data-tab");
-                document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-                const target = document.getElementById(tab + "Panel");
-                if (target) target.classList.add("active");
-                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-                btn.classList.add("active");
-
-                if (tab === 'users' && !canUserManageUsers(currentUser)) {
-                    alert("Only admins can access User Management.");
-                    document.querySelector('[data-tab="inventory"]').click();
-                }
-                if (tab === 'branches' && !canUserManageBranches(currentUser)) {
-                    alert("Only admins can access Branch Management.");
-                    document.querySelector('[data-tab="inventory"]').click();
-                }
-                if (tab === 'issue') {
-                    selectedSerials = [];
-                    updateIssuePanel();
-                    updateIssueCurrentStock();
-                }
-                if (tab === 'report') {
-                    populateReportYear();
-                    const now = new Date();
-                    document.getElementById("reportMonth").value = now.getMonth();
-                    document.getElementById("reportYear").value = now.getFullYear();
-                    generateReport();
-                }
-            };
-        });
-
-        // ===== AUTH / LOGIN FUNCTIONS =====
-        function checkAuth() {
-            const saved = localStorage.getItem("wms_user");
-            if (saved) {
-                try {
-                    currentUser = JSON.parse(saved);
-                    showApp();
-                    return true;
-                } catch (e) { localStorage.removeItem("wms_user"); }
-            }
-            return false;
-        }
-
-        function showApp() {
-            document.getElementById("loginOverlay").style.display = "none";
-            document.getElementById("appContainer").classList.add("active");
-            document.getElementById("userNameDisplay").textContent = currentUser.name || currentUser.email;
-            document.getElementById("userAvatar").textContent = (currentUser.name || currentUser.email || 'U')[0]
-                .toUpperCase();
-            const roleEl = document.getElementById("userRoleDisplay");
-            roleEl.textContent = currentUser.role || 'user';
-            roleEl.className =
-                `role-badge ${currentUser.role === 'admin' ? 'role-admin' : currentUser.role === 'manager' ? 'role-manager' : 'role-user'}`;
-
-            document.getElementById("usersTab").style.display = canUserManageUsers(currentUser) ? 'inline-flex' : 'none';
-            document.getElementById("branchesTab").style.display = canUserManageBranches(currentUser) ? 'inline-flex' :
-                'none';
-
-            populateReportYear();
-            renderAll();
-        }
-
-        function showLogin() {
-            document.getElementById("loginOverlay").style.display = "flex";
-            document.getElementById("appContainer").classList.remove("active");
-            document.getElementById("loginForm").style.display = "block";
-            document.getElementById("registerForm").style.display = "none";
-            document.getElementById("loginError").style.display = "none";
-        }
-
-        // ===== LOGIN BUTTON =====
-        document.getElementById("loginBtn").onclick = async function() {
-            const email = document.getElementById("loginEmail").value.trim();
-            const password = document.getElementById("loginPassword").value;
-            const errorDiv = document.getElementById("loginError");
-
-            if (!email || !password) {
-                errorDiv.textContent = "Please fill in all fields.";
-                errorDiv.style.display = "block";
-                return;
-            }
-
-            try {
-                const userRef = db.collection("users");
-                const query = await userRef.where("email", "==", email).get();
-
-                if (query.empty) {
-                    errorDiv.textContent = "User not found. Please register or use the demo account.";
-                    errorDiv.style.display = "block";
-                    return;
-                }
-
-                const userDoc = query.docs[0];
-                const userData = userDoc.data();
-
-                if (userData.password !== password) {
-                    errorDiv.textContent = "Invalid password. Please try again.";
-                    errorDiv.style.display = "block";
-                    return;
-                }
-
-                currentUser = { id: userDoc.id, ...userData };
-                localStorage.setItem("wms_user", JSON.stringify(currentUser));
-                errorDiv.style.display = "none";
-                addLog(`User ${currentUser.email} logged in`);
-                showApp();
-
-            } catch (error) {
-                console.error("Login error:", error);
-                errorDiv.textContent = "Error connecting to database. Please try again.";
-                errorDiv.style.display = "block";
-            }
-        };
-
-        // ===== CREATE DEMO ADMIN ACCOUNT =====
-        document.getElementById("createDemoAdminBtn").onclick = async function() {
-            const errorDiv = document.getElementById("loginError");
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Creating...';
-
-            try {
-                const existing = await db.collection("users").where("email", "==", "allan.koay@bigpos.com").get();
-
-                if (!existing.empty) {
-                    errorDiv.style.display = "block";
-                    errorDiv.textContent = "✅ Admin account already exists! Use it to login.";
-                    errorDiv.style.color = "#34d399";
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
-                    return;
-                }
-
-                await db.collection("users").add({
-                    name: "Allan Koay",
-                    email: "allan.koay@bigpos.com",
-                    password: "Admin@2025",
-                    role: "admin",
-                    branches: [],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                errorDiv.style.display = "block";
-                errorDiv.textContent = "✅ Admin account created! Email: allan.koay@bigpos.com, Password: Admin@2025";
-                errorDiv.style.color = "#34d399";
-                document.getElementById("loginEmail").value = "allan.koay@bigpos.com";
-                document.getElementById("loginPassword").value = "Admin@2025";
-
-            } catch (error) {
-                console.error("Error creating admin:", error);
-                errorDiv.style.display = "block";
-                errorDiv.textContent = "Error creating admin account: " + error.message;
-                errorDiv.style.color = "#fca5a5";
-            }
-
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
-        };
-
-        // ===== REGISTER FORM TOGGLE =====
-        document.getElementById("showRegister").onclick = function() {
-            document.getElementById("loginForm").style.display = "none";
-            document.getElementById("registerForm").style.display = "block";
-            document.getElementById("loginError").style.display = "none";
-            const container = document.getElementById("regBranchAccess");
-            container.innerHTML = branches.map(b =>
-                `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
-            ).join('');
-        };
-
-        document.getElementById("showLogin").onclick = function() {
-            document.getElementById("loginForm").style.display = "block";
-            document.getElementById("registerForm").style.display = "none";
-            document.getElementById("registerError").style.display = "none";
-        };
-
-        // ===== REGISTER BUTTON =====
-        document.getElementById("registerBtn").onclick = async function() {
-            const name = document.getElementById("regName").value.trim();
-            const email = document.getElementById("regEmail").value.trim();
-            const password = document.getElementById("regPassword").value;
-            const role = document.getElementById("regRole").value;
-            const errorDiv = document.getElementById("registerError");
-
-            if (!name || !email || !password) {
-                errorDiv.textContent = "All fields required.";
-                errorDiv.style.display = "block";
-                return;
-            }
-
-            if (password.length < 6) {
-                errorDiv.textContent = "Password must be at least 6 characters.";
-                errorDiv.style.display = "block";
-                return;
-            }
-
-            try {
-                const existing = await db.collection("users").where("email", "==", email).get();
-                if (!existing.empty) {
-                    errorDiv.textContent = "Email already registered.";
-                    errorDiv.style.display = "block";
-                    return;
-                }
-
-                const branchCheckboxes = document.querySelectorAll('#regBranchAccess input[type="checkbox"]:checked');
-                const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
-
-                await db.collection("users").add({
-                    name,
-                    email,
-                    password,
-                    role,
-                    branches: role === 'admin' ? [] : selectedBranches,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                errorDiv.textContent = "✅ Registration successful! Please login.";
-                errorDiv.style.color = "#34d399";
-                errorDiv.style.display = "block";
-
-                setTimeout(() => {
-                    document.getElementById("loginForm").style.display = "block";
-                    document.getElementById("registerForm").style.display = "none";
-                    errorDiv.style.display = "none";
-                    document.getElementById("loginEmail").value = email;
-                }, 1500);
-
-            } catch (error) {
-                console.error("Registration error:", error);
-                errorDiv.textContent = "Error: " + error.message;
-                errorDiv.style.color = "#fca5a5";
-                errorDiv.style.display = "block";
-            }
-        };
-
-        // ===== LOGOUT =====
-        document.getElementById("logoutBtn").onclick = function() {
-            addLog(`User ${currentUser?.email} logged out`);
-            localStorage.removeItem("wms_user");
-            currentUser = null;
-            showLogin();
-        };
-
-        // ===== BRANCH FILTER =====
-        document.getElementById("branchFilter").onchange = function() {
-            currentBranchFilter = this.value;
-            renderTable();
-            const b = branches.find(x => x.id === currentBranchFilter);
-            document.getElementById("headerBranchDisplay").textContent = currentBranchFilter === 'all' ? 'All Branches' :
-                b ? b.name : 'Unknown';
-        };
-
-        // ===== REMARK FILTER =====
-        document.getElementById("remarkFilter").onchange = function() {
-            renderTable();
-        };
-
-        // ===== ADD BRANCH =====
-        document.getElementById("addBranchBtn").onclick = async () => {
-            const name = document.getElementById("newBranchName").value.trim();
-            const location = document.getElementById("newBranchLocation").value.trim();
-            if (!name) { alert("Branch name required"); return; }
-            await db.collection("branches").add({ name, location: location || "N/A" });
-            addLog(`Added branch: ${name}`);
-            document.getElementById("newBranchName").value = "";
-            document.getElementById("newBranchLocation").value = "";
-            const msg = document.getElementById("branchMsg");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ Branch "${name}" added!`;
-            setTimeout(() => msg.style.display = "none", 3000);
-        };
-
         // ===== MOVEMENT REPORT FUNCTIONS =====
         function populateReportYear() {
             const yearSelect = document.getElementById("reportYear");
@@ -3055,6 +2760,35 @@
                 if (y === currentYear) option.selected = true;
                 yearSelect.appendChild(option);
             }
+        }
+
+        function extractSKU(logEntry) {
+            const text = logEntry.text || '';
+            const skuMatch = text.match(/([A-Z]{2,4}[-\s]?[A-Z0-9]+)/i);
+            if (skuMatch) {
+                const potentialSku = skuMatch[1].trim();
+                for (const p of products) {
+                    if (p.sku && potentialSku.includes(p.sku)) {
+                        return p.sku;
+                    }
+                    if (p.sku && p.sku.includes(potentialSku)) {
+                        return p.sku;
+                    }
+                }
+                return potentialSku;
+            }
+            return '';
+        }
+
+        function extractProductName(logEntry) {
+            const text = logEntry.text || '';
+            const prod = products.find(p => p.sku && text.includes(p.sku));
+            if (prod) return prod.name || '';
+            const nameMatch = text.match(/(?:from|for)\s+([^(]+?)(?:\s*\(|$)/i);
+            if (nameMatch) {
+                return nameMatch[1].trim();
+            }
+            return '';
         }
 
         function extractSerialNumbers(logEntry) {
@@ -3077,35 +2811,15 @@
             return '';
         }
 
-        function extractProductName(logEntry) {
-            const text = logEntry.text || '';
-            const productMatch = text.match(/(?:from|for)\s+([^(]+?)(?:\s*\(|$)/i);
-            if (productMatch) {
-                return productMatch[1].trim();
-            }
-            const skuMatch = text.match(/([A-Z]{2,4}-\d+)/);
-            if (skuMatch) {
-                const prod = products.find(p => p.sku === skuMatch[1]);
-                if (prod) return prod.name || '';
-            }
-            return '';
-        }
-
-        function extractSKU(logEntry) {
-            const text = logEntry.text || '';
-            const skuMatch = text.match(/([A-Z]{2,4}-\d+)/);
-            return skuMatch ? skuMatch[1] : '';
-        }
-
         function extractBranch(logEntry) {
             const text = logEntry.text || '';
+            for (const b of branches) {
+                if (text.includes(b.name)) {
+                    return b.name;
+                }
+            }
             const branchMatch = text.match(/\(([^)]+)\)/);
             if (branchMatch) {
-                for (const b of branches) {
-                    if (branchMatch[1].includes(b.name)) {
-                        return b.name;
-                    }
-                }
                 return branchMatch[1];
             }
             return '';
@@ -3469,6 +3183,281 @@
         document.getElementById("generateReportBtn").onclick = generateReport;
         document.getElementById("exportReportPdfBtn").onclick = exportReportPdf;
         document.getElementById("exportReportCsvBtn").onclick = exportReportCsv;
+
+        // ===== TAB SWITCHING =====
+        document.querySelectorAll(".tab").forEach(btn => {
+            btn.onclick = () => {
+                const tab = btn.getAttribute("data-tab");
+                document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+                const target = document.getElementById(tab + "Panel");
+                if (target) target.classList.add("active");
+                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+                btn.classList.add("active");
+
+                if (tab === 'users' && !canUserManageUsers(currentUser)) {
+                    alert("Only admins can access User Management.");
+                    document.querySelector('[data-tab="inventory"]').click();
+                }
+                if (tab === 'branches' && !canUserManageBranches(currentUser)) {
+                    alert("Only admins can access Branch Management.");
+                    document.querySelector('[data-tab="inventory"]').click();
+                }
+                if (tab === 'issue') {
+                    selectedSerials = [];
+                    updateIssuePanel();
+                    updateIssueCurrentStock();
+                }
+                if (tab === 'report') {
+                    populateReportYear();
+                    const now = new Date();
+                    document.getElementById("reportMonth").value = now.getMonth();
+                    document.getElementById("reportYear").value = now.getFullYear();
+                    generateReport();
+                }
+            };
+        });
+
+        // ===== AUTH / LOGIN FUNCTIONS =====
+        function checkAuth() {
+            const saved = localStorage.getItem("wms_user");
+            if (saved) {
+                try {
+                    currentUser = JSON.parse(saved);
+                    showApp();
+                    return true;
+                } catch (e) { localStorage.removeItem("wms_user"); }
+            }
+            return false;
+        }
+
+        function showApp() {
+            document.getElementById("loginOverlay").style.display = "none";
+            document.getElementById("appContainer").classList.add("active");
+            document.getElementById("userNameDisplay").textContent = currentUser.name || currentUser.email;
+            document.getElementById("userAvatar").textContent = (currentUser.name || currentUser.email || 'U')[0]
+                .toUpperCase();
+            const roleEl = document.getElementById("userRoleDisplay");
+            roleEl.textContent = currentUser.role || 'user';
+            roleEl.className =
+                `role-badge ${currentUser.role === 'admin' ? 'role-admin' : currentUser.role === 'manager' ? 'role-manager' : 'role-user'}`;
+
+            document.getElementById("usersTab").style.display = canUserManageUsers(currentUser) ? 'inline-flex' : 'none';
+            document.getElementById("branchesTab").style.display = canUserManageBranches(currentUser) ? 'inline-flex' :
+                'none';
+
+            populateReportYear();
+            renderAll();
+        }
+
+        function showLogin() {
+            document.getElementById("loginOverlay").style.display = "flex";
+            document.getElementById("appContainer").classList.remove("active");
+            document.getElementById("loginForm").style.display = "block";
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("loginError").style.display = "none";
+        }
+
+        // ===== LOGIN BUTTON =====
+        document.getElementById("loginBtn").onclick = async function() {
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value;
+            const errorDiv = document.getElementById("loginError");
+
+            if (!email || !password) {
+                errorDiv.textContent = "Please fill in all fields.";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            try {
+                const userRef = db.collection("users");
+                const query = await userRef.where("email", "==", email).get();
+
+                if (query.empty) {
+                    errorDiv.textContent = "User not found. Please register or use the demo account.";
+                    errorDiv.style.display = "block";
+                    return;
+                }
+
+                const userDoc = query.docs[0];
+                const userData = userDoc.data();
+
+                if (userData.password !== password) {
+                    errorDiv.textContent = "Invalid password. Please try again.";
+                    errorDiv.style.display = "block";
+                    return;
+                }
+
+                currentUser = { id: userDoc.id, ...userData };
+                localStorage.setItem("wms_user", JSON.stringify(currentUser));
+                errorDiv.style.display = "none";
+                addLog(`User ${currentUser.email} logged in`);
+                showApp();
+
+            } catch (error) {
+                console.error("Login error:", error);
+                errorDiv.textContent = "Error connecting to database. Please try again.";
+                errorDiv.style.display = "block";
+            }
+        };
+
+        // ===== CREATE DEMO ADMIN ACCOUNT =====
+        document.getElementById("createDemoAdminBtn").onclick = async function() {
+            const errorDiv = document.getElementById("loginError");
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Creating...';
+
+            try {
+                const existing = await db.collection("users").where("email", "==", "allan.koay@bigpos.com").get();
+
+                if (!existing.empty) {
+                    errorDiv.style.display = "block";
+                    errorDiv.textContent = "✅ Admin account already exists! Use it to login.";
+                    errorDiv.style.color = "#34d399";
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
+                    return;
+                }
+
+                await db.collection("users").add({
+                    name: "Allan Koay",
+                    email: "allan.koay@bigpos.com",
+                    password: "Admin@2025",
+                    role: "admin",
+                    branches: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                errorDiv.style.display = "block";
+                errorDiv.textContent = "✅ Admin account created! Email: allan.koay@bigpos.com, Password: Admin@2025";
+                errorDiv.style.color = "#34d399";
+                document.getElementById("loginEmail").value = "allan.koay@bigpos.com";
+                document.getElementById("loginPassword").value = "Admin@2025";
+
+            } catch (error) {
+                console.error("Error creating admin:", error);
+                errorDiv.style.display = "block";
+                errorDiv.textContent = "Error creating admin account: " + error.message;
+                errorDiv.style.color = "#fca5a5";
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
+        };
+
+        // ===== REGISTER FORM TOGGLE =====
+        document.getElementById("showRegister").onclick = function() {
+            document.getElementById("loginForm").style.display = "none";
+            document.getElementById("registerForm").style.display = "block";
+            document.getElementById("loginError").style.display = "none";
+            const container = document.getElementById("regBranchAccess");
+            container.innerHTML = branches.map(b =>
+                `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
+            ).join('');
+        };
+
+        document.getElementById("showLogin").onclick = function() {
+            document.getElementById("loginForm").style.display = "block";
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("registerError").style.display = "none";
+        };
+
+        // ===== REGISTER BUTTON =====
+        document.getElementById("registerBtn").onclick = async function() {
+            const name = document.getElementById("regName").value.trim();
+            const email = document.getElementById("regEmail").value.trim();
+            const password = document.getElementById("regPassword").value;
+            const role = document.getElementById("regRole").value;
+            const errorDiv = document.getElementById("registerError");
+
+            if (!name || !email || !password) {
+                errorDiv.textContent = "All fields required.";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            if (password.length < 6) {
+                errorDiv.textContent = "Password must be at least 6 characters.";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            try {
+                const existing = await db.collection("users").where("email", "==", email).get();
+                if (!existing.empty) {
+                    errorDiv.textContent = "Email already registered.";
+                    errorDiv.style.display = "block";
+                    return;
+                }
+
+                const branchCheckboxes = document.querySelectorAll('#regBranchAccess input[type="checkbox"]:checked');
+                const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
+
+                await db.collection("users").add({
+                    name,
+                    email,
+                    password,
+                    role,
+                    branches: role === 'admin' ? [] : selectedBranches,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                errorDiv.textContent = "✅ Registration successful! Please login.";
+                errorDiv.style.color = "#34d399";
+                errorDiv.style.display = "block";
+
+                setTimeout(() => {
+                    document.getElementById("loginForm").style.display = "block";
+                    document.getElementById("registerForm").style.display = "none";
+                    errorDiv.style.display = "none";
+                    document.getElementById("loginEmail").value = email;
+                }, 1500);
+
+            } catch (error) {
+                console.error("Registration error:", error);
+                errorDiv.textContent = "Error: " + error.message;
+                errorDiv.style.color = "#fca5a5";
+                errorDiv.style.display = "block";
+            }
+        };
+
+        // ===== LOGOUT =====
+        document.getElementById("logoutBtn").onclick = function() {
+            addLog(`User ${currentUser?.email} logged out`);
+            localStorage.removeItem("wms_user");
+            currentUser = null;
+            showLogin();
+        };
+
+        // ===== BRANCH FILTER =====
+        document.getElementById("branchFilter").onchange = function() {
+            currentBranchFilter = this.value;
+            renderTable();
+            const b = branches.find(x => x.id === currentBranchFilter);
+            document.getElementById("headerBranchDisplay").textContent = currentBranchFilter === 'all' ? 'All Branches' :
+                b ? b.name : 'Unknown';
+        };
+
+        // ===== REMARK FILTER =====
+        document.getElementById("remarkFilter").onchange = function() {
+            renderTable();
+        };
+
+        // ===== ADD BRANCH =====
+        document.getElementById("addBranchBtn").onclick = async () => {
+            const name = document.getElementById("newBranchName").value.trim();
+            const location = document.getElementById("newBranchLocation").value.trim();
+            if (!name) { alert("Branch name required"); return; }
+            await db.collection("branches").add({ name, location: location || "N/A" });
+            addLog(`Added branch: ${name}`);
+            document.getElementById("newBranchName").value = "";
+            document.getElementById("newBranchLocation").value = "";
+            const msg = document.getElementById("branchMsg");
+            msg.style.display = "block";
+            msg.innerHTML = `✅ Branch "${name}" added!`;
+            setTimeout(() => msg.style.display = "none", 3000);
+        };
 
         // ===== INIT =====
         if (!checkAuth()) {
