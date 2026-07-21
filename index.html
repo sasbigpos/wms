@@ -47,6 +47,8 @@
             width: 100%;
             max-width: 420px;
             border: 1px solid #334155;
+            max-height: 95vh;
+            overflow-y: auto;
         }
         .login-box h2 {
             font-size: 1.8rem;
@@ -101,8 +103,19 @@
         .login-box .login-btn:hover {
             opacity: 0.9;
         }
+        .login-box .login-btn.secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
         .login-error {
             color: #fca5a5;
+            font-size: 0.85rem;
+            margin-top: 12px;
+            text-align: center;
+            display: none;
+        }
+        .login-success {
+            color: #34d399;
             font-size: 0.85rem;
             margin-top: 12px;
             text-align: center;
@@ -117,6 +130,23 @@
         .register-link a {
             color: #34d399;
             cursor: pointer;
+        }
+        .login-box .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #334155;
+        }
+        .login-box .divider::before,
+        .login-box .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #334155;
+        }
+        .login-box .divider span {
+            padding: 0 16px;
+            font-size: 0.75rem;
+            color: #64748b;
         }
 
         .app-container {
@@ -680,6 +710,10 @@
             background: #064e3b;
             color: #34d399;
         }
+        .remark-old {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
         .filter-group {
             display: flex;
             gap: 10px;
@@ -765,6 +799,62 @@
             color: #e2e8f0;
             border: 1px solid #334155;
         }
+        .report-summary {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+        .report-summary .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .report-summary .summary-item .label {
+            font-size: 0.6rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+        .report-summary .summary-item .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #34d399;
+        }
+        .report-summary .summary-item .value.negative {
+            color: #fca5a5;
+        }
+        .serial-number-display {
+            font-family: monospace;
+            font-size: 0.65rem;
+            color: #60a5fa;
+            background: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .serial-number-display:hover {
+            white-space: normal;
+            max-width: none;
+            z-index: 10;
+            position: relative;
+        }
+        .description-text {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+        }
         @media (max-width: 768px) {
             .login-box {
                 padding: 24px;
@@ -793,6 +883,16 @@
             .serial-modal-content {
                 padding: 16px;
             }
+            .report-summary {
+                gap: 12px;
+            }
+            .serial-number-display {
+                max-width: 80px;
+                font-size: 0.55rem;
+            }
+            .description-text {
+                max-width: 80px;
+            }
         }
     </style>
 </head>
@@ -803,21 +903,27 @@
         <div class="login-box">
             <h2><i class="fas fa-warehouse"></i> StockFlow WMS</h2>
             <p class="sub">Serialized Inventory • Multi-Branch</p>
+
+            <!-- Login Form -->
             <div id="loginForm">
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" id="loginEmail" placeholder="user@company.com" />
+                    <input type="email" id="loginEmail" placeholder="user@company.com" value="allan.koay@bigpos.com" />
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="loginPassword" placeholder="••••••••" />
+                    <input type="password" id="loginPassword" placeholder="••••••••" value="Admin@2025" />
                 </div>
                 <button class="login-btn" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Sign In</button>
-                <div class="login-error" id="loginError">Invalid credentials</div>
+                <div class="login-error" id="loginError"></div>
                 <div class="register-link">
                     Don't have an account? <a id="showRegister">Register here</a>
                 </div>
+                <div class="divider"><span>or</span></div>
+                <button class="login-btn secondary" id="createDemoAdminBtn"><i class="fas fa-user-plus"></i> Create Demo Admin Account</button>
             </div>
+
+            <!-- Register Form -->
             <div id="registerForm" style="display:none;">
                 <div class="form-group">
                     <label>Full Name</label>
@@ -895,6 +1001,7 @@
             <button class="tab" data-tab="scanner"><i class="fas fa-qrcode"></i> Scanner</button>
             <button class="tab" data-tab="receive"><i class="fas fa-arrow-down"></i> Receive Stock</button>
             <button class="tab" data-tab="issue"><i class="fas fa-arrow-up"></i> Issue Stock</button>
+            <button class="tab" data-tab="report"><i class="fas fa-chart-bar"></i> Movement Report</button>
             <button class="tab" data-tab="logs"><i class="fas fa-history"></i> Logs</button>
             <button class="tab" data-tab="manage"><i class="fas fa-plus-circle"></i> Manage</button>
             <button class="tab" data-tab="users" id="usersTab"><i class="fas fa-users-cog"></i> Users</button>
@@ -907,13 +1014,14 @@
                 <div class="flex-between">
                     <h3><i class="fas fa-clipboard-list"></i> Stock Overview</h3>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                        <input type="text" id="searchInput" placeholder="🔍 Search SKU/Name/Serial" style="width:160px;padding:4px 10px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;" />
+                        <input type="text" id="searchInput" placeholder="🔍 Search SKU/Name/Serial/Description" style="width:180px;padding:4px 10px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;" />
                         <div class="filter-group">
                             <select id="remarkFilter" style="padding:4px 10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.75rem;">
                                 <option value="all">📋 All Remarks</option>
                                 <option value="new">🆕 New</option>
                                 <option value="demo">🎮 Demo</option>
                                 <option value="refurbished">🔧 Refurbished</option>
+                                <option value="old">📻 Old Model</option>
                             </select>
                         </div>
                         <div class="export-buttons">
@@ -924,7 +1032,7 @@
                 </div>
                 <div class="flex-between" style="margin-top:6px;">
                     <div class="status-bar" id="connectionStatus">Connecting to Firestore...</div>
-                    <button id="seedBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo</button>
+                    <button id="seedBtn" class="secondary"><i class="fas fa-seedling"></i> Add Demo Products</button>
                 </div>
                 <div class="table-wrapper" style="margin-top:10px;">
                     <table>
@@ -932,6 +1040,7 @@
                             <tr>
                                 <th>SKU</th>
                                 <th>Name</th>
+                                <th>Description</th>
                                 <th>Category</th>
                                 <th>Branch</th>
                                 <th>Qty</th>
@@ -943,7 +1052,7 @@
                             </tr>
                         </thead>
                         <tbody id="tableBody">
-                            <tr><td colspan="10" style="text-align:center;padding:30px;"><i class="fas fa-spinner fa-pulse"></i> Loading...</td></tr>
+                            <tr><td colspan="11" style="text-align:center;padding:30px;"><i class="fas fa-spinner fa-pulse"></i> Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -977,8 +1086,15 @@
         <!-- RECEIVE STOCK PANEL -->
         <div id="receivePanel" class="panel">
             <div class="card">
-                <h3><i class="fas fa-arrow-down"></i> Receive Stock with Serial Numbers</h3>
-                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:12px;">Add multiple serial numbers when receiving stock. Each serial must be unique per product.</p>
+                <h3><i class="fas fa-arrow-down"></i> Receive Stock</h3>
+                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:12px;">Add stock with or without serial numbers.</p>
+                
+                <!-- Toggle for Serialized / Non-Serialized -->
+                <div class="issuance-type-selector" style="margin-bottom:12px;">
+                    <label><input type="radio" name="receiveType" value="serialized" checked /> 🔢 Serialized (with serial numbers)</label>
+                    <label><input type="radio" name="receiveType" value="nonserialized" /> 📦 Non-Serialized (quantity only)</label>
+                </div>
+                
                 <div class="form-row">
                     <div class="input-group"><label>Select Product</label><select id="receiveProductSelect"></select></div>
                     <div class="input-group"><label>Branch</label><select id="receiveBranchSelect"></select></div>
@@ -987,16 +1103,32 @@
                             <option value="new">🆕 New</option>
                             <option value="demo">🎮 Demo</option>
                             <option value="refurbished">🔧 Refurbished</option>
+                            <option value="old">📻 Old Model</option>
                         </select>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="input-group" style="flex:2;">
-                        <label>Serial Numbers (one per line)</label>
-                        <textarea id="receiveSerials" placeholder="SN-2025-0001&#10;SN-2025-0002&#10;SN-2025-0003" rows="4"></textarea>
-                        <div style="font-size:0.6rem;color:#64748b;margin-top:3px;">Enter each serial number on a new line. Duplicates will be ignored.</div>
+                
+                <!-- Serialized Section -->
+                <div id="receiveSerializedSection">
+                    <div class="form-row">
+                        <div class="input-group" style="flex:2;">
+                            <label>Serial Numbers (one per line)</label>
+                            <textarea id="receiveSerials" placeholder="SN-2025-0001&#10;SN-2025-0002&#10;SN-2025-0003" rows="4"></textarea>
+                            <div style="font-size:0.6rem;color:#64748b;margin-top:3px;">Enter each serial number on a new line. Duplicates will be ignored.</div>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Non-Serialized Section -->
+                <div id="receiveNonSerializedSection" class="hidden">
+                    <div class="form-row">
+                        <div class="input-group" style="flex:1;">
+                            <label>Quantity to Receive</label>
+                            <input type="number" id="receiveQuantity" placeholder="Enter quantity" min="1" value="1" style="width:100%;padding:8px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.9rem;" />
+                        </div>
+                    </div>
+                </div>
+                
                 <button id="receiveBtn"><i class="fas fa-arrow-down"></i> Receive Stock</button>
                 <div id="receiveMsg" class="success-msg"></div>
             </div>
@@ -1005,8 +1137,14 @@
         <!-- ISSUE STOCK PANEL -->
         <div id="issuePanel" class="panel">
             <div class="card">
-                <h3><i class="fas fa-arrow-up"></i> Issue Stock with Serial Numbers</h3>
-                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:12px;">Select serial numbers to issue from stock. You can select individual serials or enter them manually.</p>
+                <h3><i class="fas fa-arrow-up"></i> Issue Stock</h3>
+                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:12px;">Issue stock with or without serial numbers.</p>
+
+                <!-- Toggle for Serialized / Non-Serialized -->
+                <div class="issuance-type-selector" style="margin-bottom:12px;">
+                    <label><input type="radio" name="issueTypeMain" value="serialized" checked /> 🔢 Serialized (select serial numbers)</label>
+                    <label><input type="radio" name="issueTypeMain" value="nonserialized" /> 📦 Non-Serialized (quantity only)</label>
+                </div>
 
                 <div class="form-row">
                     <div class="input-group"><label>Select Product</label><select id="issueProductSelect"></select></div>
@@ -1016,42 +1154,148 @@
                     </div>
                 </div>
 
-                <div class="issuance-type-selector">
-                    <label><input type="radio" name="issueType" value="select" checked /> Select from list</label>
-                    <label><input type="radio" name="issueType" value="manual" /> Enter manually</label>
-                </div>
-
-                <div id="issueSelectArea">
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                        <button id="selectAllSerialsBtn" class="secondary" style="font-size:0.7rem;"><i class="fas fa-check-double"></i> Select All</button>
-                        <button id="deselectAllSerialsBtn" class="secondary" style="font-size:0.7rem;"><i class="fas fa-times"></i> Deselect All</button>
-                        <span style="font-size:0.7rem;color:#94a3b8;" id="selectedCountDisplay">0 selected</span>
+                <!-- Serialized Section -->
+                <div id="issueSerializedSection">
+                    <div class="issuance-type-selector">
+                        <label><input type="radio" name="issueType" value="select" checked /> Select from list</label>
+                        <label><input type="radio" name="issueType" value="manual" /> Enter manually</label>
                     </div>
-                    <div id="serialCheckboxList" class="serial-checkbox-list">
-                        <span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Select a product first</span>
-                    </div>
-                </div>
 
-                <div id="issueManualArea" class="hidden">
-                    <div class="form-row">
-                        <div class="input-group" style="flex:2;">
-                            <label>Serial Numbers to Issue (one per line)</label>
-                            <textarea id="issueSerials" placeholder="SN-2025-0001&#10;SN-2025-0002" rows="3"></textarea>
-                            <div style="font-size:0.6rem;color:#64748b;margin-top:3px;">Enter each serial number on a new line.</div>
+                    <div id="issueSelectArea">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                            <button id="selectAllSerialsBtn" class="secondary" style="font-size:0.7rem;"><i class="fas fa-check-double"></i> Select All</button>
+                            <button id="deselectAllSerialsBtn" class="secondary" style="font-size:0.7rem;"><i class="fas fa-times"></i> Deselect All</button>
+                            <span style="font-size:0.7rem;color:#94a3b8;" id="selectedCountDisplay">0 selected</span>
+                        </div>
+                        <div id="serialCheckboxList" class="serial-checkbox-list">
+                            <span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Select a product first</span>
+                        </div>
+                    </div>
+
+                    <div id="issueManualArea" class="hidden">
+                        <div class="form-row">
+                            <div class="input-group" style="flex:2;">
+                                <label>Serial Numbers to Issue (one per line)</label>
+                                <textarea id="issueSerials" placeholder="SN-2025-0001&#10;SN-2025-0002" rows="3"></textarea>
+                                <div style="font-size:0.6rem;color:#64748b;margin-top:3px;">Enter each serial number on a new line.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px;">
+                        <label style="font-size:0.6rem;font-weight:700;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:4px;">Selected Serials to Issue</label>
+                        <div id="selectedSerialsDisplay" class="selected-serials-display">
+                            <span style="color:#64748b;font-size:0.7rem;">No serials selected</span>
                         </div>
                     </div>
                 </div>
 
-                <div style="margin-top:12px;">
-                    <label style="font-size:0.6rem;font-weight:700;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:4px;">Selected Serials to Issue</label>
-                    <div id="selectedSerialsDisplay" class="selected-serials-display">
-                        <span style="color:#64748b;font-size:0.7rem;">No serials selected</span>
+                <!-- Non-Serialized Section -->
+                <div id="issueNonSerializedSection" class="hidden">
+                    <div class="form-row">
+                        <div class="input-group" style="flex:1;">
+                            <label>Quantity to Issue</label>
+                            <input type="number" id="issueQuantity" placeholder="Enter quantity" min="1" value="1" style="width:100%;padding:8px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:0.9rem;" />
+                        </div>
+                    </div>
+                    <div style="color:#94a3b8;font-size:0.7rem;margin-top:4px;">
+                        <i class="fas fa-info-circle"></i> Current stock: <span id="issueCurrentStockDisplay">0</span> units
                     </div>
                 </div>
 
                 <button id="issueBtn" style="margin-top:12px;background:#f59e0b;color:#0f172a;"><i class="fas fa-arrow-up"></i> Issue Stock</button>
                 <div id="issueMsg" class="success-msg"></div>
                 <div id="issueError" class="error-msg"></div>
+            </div>
+        </div>
+
+        <!-- MOVEMENT REPORT PANEL -->
+        <div id="reportPanel" class="panel">
+            <div class="card">
+                <h3><i class="fas fa-chart-bar"></i> Inventory Movement Report</h3>
+                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:12px;">Generate inventory movement report by month. Shows receiving and issuance activities.</p>
+
+                <div class="form-row">
+                    <div class="input-group" style="flex:0.7;">
+                        <label>Year</label>
+                        <select id="reportYear"></select>
+                    </div>
+                    <div class="input-group" style="flex:0.7;">
+                        <label>Month</label>
+                        <select id="reportMonth">
+                            <option value="0">January</option>
+                            <option value="1">February</option>
+                            <option value="2">March</option>
+                            <option value="3">April</option>
+                            <option value="4">May</option>
+                            <option value="5">June</option>
+                            <option value="6">July</option>
+                            <option value="7">August</option>
+                            <option value="8">September</option>
+                            <option value="9">October</option>
+                            <option value="10">November</option>
+                            <option value="11">December</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label>Branch</label>
+                        <select id="reportBranch">
+                            <option value="all">All Branches</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="flex:0.5;">
+                        <label>Type</label>
+                        <select id="reportType">
+                            <option value="all">All</option>
+                            <option value="receive">Receive</option>
+                            <option value="issue">Issue</option>
+                        </select>
+                    </div>
+                    <button id="generateReportBtn"><i class="fas fa-play"></i> Generate</button>
+                    <button id="exportReportPdfBtn" class="secondary"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                    <button id="exportReportCsvBtn" class="secondary"><i class="fas fa-file-csv"></i> Export CSV</button>
+                </div>
+
+                <div id="reportSummary" class="report-summary" style="display:none;">
+                    <div class="summary-item">
+                        <span class="label">Total Received</span>
+                        <span class="value" id="totalReceived">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Total Issued</span>
+                        <span class="value negative" id="totalIssued">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Net Movement</span>
+                        <span class="value" id="netMovement">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Total Transactions</span>
+                        <span class="value" id="totalTransactions">0</span>
+                    </div>
+                </div>
+
+                <div id="reportTableWrapper" style="overflow-x:auto;display:none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>SKU</th>
+                                <th>Product</th>
+                                <th>Branch</th>
+                                <th>Serial #</th>
+                                <th>Remark</th>
+                                <th>Invoice No.</th>
+                                <th>User</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="reportEmpty" style="text-align:center;padding:30px;color:#94a3b8;display:none;">
+                    <i class="fas fa-info-circle"></i> No transactions found for the selected period.
+                </div>
             </div>
         </div>
 
@@ -1073,6 +1317,9 @@
                 <div class="form-row">
                     <div class="input-group"><label>SKU *</label><input type="text" id="newSku" placeholder="WH-1001" /></div>
                     <div class="input-group"><label>Name *</label><input type="text" id="newName" placeholder="Product name" /></div>
+                    <div class="input-group"><label>Description</label>
+                        <textarea id="newDesc" placeholder="Product description..." rows="2" style="resize:vertical;"></textarea>
+                    </div>
                     <div class="input-group"><label>Category</label><input type="text" id="newCat" placeholder="Category" /></div>
                     <div class="input-group"><label>Branch</label><select id="newBranch"></select></div>
                     <div class="input-group"><label>Remark</label>
@@ -1080,6 +1327,7 @@
                             <option value="new">🆕 New</option>
                             <option value="demo">🎮 Demo</option>
                             <option value="refurbished">🔧 Refurbished</option>
+                            <option value="old">📻 Old Model</option>
                         </select>
                     </div>
                     <div class="input-group"><label>Min Stock</label><input type="number" id="newMin" value="5" /></div>
@@ -1127,7 +1375,11 @@
                 <h3><i class="fas fa-edit"></i> Edit / Delete Product</h3>
                 <div class="form-row">
                     <div class="input-group"><label>Product</label><select id="editSelect"></select></div>
+                    <div class="input-group"><label>SKU</label><input type="text" id="editSku" placeholder="Update SKU" /></div>
                     <div class="input-group"><label>New Name</label><input type="text" id="editName" /></div>
+                    <div class="input-group"><label>Description</label>
+                        <textarea id="editDesc" placeholder="Product description..." rows="2" style="resize:vertical;"></textarea>
+                    </div>
                     <div class="input-group"><label>Category</label><input type="text" id="editCat" /></div>
                     <div class="input-group"><label>Branch</label><select id="editBranch"></select></div>
                     <div class="input-group"><label>Remark</label>
@@ -1135,6 +1387,7 @@
                             <option value="new">🆕 New</option>
                             <option value="demo">🎮 Demo</option>
                             <option value="refurbished">🔧 Refurbished</option>
+                            <option value="old">📻 Old Model</option>
                         </select>
                     </div>
                     <div class="input-group"><label>Min Stock</label><input type="number" id="editMin" /></div>
@@ -1217,6 +1470,7 @@
         let currentBranchFilter = 'all';
         let currentRemarkFilter = 'all';
         let selectedSerials = [];
+        let reportData = [];
 
         // ===== HELPERS =====
         function escapeHtml(s) {
@@ -1260,12 +1514,14 @@
             const classes = {
                 'new': 'remark-new',
                 'demo': 'remark-demo',
-                'refurbished': 'remark-refurbished'
+                'refurbished': 'remark-refurbished',
+                'old': 'remark-old'
             };
             const labels = {
                 'new': '🆕 New',
                 'demo': '🎮 Demo',
-                'refurbished': '🔧 Refurbished'
+                'refurbished': '🔧 Refurbished',
+                'old': '📻 Old Model'
             };
             return `<span class="remark-badge ${classes[remark] || 'remark-new'}">${labels[remark] || remark || 'New'}</span>`;
         }
@@ -1306,13 +1562,21 @@
         };
 
         // ===== LOGS =====
-        function addLog(msg) {
+        function addLog(msg, serialsList) {
             const user = currentUser || { email: 'system' };
-            transactionLogs.unshift({
+            let logText = msg;
+            const serialsArray = serialsList || [];
+            if (serialsArray.length > 0) {
+                logText += ` | Serials: ${serialsArray.join(', ')}`;
+            }
+            const entry = {
                 time: new Date().toLocaleString(),
-                text: msg,
-                user: user.email || 'system'
-            });
+                text: logText,
+                user: user.email || 'system',
+                timestamp: Date.now(),
+                serials: serialsArray
+            };
+            transactionLogs.unshift(entry);
             if (transactionLogs.length > 200) transactionLogs.pop();
             localStorage.setItem("wms_logs", JSON.stringify(transactionLogs));
             renderLogs();
@@ -1330,7 +1594,7 @@
             }
         }
 
-        // ===== RENDER TABLE =====
+        // ===== RENDER TABLE - Show ALL fields for EVERY row =====
         function renderTable() {
             const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
@@ -1349,43 +1613,89 @@
             filtered = filtered.filter(p =>
                 (p.sku || "").toLowerCase().includes(search) ||
                 (p.name || "").toLowerCase().includes(search) ||
-                (p.serials || []).some(s => s.toLowerCase().includes(search))
+                (p.serials || []).some(s => s.toLowerCase().includes(search)) ||
+                (p.description || "").toLowerCase().includes(search)
             );
+
+            // Keep products with stock > 0 (either serials OR quantity)
+            filtered = filtered.filter(p => {
+                const hasSerials = (p.serials || []).length > 0;
+                const hasQuantity = (p.quantity || 0) > 0;
+                return hasSerials || hasQuantity;
+            });
 
             const tbody = document.getElementById("tableBody");
             if (filtered.length === 0) {
                 tbody.innerHTML =
-                    `<tr><td colspan="10" style="text-align:center;padding:30px;">📦 No products found</td></tr>`;
+                    `<tr><td colspan="11" style="text-align:center;padding:30px;">📦 No products found</td></tr>`;
             } else {
-                tbody.innerHTML = filtered.map(p => {
+                let allRows = [];
+
+                // Sort products by SKU then remark
+                filtered.sort((a, b) => {
+                    const skuCompare = (a.sku || '').localeCompare(b.sku || '');
+                    if (skuCompare !== 0) return skuCompare;
+                    const remarkOrder = { 'new': 0, 'demo': 1, 'refurbished': 2, 'old': 3 };
+                    return (remarkOrder[a.remark] || 0) - (remarkOrder[b.remark] || 0);
+                });
+
+                filtered.forEach((p, index) => {
                     const serials = p.serials || [];
-                    const qty = serials.length;
+                    let qty;
+                    
+                    // Get quantity from either field
+                    if (p.quantity && p.quantity > 0) {
+                        qty = p.quantity || 0;
+                    } else {
+                        qty = serials.length;
+                    }
+                    
+                    // If still 0 but has serials, use serials count
+                    if (qty === 0 && serials.length > 0) {
+                        qty = serials.length;
+                    }
+                    
                     const low = qty <= (p.minStock || 0);
 
-                    const serialDisplay = qty > 0 ?
-                        `<span class="serial-clickable" onclick="showSerialModal('${p.id}')">${qty} units <i class="fas fa-list-ul"></i></span>` :
-                        `<span style="color:#64748b;">No serials</span>`;
+                    let serialDisplay;
+                    if (qty > 0) {
+                        // Check if it's non-serialized (has quantity but no serials)
+                        if ((p.quantity && p.quantity > 0) && (p.serials || []).length === 0) {
+                            serialDisplay = `<span>${qty} units (non-serialized)</span>`;
+                        } else if ((p.serials || []).length > 0) {
+                            serialDisplay = `<span class="serial-clickable" onclick="showSerialModal('${p.id}')">${qty} units <i class="fas fa-list-ul"></i></span>`;
+                        } else {
+                            serialDisplay = `<span>${qty} units</span>`;
+                        }
+                    } else {
+                        serialDisplay = `<span style="color:#64748b;">No serials</span>`;
+                    }
 
-                    return `<tr>
-                        <td><strong>${escapeHtml(p.sku)}</strong></td>
-                        <td>${escapeHtml(p.name)}</td>
-                        <td>${escapeHtml(p.cat || "General")}</td>
-                        <td><span class="branch-tag">${escapeHtml(getBranchName(p.branchId))}</span></td>
-                        <td><span class="stock-badge ${low ? 'low-stock' : ''}">${qty}</span></td>
-                        <td>${serialDisplay}</td>
-                        <td>${getRemarkBadge(p.remark || 'new')}</td>
-                        <td>${p.minStock || 5}</td>
-                        <td>${low ? '⚠️ Low' : '✅ OK'}</td>
-                        <td class="action-icons">
-                            <i class="fas fa-edit" data-id="${p.id}" title="Edit"></i>
-                            <i class="fas fa-trash-alt" data-id="${p.id}" title="Delete"></i>
-                            <i class="fas fa-barcode" data-id="${p.id}" title="Barcode"></i>
-                        </td>
-                    </tr>`;
-                }).join('');
+                    allRows.push(`
+                        <tr>
+                            <td><strong>${escapeHtml(p.sku)}</strong></td>
+                            <td>${escapeHtml(p.name)}</td>
+                            <td><span class="description-text" title="${escapeHtml(p.description || '')}">${escapeHtml(p.description || '—')}</span></td>
+                            <td>${escapeHtml(p.cat || "General")}</td>
+                            <td><span class="branch-tag">${escapeHtml(getBranchName(p.branchId))}</span></td>
+                            <td><span class="stock-badge ${low ? 'low-stock' : ''}">${qty}</span></td>
+                            <td>${serialDisplay}</td>
+                            <td>${getRemarkBadge(p.remark || 'new')}</td>
+                            <td>${p.minStock || 5}</td>
+                            <td>${low ? '⚠️ Low' : '✅ OK'}</td>
+                            <td class="action-icons">
+                                <i class="fas fa-edit" data-id="${p.id}" title="Edit"></i>
+                                <i class="fas fa-trash-alt" data-id="${p.id}" title="Delete"></i>
+                                <i class="fas fa-barcode" data-id="${p.id}" title="Barcode"></i>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                tbody.innerHTML = allRows.join('');
             }
 
-            // Update dropdowns
+            // Update dropdowns - clean names without remark appended
             const options = products.map(p =>
                 `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)}</option>`
             ).join('');
@@ -1394,10 +1704,25 @@
             document.getElementById("receiveProductSelect").innerHTML = options || '<option>No products</option>';
             document.getElementById("issueProductSelect").innerHTML = options || '<option>No products</option>';
 
-            // Stats
-            const totalProducts = filtered.length;
-            const totalUnits = filtered.reduce((s, p) => s + (p.serials || []).length, 0);
-            const lowCount = filtered.filter(p => (p.serials || []).length <= (p.minStock || 0)).length;
+            // Stats - count products with stock > 0
+            const activeProducts = products.filter(p => {
+                const hasSerials = (p.serials || []).length > 0;
+                const hasQuantity = (p.quantity || 0) > 0;
+                return hasSerials || hasQuantity;
+            });
+            const totalProducts = activeProducts.length;
+            let totalUnits = 0;
+            activeProducts.forEach(p => {
+                if (p.quantity && p.quantity > 0) {
+                    totalUnits += p.quantity || 0;
+                } else {
+                    totalUnits += (p.serials || []).length;
+                }
+            });
+            const lowCount = activeProducts.filter(p => {
+                const qty = (p.quantity && p.quantity > 0) ? (p.quantity || 0) : (p.serials || []).length;
+                return qty <= (p.minStock || 0);
+            }).length;
             document.getElementById("totalProducts").innerText = totalProducts;
             document.getElementById("totalUnits").innerText = totalUnits;
             document.getElementById("lowStockCount").innerText = lowCount;
@@ -1468,21 +1793,21 @@
                 container.innerHTML = '<p style="color:#94a3b8;">No users registered yet.</p>';
             } else {
                 container.innerHTML = users.map(u => `
-                    <div class="user-list-item">
-                        <div class="user-info">
-                            <strong>${escapeHtml(u.name || u.email)}</strong>
-                            <span style="color:#94a3b8;font-size:0.7rem;">${escapeHtml(u.email)}</span>
-                            <span class="role-badge ${u.role === 'admin' ? 'role-admin' : u.role === 'manager' ? 'role-manager' : 'role-user'}">${u.role}</span>
-                            <span style="font-size:0.65rem;color:#94a3b8;">Branches: ${(u.branches || []).map(b => getBranchName(b)).join(', ') || 'All (Admin)'}</span>
+                        <div class="user-list-item">
+                            <div class="user-info">
+                                <strong>${escapeHtml(u.name || u.email)}</strong>
+                                <span style="color:#94a3b8;font-size:0.7rem;">${escapeHtml(u.email)}</span>
+                                <span class="role-badge ${u.role === 'admin' ? 'role-admin' : u.role === 'manager' ? 'role-manager' : 'role-user'}">${u.role}</span>
+                                <span style="font-size:0.65rem;color:#94a3b8;">Branches: ${(u.branches || []).map(b => getBranchName(b)).join(', ') || 'All (Admin)'}</span>
+                            </div>
+                            ${u.id !== currentUser?.id ? `
+                            <div class="user-actions">
+                                <button class="secondary" onclick="editUserPrompt('${u.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-edit"></i></button>
+                                <button class="danger" onclick="deleteUser('${u.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-trash"></i></button>
+                            </div>` : `
+                            <span style="font-size:0.6rem;color:#94a3b8;">(You)</span>`}
                         </div>
-                        ${u.id !== currentUser?.id ? `
-                        <div class="user-actions">
-                            <button class="secondary" onclick="editUserPrompt('${u.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-edit"></i></button>
-                            <button class="danger" onclick="deleteUser('${u.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-trash"></i></button>
-                        </div>` : `
-                        <span style="font-size:0.6rem;color:#94a3b8;">(You)</span>`}
-                    </div>
-                `).join('');
+                    `).join('');
             }
 
             const container2 = document.getElementById("adminRegBranchAccess");
@@ -1508,16 +1833,16 @@
                 container.innerHTML = '<p style="color:#94a3b8;">No branches created yet.</p>';
             } else {
                 container.innerHTML = branches.map(b => `
-                    <div class="user-list-item">
-                        <div class="user-info">
-                            <strong>${escapeHtml(b.name)}</strong>
-                            <span style="color:#94a3b8;font-size:0.7rem;">${escapeHtml(b.location || 'No location')}</span>
+                        <div class="user-list-item">
+                            <div class="user-info">
+                                <strong>${escapeHtml(b.name)}</strong>
+                                <span style="color:#94a3b8;font-size:0.7rem;">${escapeHtml(b.location || 'No location')}</span>
+                            </div>
+                            <div class="user-actions">
+                                <button class="danger" onclick="deleteBranch('${b.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-trash"></i></button>
+                            </div>
                         </div>
-                        <div class="user-actions">
-                            <button class="danger" onclick="deleteBranch('${b.id}')" style="padding:3px 10px;font-size:0.65rem;"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('');
+                    `).join('');
             }
 
             // Update all branch dropdowns
@@ -1526,6 +1851,7 @@
             document.getElementById("editBranch").innerHTML = branchOptions;
             document.getElementById("receiveBranchSelect").innerHTML = branchOptions;
             document.getElementById("issueBranchSelect").innerHTML = branchOptions;
+            document.getElementById("reportBranch").innerHTML = `<option value="all">All Branches</option>` + branchOptions;
 
             const filter = document.getElementById("branchFilter");
             const currentVal = filter.value;
@@ -1607,6 +1933,7 @@
             renderTable();
             if (document.getElementById("issuePanel").classList.contains("active")) {
                 updateIssuePanel();
+                updateIssueCurrentStock();
             }
             document.getElementById("connectionStatus").innerHTML = '✅ Connected to Firestore';
             document.getElementById("connectionStatus").className = "status-bar status-online";
@@ -1662,9 +1989,9 @@
             if (issueType === 'select') {
                 checkboxDiv.innerHTML = serials.map(s =>
                     `<label style="display:inline-flex;align-items:center;gap:4px;background:#1e293b;padding:2px 10px;border-radius:8px;font-size:0.7rem;cursor:pointer;border:1px solid ${selectedSerials.includes(s) ? '#34d399' : '#334155'};">
-                        <input type="checkbox" value="${escapeHtml(s)}" ${selectedSerials.includes(s) ? 'checked' : ''} onchange="toggleSerial('${escapeHtml(s)}')" />
-                        ${escapeHtml(s)}
-                    </label>`
+                            <input type="checkbox" value="${escapeHtml(s)}" ${selectedSerials.includes(s) ? 'checked' : ''} onchange="toggleSerial('${escapeHtml(s)}')" />
+                            ${escapeHtml(s)}
+                        </label>`
                 ).join('');
             } else {
                 checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Manual entry mode active</span>';
@@ -1706,11 +2033,13 @@
         document.getElementById("issueProductSelect").onchange = function() {
             selectedSerials = [];
             updateIssuePanel();
+            updateIssueCurrentStock();
         };
 
         document.getElementById("issueBranchSelect").onchange = function() {
             selectedSerials = [];
             updateIssuePanel();
+            updateIssueCurrentStock();
         };
 
         document.querySelectorAll('input[name="issueType"]').forEach(radio => {
@@ -1743,7 +2072,56 @@
             updateIssuePanel();
         };
 
-        // ===== ISSUE STOCK =====
+        // ===== RECEIVE STOCK TOGGLE - Serialized / Non-Serialized =====
+        document.querySelectorAll('input[name="receiveType"]').forEach(radio => {
+            radio.onchange = function() {
+                const serializedSection = document.getElementById("receiveSerializedSection");
+                const nonSerializedSection = document.getElementById("receiveNonSerializedSection");
+                if (this.value === 'serialized') {
+                    serializedSection.classList.remove("hidden");
+                    nonSerializedSection.classList.add("hidden");
+                } else {
+                    serializedSection.classList.add("hidden");
+                    nonSerializedSection.classList.remove("hidden");
+                }
+            };
+        });
+
+        // ===== ISSUE STOCK TOGGLE - Serialized / Non-Serialized =====
+        document.querySelectorAll('input[name="issueTypeMain"]').forEach(radio => {
+            radio.onchange = function() {
+                const serializedSection = document.getElementById("issueSerializedSection");
+                const nonSerializedSection = document.getElementById("issueNonSerializedSection");
+                if (this.value === 'serialized') {
+                    serializedSection.classList.remove("hidden");
+                    nonSerializedSection.classList.add("hidden");
+                } else {
+                    serializedSection.classList.add("hidden");
+                    nonSerializedSection.classList.remove("hidden");
+                    // Update current stock display
+                    updateIssueCurrentStock();
+                }
+            };
+        });
+
+        // ===== Update current stock display for non-serialized issue =====
+        function updateIssueCurrentStock() {
+            const productId = document.getElementById("issueProductSelect").value;
+            const prod = products.find(p => p.id === productId);
+            if (prod) {
+                let qty = 0;
+                if (prod.quantity && prod.quantity > 0) {
+                    qty = prod.quantity;
+                } else if (prod.serials && prod.serials.length > 0) {
+                    qty = prod.serials.length;
+                }
+                document.getElementById("issueCurrentStockDisplay").textContent = qty;
+            } else {
+                document.getElementById("issueCurrentStockDisplay").textContent = '0';
+            }
+        }
+
+        // ===== ISSUE STOCK - Supports both Serialized and Non-Serialized =====
         document.getElementById("issueBtn").onclick = async () => {
             if (!canUserEdit(currentUser)) {
                 alert("You don't have permission to issue stock.");
@@ -1753,7 +2131,7 @@
             const productId = document.getElementById("issueProductSelect").value;
             const branchId = document.getElementById("issueBranchSelect").value;
             const invoiceNo = document.getElementById("issueInvoiceNo").value.trim() || 'N/A';
-            const issueType = document.querySelector('input[name="issueType"]:checked').value;
+            const issueTypeMain = document.querySelector('input[name="issueTypeMain"]:checked').value;
 
             if (!productId) { alert("Select a product."); return; }
             if (!branchId) { alert("Select a branch."); return; }
@@ -1766,7 +2144,61 @@
                 return;
             }
 
+            // Handle Non-Serialized Issue
+            if (issueTypeMain === 'nonserialized') {
+                const quantity = parseInt(document.getElementById("issueQuantity").value);
+                if (!quantity || quantity < 1) {
+                    alert("Please enter a valid quantity.");
+                    return;
+                }
+
+                // Get current stock - check both quantity and serials
+                let currentQty = 0;
+                if (prod.quantity && prod.quantity > 0) {
+                    currentQty = prod.quantity;
+                } else if (prod.serials && prod.serials.length > 0) {
+                    currentQty = prod.serials.length;
+                }
+                
+                if (quantity > currentQty) {
+                    alert(`Insufficient stock! Available: ${currentQty} units`);
+                    return;
+                }
+
+                // Update the product
+                if (prod.quantity !== undefined && prod.quantity > 0) {
+                    // Product has quantity field (non-serialized)
+                    await db.collection("products").doc(productId).update({
+                        quantity: currentQty - quantity,
+                        lastUpdated: new Date().toISOString()
+                    });
+                } else {
+                    // Product has serials (serialized) - remove last N serials
+                    const serials = prod.serials || [];
+                    const updatedSerials = serials.slice(0, serials.length - quantity);
+                    await db.collection("products").doc(productId).update({
+                        serials: updatedSerials,
+                        lastUpdated: new Date().toISOString()
+                    });
+                }
+
+                addLog(`Issued ${quantity} units from ${prod.sku} (${getBranchName(branchId)}) | Invoice: ${invoiceNo}`);
+                
+                document.getElementById("issueQuantity").value = "1";
+                document.getElementById("issueMsg").style.display = "block";
+                document.getElementById("issueMsg").innerHTML = `✅ Issued ${quantity} units from ${prod.sku} | Invoice: ${invoiceNo}`;
+                document.getElementById("issueError").style.display = "none";
+                setTimeout(() => {
+                    document.getElementById("issueMsg").style.display = "none";
+                }, 3000);
+                updateIssueCurrentStock();
+                return;
+            }
+
+            // Handle Serialized Issue (existing code)
+            const issueType = document.querySelector('input[name="issueType"]:checked').value;
             let serialsToIssue = [];
+            let serialsList = [];
 
             if (issueType === 'manual') {
                 const serialsText = document.getElementById("issueSerials").value.trim();
@@ -1792,12 +2224,14 @@
                         return;
                     }
                 }
+                serialsList = serialsToIssue;
             } else {
                 if (selectedSerials.length === 0) {
                     alert("Select at least one serial to issue.");
                     return;
                 }
                 serialsToIssue = [...selectedSerials];
+                serialsList = serialsToIssue;
             }
 
             const currentSerials = prod.serials || [];
@@ -1807,7 +2241,8 @@
                 serials: updatedSerials
             });
 
-            addLog(`Issued ${serialsToIssue.length} serials from ${prod.sku} (${getBranchName(branchId)}) | Invoice: ${invoiceNo}`);
+            const logMsg = `Issued ${serialsToIssue.length} serials from ${prod.sku} (${getBranchName(branchId)}) | Invoice: ${invoiceNo}`;
+            addLog(logMsg, serialsList);
 
             selectedSerials = [];
             document.getElementById("issueSerials").value = "";
@@ -1820,256 +2255,23 @@
             }, 3000);
 
             updateIssuePanel();
+            updateIssueCurrentStock();
         };
 
-        // ===== AUTH / LOGIN =====
-        function checkAuth() {
-            const saved = localStorage.getItem("wms_user");
-            if (saved) {
-                try {
-                    currentUser = JSON.parse(saved);
-                    showApp();
-                    return true;
-                } catch (e) { localStorage.removeItem("wms_user"); }
-            }
-            return false;
-        }
-
-        function showApp() {
-            document.getElementById("loginOverlay").style.display = "none";
-            document.getElementById("appContainer").classList.add("active");
-            document.getElementById("userNameDisplay").textContent = currentUser.name || currentUser.email;
-            document.getElementById("userAvatar").textContent = (currentUser.name || currentUser.email || 'U')[0]
-                .toUpperCase();
-            const roleEl = document.getElementById("userRoleDisplay");
-            roleEl.textContent = currentUser.role || 'user';
-            roleEl.className =
-                `role-badge ${currentUser.role === 'admin' ? 'role-admin' : currentUser.role === 'manager' ? 'role-manager' : 'role-user'}`;
-
-            document.getElementById("usersTab").style.display = canUserManageUsers(currentUser) ? 'inline-flex' : 'none';
-            document.getElementById("branchesTab").style.display = canUserManageBranches(currentUser) ? 'inline-flex' :
-                'none';
-
-            renderAll();
-        }
-
-        function showLogin() {
-            document.getElementById("loginOverlay").style.display = "flex";
-            document.getElementById("appContainer").classList.remove("active");
-            document.getElementById("loginForm").style.display = "block";
-            document.getElementById("registerForm").style.display = "none";
-            document.getElementById("loginError").style.display = "none";
-        }
-
-        document.getElementById("loginBtn").onclick = async () => {
-            const email = document.getElementById("loginEmail").value.trim();
-            const password = document.getElementById("loginPassword").value;
-            if (!email || !password) {
-                document.getElementById("loginError").textContent = "Please fill in all fields.";
-                document.getElementById("loginError").style.display = "block";
-                return;
-            }
-
-            const userRef = db.collection("users");
-            const query = await userRef.where("email", "==", email).get();
-            if (query.empty) {
-                document.getElementById("loginError").textContent = "User not found.";
-                document.getElementById("loginError").style.display = "block";
-                return;
-            }
-
-            const userDoc = query.docs[0];
-            const userData = userDoc.data();
-            if (userData.password !== password) {
-                document.getElementById("loginError").textContent = "Invalid password.";
-                document.getElementById("loginError").style.display = "block";
-                return;
-            }
-
-            currentUser = { id: userDoc.id, ...userData };
-            localStorage.setItem("wms_user", JSON.stringify(currentUser));
-            addLog(`User ${currentUser.email} logged in`);
-            showApp();
-        };
-
-        document.getElementById("showRegister").onclick = () => {
-            document.getElementById("loginForm").style.display = "none";
-            document.getElementById("registerForm").style.display = "block";
-            document.getElementById("loginError").style.display = "none";
-            const container = document.getElementById("regBranchAccess");
-            container.innerHTML = branches.map(b =>
-                `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
-            ).join('');
-        };
-
-        document.getElementById("showLogin").onclick = () => {
-            document.getElementById("loginForm").style.display = "block";
-            document.getElementById("registerForm").style.display = "none";
-            document.getElementById("registerError").style.display = "none";
-        };
-
-        document.getElementById("registerBtn").onclick = async () => {
-            const name = document.getElementById("regName").value.trim();
-            const email = document.getElementById("regEmail").value.trim();
-            const password = document.getElementById("regPassword").value;
-            const role = document.getElementById("regRole").value;
-
-            if (!name || !email || !password) {
-                document.getElementById("registerError").textContent = "All fields required.";
-                document.getElementById("registerError").style.display = "block";
-                return;
-            }
-
-            if (password.length < 6) {
-                document.getElementById("registerError").textContent = "Password must be at least 6 characters.";
-                document.getElementById("registerError").style.display = "block";
-                return;
-            }
-
-            const existing = await db.collection("users").where("email", "==", email).get();
-            if (!existing.empty) {
-                document.getElementById("registerError").textContent = "Email already registered.";
-                document.getElementById("registerError").style.display = "block";
-                return;
-            }
-
-            const branchCheckboxes = document.querySelectorAll('#regBranchAccess input[type="checkbox"]:checked');
-            const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
-
-            await db.collection("users").add({
-                name,
-                email,
-                password,
-                role,
-                branches: role === 'admin' ? [] : selectedBranches,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            document.getElementById("registerError").textContent = "✅ Registration successful! Please login.";
-            document.getElementById("registerError").style.color = "#34d399";
-            document.getElementById("registerError").style.display = "block";
-            setTimeout(() => {
-                document.getElementById("loginForm").style.display = "block";
-                document.getElementById("registerForm").style.display = "none";
-                document.getElementById("registerError").style.display = "none";
-                document.getElementById("loginEmail").value = email;
-            }, 1500);
-        };
-
-        document.getElementById("logoutBtn").onclick = () => {
-            addLog(`User ${currentUser?.email} logged out`);
-            localStorage.removeItem("wms_user");
-            currentUser = null;
-            showLogin();
-        };
-
-        // ===== BRANCH FILTER =====
-        document.getElementById("branchFilter").onchange = function() {
-            currentBranchFilter = this.value;
-            renderTable();
-            const b = branches.find(x => x.id === currentBranchFilter);
-            document.getElementById("headerBranchDisplay").textContent = currentBranchFilter === 'all' ? 'All Branches' :
-                b ? b.name : 'Unknown';
-        };
-
-        // ===== REMARK FILTER =====
-        document.getElementById("remarkFilter").onchange = function() {
-            renderTable();
-        };
-
-        // ===== ADD BRANCH =====
-        document.getElementById("addBranchBtn").onclick = async () => {
-            const name = document.getElementById("newBranchName").value.trim();
-            const location = document.getElementById("newBranchLocation").value.trim();
-            if (!name) { alert("Branch name required"); return; }
-            await db.collection("branches").add({ name, location: location || "N/A" });
-            addLog(`Added branch: ${name}`);
-            document.getElementById("newBranchName").value = "";
-            document.getElementById("newBranchLocation").value = "";
-            const msg = document.getElementById("branchMsg");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ Branch "${name}" added!`;
-            setTimeout(() => msg.style.display = "none", 3000);
-        };
-
-        // ===== ADD DEMO PRODUCTS =====
-        document.getElementById("seedBtn").onclick = async () => {
-            if (branches.length === 0) {
-                alert("Please create a branch first.");
-                return;
-            }
-            const branchId = branches[0].id;
-            const demos = [{
-                sku: "WH-1001",
-                name: "Wireless Mouse",
-                cat: "Electronics",
-                barcode: "690123456789",
-                serials: ["SN-2025-0001", "SN-2025-0002", "SN-2025-0003"],
-                minStock: 5,
-                branchId,
-                remark: "new"
-            }, {
-                sku: "WH-1002",
-                name: "Mechanical Keyboard",
-                cat: "Electronics",
-                barcode: "692837461025",
-                serials: ["SN-2025-0010", "SN-2025-0011"],
-                minStock: 5,
-                branchId,
-                remark: "demo"
-            }, {
-                sku: "WH-2001",
-                name: "Steel Shelf",
-                cat: "Furniture",
-                barcode: "697215438902",
-                serials: ["SN-2025-0020"],
-                minStock: 4,
-                branchId,
-                remark: "refurbished"
-            }, {
-                sku: "WH-3005",
-                name: "Anti-static Mat",
-                cat: "Safety",
-                barcode: "694178362501",
-                serials: ["SN-2025-0030", "SN-2025-0031", "SN-2025-0032", "SN-2025-0033"],
-                minStock: 5,
-                branchId,
-                remark: "new"
-            }, {
-                sku: "WH-4002",
-                name: "Pallet Jack",
-                cat: "Equipment",
-                barcode: "698234517890",
-                serials: ["SN-2025-0040", "SN-2025-0041"],
-                minStock: 2,
-                branchId,
-                remark: "refurbished"
-            }];
-            let added = 0;
-            for (const d of demos) {
-                if (!products.some(p => p.sku === d.sku)) {
-                    await db.collection("products").add(d);
-                    added++;
-                }
-            }
-            addLog(`Added ${added} demo products with remarks`);
-            alert(`✅ Added ${added} demo products with remarks!`);
-        };
-
-        // ===== RECEIVE STOCK =====
+        // ===== RECEIVE STOCK - Supports both Serialized and Non-Serialized =====
         document.getElementById("receiveBtn").onclick = async () => {
             if (!canUserEdit(currentUser)) {
                 alert("You don't have permission to receive stock.");
                 return;
             }
+            
             const productId = document.getElementById("receiveProductSelect").value;
             const branchId = document.getElementById("receiveBranchSelect").value;
             const remark = document.getElementById("receiveRemark").value;
-            const serialsText = document.getElementById("receiveSerials").value.trim();
+            const receiveType = document.querySelector('input[name="receiveType"]:checked').value;
 
             if (!productId) { alert("Select a product."); return; }
             if (!branchId) { alert("Select a branch."); return; }
-            if (!serialsText) { alert("Enter at least one serial number."); return; }
 
             const prod = products.find(p => p.id === productId);
             if (!prod) { alert("Product not found."); return; }
@@ -2078,6 +2280,60 @@
                 alert("You don't have access to this branch.");
                 return;
             }
+
+            // Handle Non-Serialized Receive
+            if (receiveType === 'nonserialized') {
+                const quantity = parseInt(document.getElementById("receiveQuantity").value);
+                if (!quantity || quantity < 1) {
+                    alert("Please enter a valid quantity.");
+                    return;
+                }
+
+                // Check if there's already a product with same SKU and same remark
+                const existingProductWithSameRemark = products.find(p => 
+                    p.sku === prod.sku && p.remark === remark
+                );
+
+                if (existingProductWithSameRemark) {
+                    // Update existing product
+                    const currentQty = existingProductWithSameRemark.quantity || 0;
+                    await db.collection("products").doc(existingProductWithSameRemark.id).update({
+                        quantity: currentQty + quantity,
+                        lastUpdated: new Date().toISOString()
+                    });
+                    addLog(`Added ${quantity} units to existing ${prod.sku} (${remark}) - Non-Serialized`);
+                } else {
+                    // Create new product document
+                    const newProduct = {
+                        sku: prod.sku,
+                        name: prod.name,
+                        description: prod.description || "",
+                        cat: prod.cat || "General",
+                        branchId: branchId,
+                        minStock: prod.minStock || 5,
+                        barcode: prod.barcode + "-" + remark.toUpperCase().substring(0, 3),
+                        serials: [],
+                        quantity: quantity,
+                        remark: remark,
+                        isNonSerialized: true,
+                        created: new Date().toISOString(),
+                        lastUpdated: new Date().toISOString()
+                    };
+                    await db.collection("products").add(newProduct);
+                    addLog(`Created new ${prod.sku} (${remark}) with ${quantity} units - Non-Serialized`);
+                }
+
+                document.getElementById("receiveQuantity").value = "1";
+                const msg = document.getElementById("receiveMsg");
+                msg.style.display = "block";
+                msg.innerHTML = `✅ Added ${quantity} units as "${remark}"!`;
+                setTimeout(() => msg.style.display = "none", 3000);
+                return;
+            }
+
+            // Handle Serialized Receive (existing code)
+            const serialsText = document.getElementById("receiveSerials").value.trim();
+            if (!serialsText) { alert("Enter at least one serial number."); return; }
 
             const newSerials = serialsText.split('\n')
                 .map(s => s.trim())
@@ -2088,23 +2344,50 @@
                 return;
             }
 
-            const existingSerials = prod.serials || [];
-            const uniqueNew = newSerials.filter(s => !existingSerials.includes(s));
-            if (uniqueNew.length === 0) {
-                alert("All serial numbers already exist.");
-                return;
+            // Check if there's already a product with same SKU and same remark
+            const existingProductWithSameRemark = products.find(p => 
+                p.sku === prod.sku && p.remark === remark
+            );
+
+            if (existingProductWithSameRemark) {
+                const existingSerials = existingProductWithSameRemark.serials || [];
+                const uniqueNew = newSerials.filter(s => !existingSerials.includes(s));
+                
+                if (uniqueNew.length === 0) {
+                    alert("All serial numbers already exist for this remark.");
+                    return;
+                }
+
+                await db.collection("products").doc(existingProductWithSameRemark.id).update({
+                    serials: [...existingSerials, ...uniqueNew]
+                });
+
+                addLog(`Added ${uniqueNew.length} serials to existing ${prod.sku} (${remark})`, uniqueNew);
+
+            } else {
+                const newProduct = {
+                    sku: prod.sku,
+                    name: prod.name,
+                    description: prod.description || "",
+                    cat: prod.cat || "General",
+                    branchId: branchId,
+                    minStock: prod.minStock || 5,
+                    barcode: prod.barcode + "-" + remark.toUpperCase().substring(0, 3),
+                    serials: newSerials,
+                    remark: remark,
+                    isNonSerialized: false,
+                    created: new Date().toISOString(),
+                    lastUpdated: new Date().toISOString()
+                };
+
+                await db.collection("products").add(newProduct);
+                addLog(`Created new ${prod.sku} (${remark}) with ${newSerials.length} serials`, newSerials);
             }
 
-            await db.collection("products").doc(productId).update({
-                serials: [...existingSerials, ...uniqueNew],
-                remark: remark
-            });
-
-            addLog(`Received ${uniqueNew.length} serials for ${prod.sku} as ${remark}`);
             document.getElementById("receiveSerials").value = "";
             const msg = document.getElementById("receiveMsg");
             msg.style.display = "block";
-            msg.innerHTML = `✅ Received ${uniqueNew.length} serial numbers as ${remark}!`;
+            msg.innerHTML = `✅ Added ${newSerials.length} serial numbers as "${remark}"!`;
             setTimeout(() => msg.style.display = "none", 3000);
         };
 
@@ -2116,10 +2399,10 @@
             }
             const sku = document.getElementById("newSku").value.trim();
             const name = document.getElementById("newName").value.trim();
+            const description = document.getElementById("newDesc").value.trim();
             const branchId = document.getElementById("newBranch").value;
             const remark = document.getElementById("newRemark").value;
             if (!sku || !name) { alert("SKU and Name required"); return; }
-            if (products.some(p => p.sku === sku)) { alert("SKU exists!"); return; }
             if (!branchId) { alert("Please select a branch."); return; }
 
             const isManual = document.querySelector('input[name="barcodeOption"]:checked').value === "manual";
@@ -2138,17 +2421,20 @@
             await db.collection("products").add({
                 sku,
                 name,
+                description: description || "",
                 cat: document.getElementById("newCat").value.trim() || "General",
                 branchId,
                 minStock: parseInt(document.getElementById("newMin").value) || 5,
                 barcode,
                 serials: [],
-                remark: remark
+                remark: remark,
+                isNonSerialized: false
             });
 
             addLog(`Added product ${sku} as ${remark}`);
             document.getElementById("newSku").value = "";
             document.getElementById("newName").value = "";
+            document.getElementById("newDesc").value = "";
             document.getElementById("newCat").value = "";
             document.getElementById("manualBarcode").value = "";
             document.querySelector('input[name="barcodeOption"][value="auto"]').checked = true;
@@ -2157,6 +2443,113 @@
             msg.style.display = "block";
             msg.innerHTML = `✅ Product "${sku}" added as ${remark}!`;
             setTimeout(() => msg.style.display = "none", 3000);
+        };
+
+        // ===== ADD DEMO PRODUCTS - COMPLETE RESET =====
+        document.getElementById("seedBtn").onclick = async () => {
+            if (branches.length === 0) {
+                alert("Please create a branch first.");
+                return;
+            }
+
+            if (!confirm("This will DELETE ALL existing products and add new demo data. Continue?")) {
+                return;
+            }
+
+            const branchId = branches[0].id;
+
+            try {
+                // Delete ALL existing products
+                const snapshot = await db.collection("products").get();
+                for (const doc of snapshot.docs) {
+                    await db.collection("products").doc(doc.id).delete();
+                }
+
+                // Add new demo products - EACH AS SEPARATE DOCUMENT
+                const demos = [{
+                    sku: "WH-1001",
+                    name: "Wireless Mouse",
+                    description: "Ergonomic wireless mouse with 2.4GHz connection - NEW VERSION",
+                    cat: "Electronics",
+                    barcode: "690123456789",
+                    serials: ["SN-2025-0001", "SN-2025-0002", "SN-2025-0003"],
+                    minStock: 5,
+                    branchId,
+                    remark: "new",
+                    isNonSerialized: false
+                }, {
+                    sku: "WH-1001",
+                    name: "Wireless Mouse",
+                    description: "Ergonomic wireless mouse - OLD VERSION (previous generation)",
+                    cat: "Electronics",
+                    barcode: "690123456790",
+                    serials: ["SN-2024-0001", "SN-2024-0002"],
+                    minStock: 3,
+                    branchId,
+                    remark: "old",
+                    isNonSerialized: false
+                }, {
+                    sku: "WH-1002",
+                    name: "Mechanical Keyboard",
+                    description: "Blue switch mechanical keyboard with RGB",
+                    cat: "Electronics",
+                    barcode: "692837461025",
+                    serials: ["SN-2025-0010", "SN-2025-0011"],
+                    minStock: 5,
+                    branchId,
+                    remark: "demo",
+                    isNonSerialized: false
+                }, {
+                    sku: "WH-2001",
+                    name: "Steel Shelf",
+                    description: "Heavy duty steel shelf, 200kg capacity",
+                    cat: "Furniture",
+                    barcode: "697215438902",
+                    serials: ["SN-2025-0020"],
+                    minStock: 4,
+                    branchId,
+                    remark: "refurbished",
+                    isNonSerialized: false
+                }, {
+                    sku: "WH-3005",
+                    name: "Anti-static Mat",
+                    description: "Anti-static mat for electronic workstations",
+                    cat: "Safety",
+                    barcode: "694178362501",
+                    serials: ["SN-2025-0030", "SN-2025-0031", "SN-2025-0032", "SN-2025-0033"],
+                    minStock: 5,
+                    branchId,
+                    remark: "old",
+                    isNonSerialized: false
+                }, {
+                    sku: "WH-4002",
+                    name: "Pallet Jack",
+                    description: "Manual pallet jack, 2500kg capacity",
+                    cat: "Equipment",
+                    barcode: "698234517890",
+                    serials: ["SN-2025-0040", "SN-2025-0041"],
+                    minStock: 2,
+                    branchId,
+                    remark: "refurbished",
+                    isNonSerialized: false
+                }];
+
+                let added = 0;
+                for (const d of demos) {
+                    await db.collection("products").add(d);
+                    added++;
+                }
+
+                addLog(`Reset data: Added ${added} demo products`);
+                alert(`✅ Reset complete! Added ${added} demo products.\n\nWH-1001 now has TWO separate lines:\n- NEW (3 units)\n- OLD MODEL (2 units)`);
+
+                // Refresh the products list
+                renderTable();
+
+            } catch (error) {
+                console.error("Error resetting data:", error);
+                alert("Error resetting data: " + error.message);
+            }
         };
 
         // ===== TOGGLE BARCODE INPUTS =====
@@ -2243,8 +2636,18 @@
             if (!prod) return;
 
             const updates = {};
+            const newSku = document.getElementById("editSku").value.trim();
+            if (newSku && newSku !== prod.sku) {
+                if (products.some(p => p.sku === newSku && p.id !== id)) {
+                    alert("SKU already exists on another product!");
+                    return;
+                }
+                updates.sku = newSku;
+            }
             if (document.getElementById("editName").value.trim()) updates.name = document.getElementById("editName").value
                 .trim();
+            if (document.getElementById("editDesc").value.trim() !== undefined) updates.description = document.getElementById(
+                    "editDesc").value.trim();
             if (document.getElementById("editCat").value.trim()) updates.cat = document.getElementById("editCat").value
                 .trim();
             if (document.getElementById("editBranch").value) updates.branchId = document.getElementById("editBranch").value;
@@ -2280,7 +2683,9 @@
             const id = document.getElementById("editSelect").value;
             const prod = products.find(p => p.id === id);
             if (prod) {
+                document.getElementById("editSku").value = prod.sku || "";
                 document.getElementById("editName").value = prod.name || "";
+                document.getElementById("editDesc").value = prod.description || "";
                 document.getElementById("editCat").value = prod.cat || "";
                 document.getElementById("editBranch").value = prod.branchId || "";
                 document.getElementById("editRemark").value = prod.remark || "new";
@@ -2303,7 +2708,8 @@
                 const remarkLabels = {
                     'new': '🆕 New',
                     'demo': '🎮 Demo',
-                    'refurbished': '🔧 Refurbished'
+                    'refurbished': '🔧 Refurbished',
+                    'old': '📻 Old Model'
                 };
                 document.getElementById("lookupInfo").innerHTML =
                     `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Remark: ${remarkLabels[prod.remark] || 'New'}<br>Stock: ${serialCount} units<br>Serials: ${(prod.serials || []).slice(0,5).join(', ')}${serialCount > 5 ? ` +${serialCount-5} more` : ''}`;
@@ -2343,14 +2749,14 @@
                     return;
                 }
                 await db.collection("products").doc(id).update({ serials: [...serials, serial] });
-                addLog(`Added serial ${serial} to ${prod.sku}`);
+                addLog(`Added serial ${serial} to ${prod.sku}`, [serial]);
             } else {
                 if (!serials.includes(serial)) {
                     alert("Serial not found!");
                     return;
                 }
                 await db.collection("products").doc(id).update({ serials: serials.filter(s => s !== serial) });
-                addLog(`Removed serial ${serial} from ${prod.sku}`);
+                addLog(`Removed serial ${serial} from ${prod.sku}`, [serial]);
             }
 
             document.getElementById("scannerInput").value = "";
@@ -2359,7 +2765,571 @@
             alert(`✅ Serial ${action === 'add' ? 'added' : 'removed'}!`);
         };
 
-        // ===== EXPORT PDF =====
+        // ===== EXPORT FUNCTIONS =====
+        // (export functions remain the same)
+
+        // ===== TAB SWITCHING =====
+        document.querySelectorAll(".tab").forEach(btn => {
+            btn.onclick = () => {
+                const tab = btn.getAttribute("data-tab");
+                document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+                const target = document.getElementById(tab + "Panel");
+                if (target) target.classList.add("active");
+                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+                btn.classList.add("active");
+
+                if (tab === 'users' && !canUserManageUsers(currentUser)) {
+                    alert("Only admins can access User Management.");
+                    document.querySelector('[data-tab="inventory"]').click();
+                }
+                if (tab === 'branches' && !canUserManageBranches(currentUser)) {
+                    alert("Only admins can access Branch Management.");
+                    document.querySelector('[data-tab="inventory"]').click();
+                }
+                if (tab === 'issue') {
+                    selectedSerials = [];
+                    updateIssuePanel();
+                    updateIssueCurrentStock();
+                }
+                if (tab === 'report') {
+                    populateReportYear();
+                    const now = new Date();
+                    document.getElementById("reportMonth").value = now.getMonth();
+                    document.getElementById("reportYear").value = now.getFullYear();
+                    generateReport();
+                }
+            };
+        });
+
+        // ===== AUTH / LOGIN FUNCTIONS =====
+        function checkAuth() {
+            const saved = localStorage.getItem("wms_user");
+            if (saved) {
+                try {
+                    currentUser = JSON.parse(saved);
+                    showApp();
+                    return true;
+                } catch (e) { localStorage.removeItem("wms_user"); }
+            }
+            return false;
+        }
+
+        function showApp() {
+            document.getElementById("loginOverlay").style.display = "none";
+            document.getElementById("appContainer").classList.add("active");
+            document.getElementById("userNameDisplay").textContent = currentUser.name || currentUser.email;
+            document.getElementById("userAvatar").textContent = (currentUser.name || currentUser.email || 'U')[0]
+                .toUpperCase();
+            const roleEl = document.getElementById("userRoleDisplay");
+            roleEl.textContent = currentUser.role || 'user';
+            roleEl.className =
+                `role-badge ${currentUser.role === 'admin' ? 'role-admin' : currentUser.role === 'manager' ? 'role-manager' : 'role-user'}`;
+
+            document.getElementById("usersTab").style.display = canUserManageUsers(currentUser) ? 'inline-flex' : 'none';
+            document.getElementById("branchesTab").style.display = canUserManageBranches(currentUser) ? 'inline-flex' :
+                'none';
+
+            populateReportYear();
+            renderAll();
+        }
+
+        function showLogin() {
+            document.getElementById("loginOverlay").style.display = "flex";
+            document.getElementById("appContainer").classList.remove("active");
+            document.getElementById("loginForm").style.display = "block";
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("loginError").style.display = "none";
+        }
+
+        // ===== LOGIN BUTTON =====
+        document.getElementById("loginBtn").onclick = async function() {
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value;
+            const errorDiv = document.getElementById("loginError");
+
+            if (!email || !password) {
+                errorDiv.textContent = "Please fill in all fields.";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            try {
+                const userRef = db.collection("users");
+                const query = await userRef.where("email", "==", email).get();
+
+                if (query.empty) {
+                    errorDiv.textContent = "User not found. Please register or use the demo account.";
+                    errorDiv.style.display = "block";
+                    return;
+                }
+
+                const userDoc = query.docs[0];
+                const userData = userDoc.data();
+
+                if (userData.password !== password) {
+                    errorDiv.textContent = "Invalid password. Please try again.";
+                    errorDiv.style.display = "block";
+                    return;
+                }
+
+                currentUser = { id: userDoc.id, ...userData };
+                localStorage.setItem("wms_user", JSON.stringify(currentUser));
+                errorDiv.style.display = "none";
+                addLog(`User ${currentUser.email} logged in`);
+                showApp();
+
+            } catch (error) {
+                console.error("Login error:", error);
+                errorDiv.textContent = "Error connecting to database. Please try again.";
+                errorDiv.style.display = "block";
+            }
+        };
+
+        // ===== CREATE DEMO ADMIN ACCOUNT =====
+        document.getElementById("createDemoAdminBtn").onclick = async function() {
+            const errorDiv = document.getElementById("loginError");
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Creating...';
+
+            try {
+                const existing = await db.collection("users").where("email", "==", "allan.koay@bigpos.com").get();
+
+                if (!existing.empty) {
+                    errorDiv.style.display = "block";
+                    errorDiv.textContent = "✅ Admin account already exists! Use it to login.";
+                    errorDiv.style.color = "#34d399";
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
+                    return;
+                }
+
+                await db.collection("users").add({
+                    name: "Allan Koay",
+                    email: "allan.koay@bigpos.com",
+                    password: "Admin@2025",
+                    role: "admin",
+                    branches: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                errorDiv.style.display = "block";
+                errorDiv.textContent = "✅ Admin account created! Email: allan.koay@bigpos.com, Password: Admin@2025";
+                errorDiv.style.color = "#34d399";
+                document.getElementById("loginEmail").value = "allan.koay@bigpos.com";
+                document.getElementById("loginPassword").value = "Admin@2025";
+
+            } catch (error) {
+                console.error("Error creating admin:", error);
+                errorDiv.style.display = "block";
+                errorDiv.textContent = "Error creating admin account: " + error.message;
+                errorDiv.style.color = "#fca5a5";
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
+        };
+
+        // ===== REGISTER FORM TOGGLE =====
+        document.getElementById("showRegister").onclick = function() {
+            document.getElementById("loginForm").style.display = "none";
+            document.getElementById("registerForm").style.display = "block";
+            document.getElementById("loginError").style.display = "none";
+            const container = document.getElementById("regBranchAccess");
+            container.innerHTML = branches.map(b =>
+                `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
+            ).join('');
+        };
+
+        document.getElementById("showLogin").onclick = function() {
+            document.getElementById("loginForm").style.display = "block";
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("registerError").style.display = "none";
+        };
+
+        // ===== REGISTER BUTTON =====
+        document.getElementById("registerBtn").onclick = async function() {
+            const name = document.getElementById("regName").value.trim();
+            const email = document.getElementById("regEmail").value.trim();
+            const password = document.getElementById("regPassword").value;
+            const role = document.getElementById("regRole").value;
+            const errorDiv = document.getElementById("registerError");
+
+            if (!name || !email || !password) {
+                errorDiv.textContent = "All fields required.";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            if (password.length < 6) {
+                errorDiv.textContent = "Password must be at least 6 characters.";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            try {
+                const existing = await db.collection("users").where("email", "==", email).get();
+                if (!existing.empty) {
+                    errorDiv.textContent = "Email already registered.";
+                    errorDiv.style.display = "block";
+                    return;
+                }
+
+                const branchCheckboxes = document.querySelectorAll('#regBranchAccess input[type="checkbox"]:checked');
+                const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
+
+                await db.collection("users").add({
+                    name,
+                    email,
+                    password,
+                    role,
+                    branches: role === 'admin' ? [] : selectedBranches,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                errorDiv.textContent = "✅ Registration successful! Please login.";
+                errorDiv.style.color = "#34d399";
+                errorDiv.style.display = "block";
+
+                setTimeout(() => {
+                    document.getElementById("loginForm").style.display = "block";
+                    document.getElementById("registerForm").style.display = "none";
+                    errorDiv.style.display = "none";
+                    document.getElementById("loginEmail").value = email;
+                }, 1500);
+
+            } catch (error) {
+                console.error("Registration error:", error);
+                errorDiv.textContent = "Error: " + error.message;
+                errorDiv.style.color = "#fca5a5";
+                errorDiv.style.display = "block";
+            }
+        };
+
+        // ===== LOGOUT =====
+        document.getElementById("logoutBtn").onclick = function() {
+            addLog(`User ${currentUser?.email} logged out`);
+            localStorage.removeItem("wms_user");
+            currentUser = null;
+            showLogin();
+        };
+
+        // ===== BRANCH FILTER =====
+        document.getElementById("branchFilter").onchange = function() {
+            currentBranchFilter = this.value;
+            renderTable();
+            const b = branches.find(x => x.id === currentBranchFilter);
+            document.getElementById("headerBranchDisplay").textContent = currentBranchFilter === 'all' ? 'All Branches' :
+                b ? b.name : 'Unknown';
+        };
+
+        // ===== REMARK FILTER =====
+        document.getElementById("remarkFilter").onchange = function() {
+            renderTable();
+        };
+
+        // ===== ADD BRANCH =====
+        document.getElementById("addBranchBtn").onclick = async () => {
+            const name = document.getElementById("newBranchName").value.trim();
+            const location = document.getElementById("newBranchLocation").value.trim();
+            if (!name) { alert("Branch name required"); return; }
+            await db.collection("branches").add({ name, location: location || "N/A" });
+            addLog(`Added branch: ${name}`);
+            document.getElementById("newBranchName").value = "";
+            document.getElementById("newBranchLocation").value = "";
+            const msg = document.getElementById("branchMsg");
+            msg.style.display = "block";
+            msg.innerHTML = `✅ Branch "${name}" added!`;
+            setTimeout(() => msg.style.display = "none", 3000);
+        };
+
+        // ===== MOVEMENT REPORT FUNCTIONS =====
+        function populateReportYear() {
+            const yearSelect = document.getElementById("reportYear");
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = '';
+            for (let y = currentYear; y >= currentYear - 5; y--) {
+                const option = document.createElement('option');
+                option.value = y;
+                option.textContent = y;
+                if (y === currentYear) option.selected = true;
+                yearSelect.appendChild(option);
+            }
+        }
+
+        function extractSerialNumbers(logEntry) {
+            if (logEntry.serials && logEntry.serials.length > 0) {
+                return logEntry.serials.join(', ');
+            }
+            const text = logEntry.text || '';
+            const serialMatch = text.match(/Serials?:\s*([^|]+)/i);
+            if (serialMatch) {
+                return serialMatch[1].trim();
+            }
+            const snMatch = text.match(/(SN-[A-Z0-9\-]+)/gi);
+            if (snMatch) {
+                return snMatch.join(', ');
+            }
+            const countMatch = text.match(/(\d+)\s*serials?/i);
+            if (countMatch) {
+                return `${countMatch[1]} serials`;
+            }
+            return '';
+        }
+
+        function extractProductName(logEntry) {
+            const text = logEntry.text || '';
+            const productMatch = text.match(/(?:from|for)\s+([^(]+?)(?:\s*\(|$)/i);
+            if (productMatch) {
+                return productMatch[1].trim();
+            }
+            const skuMatch = text.match(/([A-Z]{2,4}-\d+)/);
+            if (skuMatch) {
+                const prod = products.find(p => p.sku === skuMatch[1]);
+                if (prod) return prod.name || '';
+            }
+            return '';
+        }
+
+        function extractSKU(logEntry) {
+            const text = logEntry.text || '';
+            const skuMatch = text.match(/([A-Z]{2,4}-\d+)/);
+            return skuMatch ? skuMatch[1] : '';
+        }
+
+        function extractBranch(logEntry) {
+            const text = logEntry.text || '';
+            const branchMatch = text.match(/\(([^)]+)\)/);
+            if (branchMatch) {
+                for (const b of branches) {
+                    if (branchMatch[1].includes(b.name)) {
+                        return b.name;
+                    }
+                }
+                return branchMatch[1];
+            }
+            return '';
+        }
+
+        function extractInvoice(logEntry) {
+            const text = logEntry.text || '';
+            const invMatch = text.match(/Invoice:\s*([^\s|]+)/i);
+            return invMatch ? invMatch[1] : '';
+        }
+
+        function extractRemark(logEntry) {
+            const text = logEntry.text || '';
+            const remarkMatch = text.match(/as\s+(\w+)/i);
+            if (remarkMatch && ['new', 'demo', 'refurbished', 'old'].includes(remarkMatch[1].toLowerCase())) {
+                return remarkMatch[1];
+            }
+            return '';
+        }
+
+        function generateReport() {
+            const year = parseInt(document.getElementById("reportYear").value);
+            const month = parseInt(document.getElementById("reportMonth").value);
+            const branchFilter = document.getElementById("reportBranch").value;
+            const typeFilter = document.getElementById("reportType").value;
+
+            const filteredLogs = transactionLogs.filter(log => {
+                const logDate = new Date(log.time);
+                const logYear = logDate.getFullYear();
+                const logMonth = logDate.getMonth();
+
+                if (logYear !== year || logMonth !== month) return false;
+
+                if (branchFilter !== 'all') {
+                    const branchName = getBranchName(branchFilter);
+                    if (!log.text.includes(branchName)) return false;
+                }
+
+                if (typeFilter !== 'all') {
+                    const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
+                        'receive');
+                    const isIssue = log.text.toLowerCase().includes('issued') || log.text.toLowerCase().includes(
+                        'issue');
+                    if (typeFilter === 'receive' && !isReceive) return false;
+                    if (typeFilter === 'issue' && !isIssue) return false;
+                }
+
+                return true;
+            });
+
+            reportData = filteredLogs;
+
+            const tableWrapper = document.getElementById("reportTableWrapper");
+            const tableBody = document.getElementById("reportTableBody");
+            const summaryDiv = document.getElementById("reportSummary");
+            const emptyDiv = document.getElementById("reportEmpty");
+
+            if (filteredLogs.length === 0) {
+                tableWrapper.style.display = 'none';
+                summaryDiv.style.display = 'none';
+                emptyDiv.style.display = 'block';
+                return;
+            }
+
+            emptyDiv.style.display = 'none';
+            summaryDiv.style.display = 'flex';
+            tableWrapper.style.display = 'block';
+
+            let totalReceived = 0;
+            let totalIssued = 0;
+
+            filteredLogs.forEach(log => {
+                const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
+                    'receive');
+                const isIssue = log.text.toLowerCase().includes('issued') || log.text.toLowerCase().includes('issue');
+                const match = log.text.match(/(\d+)\s*serials?/i);
+                const count = match ? parseInt(match[1]) : 1;
+
+                if (isReceive) totalReceived += count;
+                if (isIssue) totalIssued += count;
+            });
+
+            document.getElementById("totalReceived").textContent = totalReceived;
+            document.getElementById("totalIssued").textContent = totalIssued;
+            document.getElementById("totalTransactions").textContent = filteredLogs.length;
+            const netMovement = totalReceived - totalIssued;
+            const netEl = document.getElementById("netMovement");
+            netEl.textContent = netMovement >= 0 ? `+${netMovement}` : `${netMovement}`;
+            netEl.className = `value ${netMovement < 0 ? 'negative' : ''}`;
+
+            tableBody.innerHTML = filteredLogs.map(log => {
+                const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
+                    'receive');
+                const type = isReceive ? '📥 Receive' : '📤 Issue';
+                const typeClass = isReceive ? 'style="color:#34d399;"' : 'style="color:#fca5a5;"';
+
+                const sku = extractSKU(log);
+                let product = extractProductName(log);
+                if (!product && sku) {
+                    const prod = products.find(p => p.sku === sku);
+                    if (prod) product = prod.name;
+                }
+                const serials = extractSerialNumbers(log);
+                const branch = extractBranch(log);
+                const invoice = extractInvoice(log);
+                const remark = extractRemark(log);
+                const user = log.user || 'system';
+
+                if (!product) {
+                    const text = log.text || '';
+                    const afterFrom = text.match(/from\s+([^(]+?)(?:\s*\(|$)/i);
+                    if (afterFrom) product = afterFrom[1].trim();
+                }
+
+                return `<tr>
+                        <td>${escapeHtml(log.time)}</td>
+                        <td ${typeClass}>${type}</td>
+                        <td><strong>${escapeHtml(sku)}</strong></td>
+                        <td>${escapeHtml(product)}</td>
+                        <td>${escapeHtml(branch)}</td>
+                        <td><span class="serial-number-display">${escapeHtml(serials)}</span></td>
+                        <td>${escapeHtml(remark)}</td>
+                        <td>${escapeHtml(invoice)}</td>
+                        <td>${escapeHtml(user)}</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        // ===== EXPORT REPORT PDF =====
+        function exportReportPdf() {
+            if (reportData.length === 0) {
+                alert("No data to export. Generate a report first.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'mm', 'a4');
+            doc.setFontSize(14);
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+                'October', 'November', 'December'
+            ];
+            const month = parseInt(document.getElementById("reportMonth").value);
+            const year = document.getElementById("reportYear").value;
+            doc.text(`Inventory Movement Report - ${monthNames[month]} ${year}`, 14, 20);
+
+            const tableData = reportData.map(log => {
+                const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
+                    'receive');
+                const type = isReceive ? 'Receive' : 'Issue';
+                const sku = extractSKU(log);
+                let product = extractProductName(log);
+                if (!product && sku) {
+                    const prod = products.find(p => p.sku === sku);
+                    if (prod) product = prod.name;
+                }
+                const serials = extractSerialNumbers(log);
+                const branch = extractBranch(log);
+                const invoice = extractInvoice(log);
+                const remark = extractRemark(log);
+                const user = log.user || 'system';
+
+                return [log.time, type, sku, product, branch, serials, remark, invoice, user];
+            });
+
+            doc.autoTable({
+                head: [
+                    ['Date', 'Type', 'SKU', 'Product', 'Branch', 'Serial #', 'Remark', 'Invoice No.', 'User']
+                ],
+                body: tableData,
+                startY: 25,
+                styles: { fontSize: 6, cellPadding: 2 },
+                headStyles: { fillColor: [52, 211, 153], textColor: [15, 23, 42] }
+            });
+
+            doc.save(`movement_report_${monthNames[month]}_${year}.pdf`);
+            addLog(`Exported movement report for ${monthNames[month]} ${year} to PDF`);
+        }
+
+        // ===== EXPORT REPORT CSV =====
+        function exportReportCsv() {
+            if (reportData.length === 0) {
+                alert("No data to export. Generate a report first.");
+                return;
+            }
+
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+                'October', 'November', 'December'
+            ];
+            const month = parseInt(document.getElementById("reportMonth").value);
+            const year = document.getElementById("reportYear").value;
+            const headers = ['Date', 'Type', 'SKU', 'Product', 'Branch', 'Serial #', 'Remark', 'Invoice No.', 'User'];
+            const data = reportData.map(log => {
+                const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
+                    'receive');
+                const type = isReceive ? 'Receive' : 'Issue';
+                const sku = extractSKU(log);
+                let product = extractProductName(log);
+                if (!product && sku) {
+                    const prod = products.find(p => p.sku === sku);
+                    if (prod) product = prod.name;
+                }
+                const serials = extractSerialNumbers(log);
+                const branch = extractBranch(log);
+                const invoice = extractInvoice(log);
+                const remark = extractRemark(log);
+                const user = log.user || 'system';
+
+                return [log.time, type, sku, product, branch, serials, remark, invoice, user];
+            });
+
+            let csv = headers.join(',') + '\n';
+            data.forEach(row => {
+                csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `movement_report_${monthNames[month]}_${year}.csv`;
+            link.click();
+            addLog(`Exported movement report for ${monthNames[month]} ${year} to CSV`);
+        }
+
+        // ===== EXPORT INVENTORY PDF =====
         document.getElementById("exportPdfBtn").onclick = () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape', 'mm', 'a4');
@@ -2375,23 +3345,25 @@
             const remarkLabels = {
                 'new': 'New',
                 'demo': 'Demo',
-                'refurbished': 'Refurbished'
+                'refurbished': 'Refurbished',
+                'old': 'Old Model'
             };
 
             const tableData = filtered.map(p => [
                 p.sku || '',
                 p.name || '',
+                p.description || '',
                 p.cat || 'General',
                 getBranchName(p.branchId),
-                String((p.serials || []).length),
+                String((p.quantity && p.quantity > 0) ? p.quantity : (p.serials || []).length),
                 remarkLabels[p.remark] || 'New',
                 String(p.minStock || 5),
-                (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK'
+                ((p.quantity && p.quantity > 0) ? p.quantity : (p.serials || []).length) <= (p.minStock || 0) ? 'Low Stock' : 'OK'
             ]);
 
             doc.autoTable({
                 head: [
-                    ['SKU', 'Name', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status']
+                    ['SKU', 'Name', 'Description', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status']
                 ],
                 body: tableData,
                 startY: 25,
@@ -2404,7 +3376,7 @@
             addLog(`Exported ${filterLabel} inventory to PDF`);
         };
 
-        // ===== EXPORT CSV =====
+        // ===== EXPORT INVENTORY CSV =====
         document.getElementById("exportCsvBtn").onclick = () => {
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
             let filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
@@ -2415,20 +3387,22 @@
             const remarkLabels = {
                 'new': 'New',
                 'demo': 'Demo',
-                'refurbished': 'Refurbished'
+                'refurbished': 'Refurbished',
+                'old': 'Old Model'
             };
 
-            const headers = ['SKU', 'Name', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status', 'Serials'];
+            const headers = ['SKU', 'Name', 'Description', 'Category', 'Branch', 'Qty', 'Remark', 'Min', 'Status', 'Serials'];
             const data = filtered.map(p => [
                 p.sku || '',
                 p.name || '',
+                p.description || '',
                 p.cat || 'General',
                 getBranchName(p.branchId),
-                String((p.serials || []).length),
+                String((p.quantity && p.quantity > 0) ? p.quantity : (p.serials || []).length),
                 remarkLabels[p.remark] || 'New',
                 String(p.minStock || 5),
-                (p.serials || []).length <= (p.minStock || 0) ? 'Low Stock' : 'OK',
-                (p.serials || []).join('; ')
+                ((p.quantity && p.quantity > 0) ? p.quantity : (p.serials || []).length) <= (p.minStock || 0) ? 'Low Stock' : 'OK',
+                (p.quantity && p.quantity > 0 && (p.serials || []).length === 0) ? 'Non-Serialized' : (p.serials || []).join('; ')
             ]);
 
             let csv = headers.join(',') + '\n';
@@ -2491,44 +3465,40 @@
         // ===== SEARCH =====
         document.getElementById("searchInput").oninput = () => renderTable();
 
-        // ===== TAB SWITCHING =====
-        document.querySelectorAll(".tab").forEach(btn => {
-            btn.onclick = () => {
-                const tab = btn.getAttribute("data-tab");
-                document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-                const target = document.getElementById(tab + "Panel");
-                if (target) target.classList.add("active");
-                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-                btn.classList.add("active");
-
-                if (tab === 'users' && !canUserManageUsers(currentUser)) {
-                    alert("Only admins can access User Management.");
-                    document.querySelector('[data-tab="inventory"]').click();
-                }
-                if (tab === 'branches' && !canUserManageBranches(currentUser)) {
-                    alert("Only admins can access Branch Management.");
-                    document.querySelector('[data-tab="inventory"]').click();
-                }
-                if (tab === 'issue') {
-                    selectedSerials = [];
-                    updateIssuePanel();
-                }
-            };
-        });
+        // ===== REPORT EVENT LISTENERS =====
+        document.getElementById("generateReportBtn").onclick = generateReport;
+        document.getElementById("exportReportPdfBtn").onclick = exportReportPdf;
+        document.getElementById("exportReportCsvBtn").onclick = exportReportCsv;
 
         // ===== INIT =====
         if (!checkAuth()) {
             showLogin();
+            db.collection("branches").onSnapshot((snapshot) => {
+                branches = [];
+                snapshot.forEach(doc => branches.push({ id: doc.id, ...doc.data() }));
+                const container = document.getElementById("regBranchAccess");
+                if (container) {
+                    container.innerHTML = branches.map(b =>
+                        `<label><input type="checkbox" value="${b.id}" checked /> ${escapeHtml(b.name)}</label>`
+                    ).join('');
+                }
+            });
         } else {
             document.getElementById("branchFilter").value = 'all';
             renderAll();
+            setTimeout(() => {
+                const now = new Date();
+                document.getElementById("reportMonth").value = now.getMonth();
+                document.getElementById("reportYear").value = now.getFullYear();
+                generateReport();
+            }, 500);
         }
 
         document.querySelector('input[name="issueType"][value="select"]').checked = true;
         document.getElementById("issueManualArea").classList.add("hidden");
 
-        addLog("System initialized");
-        console.log("WMS Pro loaded successfully.");
+        addLog("System initialized with Movement Report");
+        console.log("WMS Pro loaded successfully with Movement Report.");
     </script>
 </body>
 </html>
