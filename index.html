@@ -17,7 +17,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js">
     </script>
     <style>
-        /* ===== COMPLETE STYLES ===== */
         * {
             margin: 0;
             padding: 0;
@@ -1090,7 +1089,6 @@
                 <h3><i class="fas fa-arrow-down"></i> Receive Stock</h3>
                 <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:12px;">Add stock with or without serial numbers.</p>
                 
-                <!-- Toggle for Serialized / Non-Serialized -->
                 <div class="issuance-type-selector" style="margin-bottom:12px;">
                     <label><input type="radio" name="receiveType" value="serialized" checked /> 🔢 Serialized (with serial numbers)</label>
                     <label><input type="radio" name="receiveType" value="nonserialized" /> 📦 Non-Serialized (quantity only)</label>
@@ -1109,7 +1107,6 @@
                     </div>
                 </div>
                 
-                <!-- Serialized Section -->
                 <div id="receiveSerializedSection">
                     <div class="form-row">
                         <div class="input-group" style="flex:2;">
@@ -1120,7 +1117,6 @@
                     </div>
                 </div>
                 
-                <!-- Non-Serialized Section -->
                 <div id="receiveNonSerializedSection" class="hidden">
                     <div class="form-row">
                         <div class="input-group" style="flex:1;">
@@ -1141,7 +1137,6 @@
                 <h3><i class="fas fa-arrow-up"></i> Issue Stock</h3>
                 <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:12px;">Issue stock with or without serial numbers.</p>
 
-                <!-- Toggle for Serialized / Non-Serialized -->
                 <div class="issuance-type-selector" style="margin-bottom:12px;">
                     <label><input type="radio" name="issueTypeMain" value="serialized" checked /> 🔢 Serialized (select serial numbers)</label>
                     <label><input type="radio" name="issueTypeMain" value="nonserialized" /> 📦 Non-Serialized (quantity only)</label>
@@ -1155,7 +1150,6 @@
                     </div>
                 </div>
 
-                <!-- Serialized Section -->
                 <div id="issueSerializedSection">
                     <div class="issuance-type-selector">
                         <label><input type="radio" name="issueType" value="select" checked /> Select from list</label>
@@ -1191,7 +1185,6 @@
                     </div>
                 </div>
 
-                <!-- Non-Serialized Section -->
                 <div id="issueNonSerializedSection" class="hidden">
                     <div class="form-row">
                         <div class="input-group" style="flex:1;">
@@ -1286,6 +1279,7 @@
                                 <th>Product</th>
                                 <th>Branch</th>
                                 <th>Serial #</th>
+                                <th>Qty</th>
                                 <th>Remark</th>
                                 <th>Invoice No.</th>
                                 <th>User</th>
@@ -1562,25 +1556,115 @@
             }
         };
 
-        // ===== LOGS =====
-        function addLog(msg, serialsList) {
+        // ===== LOGS - Updated to store more details =====
+        function addLog(msg, serialsList, details) {
             const user = currentUser || { email: 'system' };
             let logText = msg;
             const serialsArray = serialsList || [];
-            if (serialsArray.length > 0) {
-                logText += ` | Serials: ${serialsArray.join(', ')}`;
-            }
+
+            // Build a detailed log entry
             const entry = {
                 time: new Date().toLocaleString(),
                 text: logText,
                 user: user.email || 'system',
                 timestamp: Date.now(),
-                serials: serialsArray
+                serials: serialsArray,
+                // Store additional details for the report
+                type: details?.type || (logText.toLowerCase().includes('received') ? 'receive' : 'issue'),
+                sku: details?.sku || '',
+                productName: details?.productName || '',
+                branch: details?.branch || '',
+                quantity: details?.quantity || serialsArray.length || 0,
+                remark: details?.remark || '',
+                invoice: details?.invoice || ''
             };
+
             transactionLogs.unshift(entry);
             if (transactionLogs.length > 200) transactionLogs.pop();
             localStorage.setItem("wms_logs", JSON.stringify(transactionLogs));
             renderLogs();
+        }
+
+        // ===== FIX OLD LOGS - Run this once to migrate old logs =====
+        function fixOldLogs() {
+            let fixed = 0;
+            transactionLogs = transactionLogs.map(log => {
+                // If log already has structured data, skip
+                if (log.sku !== undefined && log.sku !== '') {
+                    return log;
+                }
+                
+                // Try to extract from text
+                const text = log.text || '';
+                let sku = '';
+                let productName = '';
+                let branch = '';
+                let quantity = 0;
+                let remark = '';
+                let invoice = '';
+                let type = 'issue';
+                
+                // Check if it's a receive or issue
+                if (text.toLowerCase().includes('received') || text.toLowerCase().includes('receive')) {
+                    type = 'receive';
+                } else if (text.toLowerCase().includes('issued') || text.toLowerCase().includes('issue')) {
+                    type = 'issue';
+                }
+                
+                // Extract SKU
+                const skuMatch = text.match(/([A-Z]{2,4}[-\s]?[A-Z0-9]+)/i);
+                if (skuMatch) {
+                    sku = skuMatch[1].trim();
+                }
+                
+                // Extract quantity
+                const qtyMatch = text.match(/(\d+)\s*units?/i);
+                if (qtyMatch) {
+                    quantity = parseInt(qtyMatch[1]);
+                } else if (log.serials && log.serials.length > 0) {
+                    quantity = log.serials.length;
+                }
+                
+                // Extract branch
+                const branchMatch = text.match(/\(([^)]+)\)/);
+                if (branchMatch) {
+                    branch = branchMatch[1];
+                }
+                
+                // Extract invoice
+                const invMatch = text.match(/Invoice:\s*([^\s|]+)/i);
+                if (invMatch) {
+                    invoice = invMatch[1];
+                }
+                
+                // Extract remark
+                const remarkMatch = text.match(/as\s+(\w+)/i);
+                if (remarkMatch && ['new', 'demo', 'refurbished', 'old'].includes(remarkMatch[1].toLowerCase())) {
+                    remark = remarkMatch[1];
+                }
+                
+                // If we found any data, update the log
+                if (sku || productName || branch || quantity > 0) {
+                    fixed++;
+                    return {
+                        ...log,
+                        type: type,
+                        sku: sku,
+                        productName: productName,
+                        branch: branch,
+                        quantity: quantity,
+                        remark: remark,
+                        invoice: invoice
+                    };
+                }
+                
+                return log;
+            });
+            
+            localStorage.setItem("wms_logs", JSON.stringify(transactionLogs));
+            console.log(`Fixed ${fixed} old logs`);
+            renderLogs();
+            return fixed;
         }
 
         function renderLogs() {
@@ -2159,6 +2243,9 @@
                     return;
                 }
 
+                // Get the remark from the product
+                const remark = prod.remark || '';
+
                 if (prod.quantity !== undefined && prod.quantity > 0) {
                     await db.collection("products").doc(productId).update({
                         quantity: currentQty - quantity,
@@ -2173,7 +2260,19 @@
                     });
                 }
 
-                addLog(`Issued ${quantity} units from ${prod.sku} (${getBranchName(branchId)}) | Invoice: ${invoiceNo}`);
+                addLog(
+                    `Issued ${quantity} units from ${prod.sku} (${getBranchName(branchId)}) | Invoice: ${invoiceNo}`,
+                    [],
+                    {
+                        type: 'issue',
+                        sku: prod.sku,
+                        productName: prod.name,
+                        branch: getBranchName(branchId),
+                        quantity: quantity,
+                        remark: remark,
+                        invoice: invoiceNo
+                    }
+                );
 
                 document.getElementById("issueQuantity").value = "1";
                 document.getElementById("issueMsg").style.display = "block";
@@ -2232,8 +2331,22 @@
                 serials: updatedSerials
             });
 
-            const logMsg = `Issued ${serialsToIssue.length} serials from ${prod.sku} (${getBranchName(branchId)}) | Invoice: ${invoiceNo}`;
-            addLog(logMsg, serialsList);
+            // Get the remark from the product
+            const remark = prod.remark || '';
+
+            addLog(
+                `Issued ${serialsToIssue.length} serials from ${prod.sku} (${getBranchName(branchId)}) | Invoice: ${invoiceNo}`,
+                serialsList,
+                {
+                    type: 'issue',
+                    sku: prod.sku,
+                    productName: prod.name,
+                    branch: getBranchName(branchId),
+                    quantity: serialsToIssue.length,
+                    remark: remark,
+                    invoice: invoiceNo
+                }
+            );
 
             selectedSerials = [];
             document.getElementById("issueSerials").value = "";
@@ -2290,7 +2403,20 @@
                         quantity: currentQty + quantity,
                         lastUpdated: new Date().toISOString()
                     });
-                    addLog(`Added ${quantity} units to existing ${prod.sku} (${remark}) - Non-Serialized`);
+
+                    addLog(
+                        `Received ${quantity} units from ${prod.sku} (${getBranchName(branchId)}) as ${remark} - Non-Serialized`,
+                        [],
+                        {
+                            type: 'receive',
+                            sku: prod.sku,
+                            productName: prod.name,
+                            branch: getBranchName(branchId),
+                            quantity: quantity,
+                            remark: remark,
+                            invoice: ''
+                        }
+                    );
                 } else {
                     const newProduct = {
                         sku: prod.sku,
@@ -2308,7 +2434,20 @@
                         lastUpdated: new Date().toISOString()
                     };
                     await db.collection("products").add(newProduct);
-                    addLog(`Created new ${prod.sku} (${remark}) with ${quantity} units - Non-Serialized`);
+
+                    addLog(
+                        `Created new ${prod.sku} (${remark}) with ${quantity} units - Non-Serialized`,
+                        [],
+                        {
+                            type: 'receive',
+                            sku: prod.sku,
+                            productName: prod.name,
+                            branch: getBranchName(branchId),
+                            quantity: quantity,
+                            remark: remark,
+                            invoice: ''
+                        }
+                    );
                 }
 
                 document.getElementById("receiveQuantity").value = "1";
@@ -2349,7 +2488,19 @@
                     serials: [...existingSerials, ...uniqueNew]
                 });
 
-                addLog(`Added ${uniqueNew.length} serials to existing ${prod.sku} (${remark})`, uniqueNew);
+                addLog(
+                    `Received ${uniqueNew.length} serials for ${prod.sku} (${getBranchName(branchId)}) as ${remark}`,
+                    uniqueNew,
+                    {
+                        type: 'receive',
+                        sku: prod.sku,
+                        productName: prod.name,
+                        branch: getBranchName(branchId),
+                        quantity: uniqueNew.length,
+                        remark: remark,
+                        invoice: ''
+                    }
+                );
 
             } else {
                 const newProduct = {
@@ -2368,7 +2519,20 @@
                 };
 
                 await db.collection("products").add(newProduct);
-                addLog(`Created new ${prod.sku} (${remark}) with ${newSerials.length} serials`, newSerials);
+
+                addLog(
+                    `Created new ${prod.sku} (${remark}) with ${newSerials.length} serials`,
+                    newSerials,
+                    {
+                        type: 'receive',
+                        sku: prod.sku,
+                        productName: prod.name,
+                        branch: getBranchName(branchId),
+                        quantity: newSerials.length,
+                        remark: remark,
+                        invoice: ''
+                    }
+                );
             }
 
             document.getElementById("receiveSerials").value = "";
@@ -2762,84 +2926,6 @@
             }
         }
 
-        function extractSKU(logEntry) {
-            const text = logEntry.text || '';
-            const skuMatch = text.match(/([A-Z]{2,4}[-\s]?[A-Z0-9]+)/i);
-            if (skuMatch) {
-                const potentialSku = skuMatch[1].trim();
-                for (const p of products) {
-                    if (p.sku && potentialSku.includes(p.sku)) {
-                        return p.sku;
-                    }
-                    if (p.sku && p.sku.includes(potentialSku)) {
-                        return p.sku;
-                    }
-                }
-                return potentialSku;
-            }
-            return '';
-        }
-
-        function extractProductName(logEntry) {
-            const text = logEntry.text || '';
-            const prod = products.find(p => p.sku && text.includes(p.sku));
-            if (prod) return prod.name || '';
-            const nameMatch = text.match(/(?:from|for)\s+([^(]+?)(?:\s*\(|$)/i);
-            if (nameMatch) {
-                return nameMatch[1].trim();
-            }
-            return '';
-        }
-
-        function extractSerialNumbers(logEntry) {
-            if (logEntry.serials && logEntry.serials.length > 0) {
-                return logEntry.serials.join(', ');
-            }
-            const text = logEntry.text || '';
-            const serialMatch = text.match(/Serials?:\s*([^|]+)/i);
-            if (serialMatch) {
-                return serialMatch[1].trim();
-            }
-            const snMatch = text.match(/(SN-[A-Z0-9\-]+)/gi);
-            if (snMatch) {
-                return snMatch.join(', ');
-            }
-            const countMatch = text.match(/(\d+)\s*serials?/i);
-            if (countMatch) {
-                return `${countMatch[1]} serials`;
-            }
-            return '';
-        }
-
-        function extractBranch(logEntry) {
-            const text = logEntry.text || '';
-            for (const b of branches) {
-                if (text.includes(b.name)) {
-                    return b.name;
-                }
-            }
-            const branchMatch = text.match(/\(([^)]+)\)/);
-            if (branchMatch) {
-                return branchMatch[1];
-            }
-            return '';
-        }
-
-        function extractInvoice(logEntry) {
-            const text = logEntry.text || '';
-            const invMatch = text.match(/Invoice:\s*([^\s|]+)/i);
-            return invMatch ? invMatch[1] : '';
-        }
-
-        function extractRemark(logEntry) {
-            const text = logEntry.text || '';
-            const remarkMatch = text.match(/as\s+(\w+)/i);
-            if (remarkMatch && ['new', 'demo', 'refurbished', 'old'].includes(remarkMatch[1].toLowerCase())) {
-                return remarkMatch[1];
-            }
-            return '';
-        }
-
         function generateReport() {
             const year = parseInt(document.getElementById("reportYear").value);
             const month = parseInt(document.getElementById("reportMonth").value);
@@ -2855,16 +2941,12 @@
 
                 if (branchFilter !== 'all') {
                     const branchName = getBranchName(branchFilter);
-                    if (!log.text.includes(branchName)) return false;
+                    if (!log.branch && !log.text.includes(branchName)) return false;
+                    if (log.branch && log.branch !== branchName) return false;
                 }
 
                 if (typeFilter !== 'all') {
-                    const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
-                        'receive');
-                    const isIssue = log.text.toLowerCase().includes('issued') || log.text.toLowerCase().includes(
-                        'issue');
-                    if (typeFilter === 'receive' && !isReceive) return false;
-                    if (typeFilter === 'issue' && !isIssue) return false;
+                    if (log.type !== typeFilter) return false;
                 }
 
                 return true;
@@ -2892,11 +2974,9 @@
             let totalIssued = 0;
 
             filteredLogs.forEach(log => {
-                const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
-                    'receive');
-                const isIssue = log.text.toLowerCase().includes('issued') || log.text.toLowerCase().includes('issue');
-                const match = log.text.match(/(\d+)\s*serials?/i);
-                const count = match ? parseInt(match[1]) : 1;
+                const isReceive = log.type === 'receive' || log.text.toLowerCase().includes('received');
+                const isIssue = log.type === 'issue' || log.text.toLowerCase().includes('issued');
+                const count = log.quantity || 1;
 
                 if (isReceive) totalReceived += count;
                 if (isIssue) totalIssued += count;
@@ -2910,29 +2990,29 @@
             netEl.textContent = netMovement >= 0 ? `+${netMovement}` : `${netMovement}`;
             netEl.className = `value ${netMovement < 0 ? 'negative' : ''}`;
 
+            // Display serials and quantity in separate columns with remark
             tableBody.innerHTML = filteredLogs.map(log => {
-                const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
-                    'receive');
+                const isReceive = log.type === 'receive' || log.text.toLowerCase().includes('received');
                 const type = isReceive ? '📥 Receive' : '📤 Issue';
                 const typeClass = isReceive ? 'style="color:#34d399;"' : 'style="color:#fca5a5;"';
 
-                const sku = extractSKU(log);
-                let product = extractProductName(log);
-                if (!product && sku) {
-                    const prod = products.find(p => p.sku === sku);
-                    if (prod) product = prod.name;
+                const sku = log.sku || '';
+                const product = log.productName || '';
+                
+                // Serial # column - show comma separated serials or empty
+                let serialsDisplay = '';
+                if (log.serials && log.serials.length > 0) {
+                    serialsDisplay = log.serials.join(', ');
                 }
-                const serials = extractSerialNumbers(log);
-                const branch = extractBranch(log);
-                const invoice = extractInvoice(log);
-                const remark = extractRemark(log);
+                
+                // Qty column - show the quantity
+                const qtyDisplay = log.quantity || 0;
+                
+                const branch = log.branch || '';
+                const invoice = log.invoice || '';
+                // Show remark - for issue logs, it comes from the product's remark
+                const remark = log.remark || '';
                 const user = log.user || 'system';
-
-                if (!product) {
-                    const text = log.text || '';
-                    const afterFrom = text.match(/from\s+([^(]+?)(?:\s*\(|$)/i);
-                    if (afterFrom) product = afterFrom[1].trim();
-                }
 
                 return `<tr>
                         <td>${escapeHtml(log.time)}</td>
@@ -2940,7 +3020,8 @@
                         <td><strong>${escapeHtml(sku)}</strong></td>
                         <td>${escapeHtml(product)}</td>
                         <td>${escapeHtml(branch)}</td>
-                        <td><span class="serial-number-display">${escapeHtml(serials)}</span></td>
+                        <td><span class="serial-number-display">${escapeHtml(serialsDisplay)}</span></td>
+                        <td style="text-align:center;font-weight:bold;">${qtyDisplay}</td>
                         <td>${escapeHtml(remark)}</td>
                         <td>${escapeHtml(invoice)}</td>
                         <td>${escapeHtml(user)}</td>
@@ -2966,27 +3047,26 @@
             doc.text(`Inventory Movement Report - ${monthNames[month]} ${year}`, 14, 20);
 
             const tableData = reportData.map(log => {
-                const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
-                    'receive');
+                const isReceive = log.type === 'receive' || log.text.toLowerCase().includes('received');
                 const type = isReceive ? 'Receive' : 'Issue';
-                const sku = extractSKU(log);
-                let product = extractProductName(log);
-                if (!product && sku) {
-                    const prod = products.find(p => p.sku === sku);
-                    if (prod) product = prod.name;
+                const sku = log.sku || '';
+                const product = log.productName || '';
+                let serialsDisplay = '';
+                if (log.serials && log.serials.length > 0) {
+                    serialsDisplay = log.serials.join(', ');
                 }
-                const serials = extractSerialNumbers(log);
-                const branch = extractBranch(log);
-                const invoice = extractInvoice(log);
-                const remark = extractRemark(log);
+                const qtyDisplay = log.quantity || 0;
+                const branch = log.branch || '';
+                const invoice = log.invoice || '';
+                const remark = log.remark || '';
                 const user = log.user || 'system';
 
-                return [log.time, type, sku, product, branch, serials, remark, invoice, user];
+                return [log.time, type, sku, product, branch, serialsDisplay, qtyDisplay, remark, invoice, user];
             });
 
             doc.autoTable({
                 head: [
-                    ['Date', 'Type', 'SKU', 'Product', 'Branch', 'Serial #', 'Remark', 'Invoice No.', 'User']
+                    ['Date', 'Type', 'SKU', 'Product', 'Branch', 'Serial #', 'Qty', 'Remark', 'Invoice No.', 'User']
                 ],
                 body: tableData,
                 startY: 25,
@@ -3010,24 +3090,23 @@
             ];
             const month = parseInt(document.getElementById("reportMonth").value);
             const year = document.getElementById("reportYear").value;
-            const headers = ['Date', 'Type', 'SKU', 'Product', 'Branch', 'Serial #', 'Remark', 'Invoice No.', 'User'];
+            const headers = ['Date', 'Type', 'SKU', 'Product', 'Branch', 'Serial #', 'Qty', 'Remark', 'Invoice No.', 'User'];
             const data = reportData.map(log => {
-                const isReceive = log.text.toLowerCase().includes('received') || log.text.toLowerCase().includes(
-                    'receive');
+                const isReceive = log.type === 'receive' || log.text.toLowerCase().includes('received');
                 const type = isReceive ? 'Receive' : 'Issue';
-                const sku = extractSKU(log);
-                let product = extractProductName(log);
-                if (!product && sku) {
-                    const prod = products.find(p => p.sku === sku);
-                    if (prod) product = prod.name;
+                const sku = log.sku || '';
+                const product = log.productName || '';
+                let serialsDisplay = '';
+                if (log.serials && log.serials.length > 0) {
+                    serialsDisplay = log.serials.join(', ');
                 }
-                const serials = extractSerialNumbers(log);
-                const branch = extractBranch(log);
-                const invoice = extractInvoice(log);
-                const remark = extractRemark(log);
+                const qtyDisplay = log.quantity || 0;
+                const branch = log.branch || '';
+                const invoice = log.invoice || '';
+                const remark = log.remark || '';
                 const user = log.user || 'system';
 
-                return [log.time, type, sku, product, branch, serials, remark, invoice, user];
+                return [log.time, type, sku, product, branch, serialsDisplay, qtyDisplay, remark, invoice, user];
             });
 
             let csv = headers.join(',') + '\n';
@@ -3459,6 +3538,10 @@
             setTimeout(() => msg.style.display = "none", 3000);
         };
 
+        // ===== FIX OLD LOGS - Run in console if needed =====
+        window.fixOldLogs = fixOldLogs;
+        console.log("To fix old logs, run: fixOldLogs()");
+
         // ===== INIT =====
         if (!checkAuth()) {
             showLogin();
@@ -3475,6 +3558,8 @@
         } else {
             document.getElementById("branchFilter").value = 'all';
             renderAll();
+            // Fix old logs on startup
+            fixOldLogs();
             setTimeout(() => {
                 const now = new Date();
                 document.getElementById("reportMonth").value = now.getMonth();
@@ -3486,8 +3571,17 @@
         document.querySelector('input[name="issueType"][value="select"]').checked = true;
         document.getElementById("issueManualArea").classList.add("hidden");
 
-        addLog("System initialized with Movement Report");
+        addLog("System initialized with Movement Report", [], {
+            type: 'system',
+            sku: '',
+            productName: '',
+            branch: '',
+            quantity: 0,
+            remark: '',
+            invoice: ''
+        });
         console.log("WMS Pro loaded successfully with Movement Report.");
+        console.log("To fix old logs, run: fixOldLogs()");
     </script>
 </body>
 </html>
