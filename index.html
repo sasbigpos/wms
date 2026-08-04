@@ -735,6 +735,31 @@
             color: #e2e8f0;
             font-size: 0.75rem;
         }
+        .category-filter-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .category-filter-group .category-btn {
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.3s;
+        }
+        .category-filter-group .category-btn:hover {
+            border-color: #34d399;
+            color: #34d399;
+        }
+        .category-filter-group .category-btn.active {
+            background: #34d399;
+            color: #0f172a;
+            border-color: #34d399;
+        }
         .invoice-badge {
             display: inline-block;
             padding: 1px 8px;
@@ -885,6 +910,30 @@
             background: #7f1d1d;
             color: #fca5a5;
         }
+        .category-management-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0;
+        }
+        .category-management-list .category-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #0f172a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            font-size: 0.8rem;
+        }
+        .category-management-list .category-item .delete-cat {
+            cursor: pointer;
+            color: #fca5a5;
+            font-size: 0.7rem;
+        }
+        .category-management-list .category-item .delete-cat:hover {
+            color: #ef4444;
+        }
         @media (max-width: 768px) {
             .login-box {
                 padding: 24px;
@@ -909,6 +958,13 @@
             }
             .filter-group {
                 gap: 6px;
+            }
+            .category-filter-group {
+                gap: 4px;
+            }
+            .category-filter-group .category-btn {
+                font-size: 0.6rem;
+                padding: 3px 10px;
             }
             .serial-modal-content {
                 padding: 16px;
@@ -1054,6 +1110,9 @@
                                 <option value="old">📻 Old Model</option>
                             </select>
                         </div>
+                        <div class="category-filter-group" id="categoryFilterGroup">
+                            <button class="category-btn active" data-category="all">📂 All Categories</button>
+                        </div>
                         <div class="export-buttons">
                             <button id="exportPdfBtn" class="secondary"><i class="fas fa-file-pdf"></i> PDF</button>
                             <button id="exportCsvBtn" class="secondary"><i class="fas fa-file-csv"></i> CSV</button>
@@ -1126,9 +1185,24 @@
                 </div>
                 
                 <div class="form-row">
-                    <div class="input-group"><label>Select Product</label><select id="receiveProductSelect"></select></div>
-                    <div class="input-group"><label>Branch</label><select id="receiveBranchSelect"></select></div>
-                    <div class="input-group"><label>Type</label>
+                    <div class="input-group" style="flex:1;">
+                        <label>Category Filter</label>
+                        <select id="receiveCategoryFilter">
+                            <option value="all">📂 All Categories</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="flex:1.5;">
+                        <label>Select Product</label>
+                        <select id="receiveProductSelect">
+                            <option value="">-- Select a product --</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label>Branch</label>
+                        <select id="receiveBranchSelect"></select>
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label>Type</label>
                         <select id="receiveRemark">
                             <option value="new">🆕 New</option>
                             <option value="demo">🎮 Demo</option>
@@ -1174,6 +1248,12 @@
                 </div>
 
                 <div class="form-row">
+                    <div class="input-group" style="flex:1;">
+                        <label>Category Filter</label>
+                        <select id="issueCategoryFilter">
+                            <option value="all">📂 All Categories</option>
+                        </select>
+                    </div>
                     <div class="input-group" style="flex:1.2;">
                         <label>Product Type</label>
                         <select id="issueTypeFilter">
@@ -1442,6 +1522,25 @@
                     <button id="deleteBtn" class="danger"><i class="fas fa-trash"></i> Delete</button>
                 </div>
             </div>
+
+            <!-- Category Management Card -->
+            <div class="card">
+                <h3><i class="fas fa-tags"></i> Category Management</h3>
+                <p style="color:#94a3b8;font-size:0.75rem;margin-bottom:10px;">Manage product categories. Delete categories that are no longer needed.</p>
+                
+                <div id="categoryManagementList" class="category-management-list">
+                    <span style="color:#64748b;font-size:0.75rem;">Loading categories...</span>
+                </div>
+                
+                <div class="form-row" style="margin-top:10px;">
+                    <div class="input-group" style="flex:2;">
+                        <label>Add New Category</label>
+                        <input type="text" id="newCategoryInput" placeholder="Enter category name" />
+                    </div>
+                    <button id="addCategoryBtn"><i class="fas fa-plus"></i> Add Category</button>
+                </div>
+                <div id="categoryMsg" class="success-msg"></div>
+            </div>
         </div>
 
         <!-- USERS PANEL -->
@@ -1514,8 +1613,10 @@
         let transactionLogs = JSON.parse(localStorage.getItem("wms_logs") || "[]");
         let currentBranchFilter = 'all';
         let currentRemarkFilter = 'all';
+        let currentCategoryFilter = 'all';
         let selectedSerials = [];
         let reportData = [];
+        let categories = [];
 
         // ===== HELPERS =====
         function escapeHtml(s) {
@@ -1585,6 +1686,232 @@
                 'old': '📻 Old Model'
             };
             return `<span class="type-badge ${classes[type] || 'new'}">${labels[type] || type || 'New'}</span>`;
+        }
+
+        // ===== CATEGORY MANAGEMENT =====
+        function getUniqueCategories() {
+            // Get categories from localStorage first (user-managed list)
+            const storedCats = JSON.parse(localStorage.getItem('wms_categories') || '[]');
+            
+            // Get categories from products
+            const productCats = new Set();
+            products.forEach(p => {
+                if (p.cat && p.cat.trim()) productCats.add(p.cat.trim());
+            });
+            
+            // Combine: keep stored categories AND product categories
+            const allCats = new Set();
+            
+            // Add stored categories
+            storedCats.forEach(c => {
+                if (c && c.trim()) allCats.add(c.trim());
+            });
+            
+            // Add product categories
+            productCats.forEach(c => {
+                if (c && c.trim()) allCats.add(c.trim());
+            });
+            
+            const finalCats = Array.from(allCats).sort();
+            localStorage.setItem('wms_categories', JSON.stringify(finalCats));
+            
+            return finalCats;
+        }
+
+        window.deleteCategory = function(category) {
+            // Check if any products are using this category
+            const productsUsingCat = products.filter(p => (p.cat || '').trim() === category);
+            
+            let confirmMessage = `Delete category "${category}"?`;
+            if (productsUsingCat.length > 0) {
+                confirmMessage = `Category "${category}" is used by ${productsUsingCat.length} product(s).\n\nClick OK to remove this category from all products (set to "General") AND delete it.\nClick Cancel to keep it.`;
+            }
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            // Remove category from all products that use it
+            if (productsUsingCat.length > 0) {
+                productsUsingCat.forEach(async (p) => {
+                    await db.collection("products").doc(p.id).update({
+                        cat: "General"
+                    });
+                });
+                // Remove from categories array after a moment
+                setTimeout(() => {
+                    categories = categories.filter(c => c.trim() !== category);
+                    localStorage.setItem('wms_categories', JSON.stringify(categories));
+                    
+                    updateCategoryManagement();
+                    updateCategoryFilters();
+                    renderTable();
+                    addLog(`Deleted category: ${category} and removed from ${productsUsingCat.length} products`);
+                    
+                    const msg = document.getElementById('categoryMsg');
+                    msg.style.display = 'block';
+                    msg.innerHTML = `✅ Category "${category}" deleted and removed from ${productsUsingCat.length} product(s).`;
+                    setTimeout(() => msg.style.display = 'none', 3000);
+                }, 500);
+            } else {
+                // Remove from categories array
+                categories = categories.filter(c => c.trim() !== category);
+                localStorage.setItem('wms_categories', JSON.stringify(categories));
+                
+                updateCategoryManagement();
+                updateCategoryFilters();
+                renderTable();
+                addLog(`Deleted category: ${category}`);
+                
+                const msg = document.getElementById('categoryMsg');
+                msg.style.display = 'block';
+                msg.innerHTML = `✅ Category "${category}" deleted.`;
+                setTimeout(() => msg.style.display = 'none', 3000);
+            }
+        };
+
+        function addCategory(category) {
+            category = category.trim();
+            if (!category) {
+                alert('Please enter a category name.');
+                return false;
+            }
+
+            const existingCats = getUniqueCategories();
+            if (existingCats.includes(category)) {
+                alert(`Category "${category}" already exists.`);
+                return false;
+            }
+
+            categories.push(category);
+            localStorage.setItem('wms_categories', JSON.stringify(categories));
+            
+            updateCategoryManagement();
+            updateCategoryFilters();
+            renderTable();
+            
+            const msg = document.getElementById('categoryMsg');
+            msg.style.display = 'block';
+            msg.innerHTML = `✅ Category "${category}" added!`;
+            setTimeout(() => msg.style.display = 'none', 3000);
+            
+            addLog(`Added category: ${category}`);
+            return true;
+        }
+
+        // ===== LOAD CATEGORIES FROM STORAGE =====
+        function loadCategories() {
+            const stored = localStorage.getItem('wms_categories');
+            if (stored) {
+                try {
+                    categories = JSON.parse(stored);
+                } catch (e) {
+                    categories = [];
+                }
+            }
+            
+            // Also extract categories from products
+            products.forEach(p => {
+                if (p.cat && p.cat.trim() && !categories.includes(p.cat.trim())) {
+                    categories.push(p.cat.trim());
+                }
+            });
+            
+            categories = Array.from(new Set(categories)).sort();
+            localStorage.setItem('wms_categories', JSON.stringify(categories));
+        }
+
+        function updateCategoryManagement() {
+            const container = document.getElementById('categoryManagementList');
+            const cats = getUniqueCategories();
+            
+            if (cats.length === 0) {
+                container.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">No categories yet. Add one below.</span>';
+                return;
+            }
+
+            container.innerHTML = cats.map(cat => `
+                <span class="category-item">
+                    📁 ${escapeHtml(cat)}
+                    <span class="delete-cat" onclick="deleteCategory('${escapeHtml(cat)}')" title="Delete this category">
+                        <i class="fas fa-times"></i>
+                    </span>
+                </span>
+            `).join('');
+        }
+
+        // ===== UPDATE CATEGORY FILTERS (FIXED) =====
+        function updateCategoryFilters() {
+            const categories = getUniqueCategories();
+            
+            const filterGroup = document.getElementById('categoryFilterGroup');
+            
+            // Create "All Categories" button with proper event handler
+            const allBtn = document.createElement('button');
+            allBtn.className = 'category-btn active';
+            allBtn.dataset.category = 'all';
+            allBtn.textContent = '📂 All Categories';
+            allBtn.onclick = function() {
+                setCategoryFilter('all');
+            };
+            
+            filterGroup.innerHTML = '';
+            filterGroup.appendChild(allBtn);
+            
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.dataset.category = cat;
+                btn.textContent = `📁 ${cat}`;
+                btn.onclick = function() {
+                    setCategoryFilter(cat);
+                };
+                if (currentCategoryFilter === cat) btn.classList.add('active');
+                filterGroup.appendChild(btn);
+            });
+
+            // Update receive category filter
+            const receiveCatFilter = document.getElementById('receiveCategoryFilter');
+            const receiveVal = receiveCatFilter.value;
+            receiveCatFilter.innerHTML = '<option value="all">📂 All Categories</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                receiveCatFilter.appendChild(opt);
+            });
+            if (receiveVal && categories.includes(receiveVal)) {
+                receiveCatFilter.value = receiveVal;
+            }
+
+            // Update issue category filter
+            const issueCatFilter = document.getElementById('issueCategoryFilter');
+            const issueVal = issueCatFilter.value;
+            issueCatFilter.innerHTML = '<option value="all">📂 All Categories</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                issueCatFilter.appendChild(opt);
+            });
+            if (issueVal && categories.includes(issueVal)) {
+                issueCatFilter.value = issueVal;
+            }
+
+            updateCategoryManagement();
+        }
+
+        function setCategoryFilter(category) {
+            currentCategoryFilter = category;
+            // Update all category buttons
+            document.querySelectorAll('#categoryFilterGroup .category-btn').forEach(btn => {
+                if (btn.dataset.category === category) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            renderTable();
         }
 
         // ===== SERIAL MODAL =====
@@ -1732,7 +2059,7 @@
             }
         }
 
-        // ===== RENDER TABLE - FIXED: Prioritize serials over quantity =====
+        // ===== RENDER TABLE =====
         function renderTable() {
             const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
@@ -1748,6 +2075,10 @@
                 filtered = filtered.filter(p => (p.remark || 'new') === remarkFilter);
             }
 
+            if (currentCategoryFilter !== 'all') {
+                filtered = filtered.filter(p => (p.cat || '') === currentCategoryFilter);
+            }
+
             filtered = filtered.filter(p =>
                 (p.sku || "").toLowerCase().includes(search) ||
                 (p.name || "").toLowerCase().includes(search) ||
@@ -1755,7 +2086,7 @@
                 (p.description || "").toLowerCase().includes(search)
             );
 
-            // Keep products with stock > 0 (quantity OR serials)
+            // Keep products with stock > 0
             filtered = filtered.filter(p => {
                 const hasQuantity = (p.quantity || 0) > 0;
                 const hasSerials = (p.serials || []).length > 0;
@@ -1769,24 +2100,23 @@
             } else {
                 let allRows = [];
 
+                // Sort by SKU first, then by Description
                 filtered.sort((a, b) => {
                     const skuCompare = (a.sku || '').localeCompare(b.sku || '');
                     if (skuCompare !== 0) return skuCompare;
-                    const remarkOrder = { 'new': 0, 'demo': 1, 'refurbished': 2, 'old': 3 };
-                    return (remarkOrder[a.remark] || 0) - (remarkOrder[b.remark] || 0);
+                    const descA = a.description || '';
+                    const descB = b.description || '';
+                    return descA.localeCompare(descB);
                 });
 
                 let rowNumber = 1;
                 filtered.forEach((p, index) => {
-                    // FIX: Prioritize serials over quantity
                     const serialsLength = (p.serials || []).length;
                     let qty;
 
                     if (serialsLength > 0) {
-                        // Product has serials - use serials count
                         qty = serialsLength;
                     } else if (p.quantity !== undefined && p.quantity > 0) {
-                        // Product has quantity but no serials (non-serialized)
                         qty = p.quantity || 0;
                     } else {
                         qty = 0;
@@ -1809,14 +2139,15 @@
                     }
 
                     const typeBadge = getTypeBadge(p.remark || 'new');
+                    const displayDescription = p.description || '—';
 
                     allRows.push(`
                         <tr>
                             <td class="row-number">${rowNumber}</td>
                             <td><strong>${escapeHtml(p.sku)}</strong></td>
                             <td>${escapeHtml(p.name)}</td>
-                            <td><span class="description-text" title="${escapeHtml(p.description || '')}">${escapeHtml(p.description || '—')}</span></td>
-                            <td>${escapeHtml(p.cat || "General")}</td>
+                            <td><span class="description-text" title="${escapeHtml(displayDescription)}">${escapeHtml(displayDescription)}</span></td>
+                            <td><span class="branch-tag">${escapeHtml(p.cat || "General")}</span></td>
                             <td><span class="branch-tag">${escapeHtml(getBranchName(p.branchId))}</span></td>
                             <td><span class="stock-badge ${low ? 'low-stock' : ''}">${qty}</span></td>
                             <td>${serialDisplay}</td>
@@ -1837,16 +2168,16 @@
             }
 
             // Update dropdowns
+            updateReceiveProductDropdown();
+            updateIssueProductDropdown();
+            
             const options = products.map(p =>
-                `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)}</option>`
+                `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)} ${escapeHtml(p.description ? ' - ' + p.description : '')}</option>`
             ).join('');
             document.getElementById("editSelect").innerHTML = options || '<option>No products</option>';
             document.getElementById("barcodeSelect").innerHTML = options || '<option>No products</option>';
-            document.getElementById("receiveProductSelect").innerHTML = options || '<option>No products</option>';
 
-            updateIssueProductDropdown();
-
-            // Stats - count only products with stock > 0
+            // Stats
             const activeProducts = products.filter(p => {
                 const hasQuantity = (p.quantity || 0) > 0;
                 const hasSerials = (p.serials || []).length > 0;
@@ -1927,15 +2258,51 @@
             });
         }
 
+        // ===== UPDATE RECEIVE PRODUCT DROPDOWN =====
+        function updateReceiveProductDropdown() {
+            const categoryFilter = document.getElementById("receiveCategoryFilter").value;
+            const select = document.getElementById("receiveProductSelect");
+            const currentVal = select.value;
+            
+            let filteredProducts = products;
+            if (categoryFilter !== 'all') {
+                filteredProducts = products.filter(p => (p.cat || '') === categoryFilter);
+            }
+
+            select.innerHTML = '<option value="">-- Select a product --</option>';
+            filteredProducts.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                let qty;
+                const serialsLength = (p.serials || []).length;
+                if (serialsLength > 0) {
+                    qty = serialsLength;
+                } else {
+                    qty = p.quantity || 0;
+                }
+                const desc = p.description ? ` - ${p.description}` : '';
+                opt.textContent = `${p.sku} - ${p.name}${desc} | Qty: ${qty} | ${p.cat || 'General'}`;
+                select.appendChild(opt);
+            });
+
+            if (currentVal && filteredProducts.some(p => p.id === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
         // ===== UPDATE ISSUE PRODUCT DROPDOWN =====
         function updateIssueProductDropdown() {
+            const categoryFilter = document.getElementById("issueCategoryFilter").value;
             const typeFilter = document.getElementById("issueTypeFilter").value;
             const select = document.getElementById("issueProductSelect");
             const currentVal = select.value;
-
+            
             let filteredProducts = products;
+            if (categoryFilter !== 'all') {
+                filteredProducts = products.filter(p => (p.cat || '') === categoryFilter);
+            }
             if (typeFilter !== 'all') {
-                filteredProducts = products.filter(p => (p.remark || 'new') === typeFilter);
+                filteredProducts = filteredProducts.filter(p => (p.remark || 'new') === typeFilter);
             }
 
             // Only show products with stock > 0
@@ -1956,7 +2323,8 @@
                 } else {
                     qty = p.quantity || 0;
                 }
-                opt.textContent = `${p.sku} - ${p.name} | Qty: ${qty}`;
+                const desc = p.description ? ` - ${p.description}` : '';
+                opt.textContent = `${p.sku} - ${p.name}${desc} | Qty: ${qty} | ${p.cat || 'General'}`;
                 select.appendChild(opt);
             });
 
@@ -2061,10 +2429,13 @@
         }
 
         function renderAll() {
+            loadCategories();
+            updateCategoryFilters();
             renderTable();
             renderUsers();
             renderBranches();
             renderLogs();
+            updateCategoryManagement();
         }
 
         // ===== USER MANAGEMENT FUNCTIONS =====
@@ -2116,6 +2487,8 @@
                 const data = doc.data();
                 products.push({ id: doc.id, ...data, serials: data.serials || [] });
             });
+            loadCategories();
+            updateCategoryFilters();
             renderTable();
             if (document.getElementById("issuePanel").classList.contains("active")) {
                 updateIssuePanel();
@@ -2222,6 +2595,13 @@
             updateIssueCurrentStock();
         };
 
+        document.getElementById("issueCategoryFilter").onchange = function() {
+            updateIssueProductDropdown();
+            selectedSerials = [];
+            updateIssuePanel();
+            updateIssueCurrentStock();
+        };
+
         document.getElementById("issueTypeFilter").onchange = function() {
             updateIssueProductDropdown();
             selectedSerials = [];
@@ -2233,6 +2613,10 @@
             selectedSerials = [];
             updateIssuePanel();
             updateIssueCurrentStock();
+        };
+
+        document.getElementById("receiveCategoryFilter").onchange = function() {
+            updateReceiveProductDropdown();
         };
 
         document.querySelectorAll('input[name="issueType"]').forEach(radio => {
@@ -2313,6 +2697,190 @@
                 document.getElementById("issueCurrentStockDisplay").textContent = '0';
             }
         }
+
+        // ===== RECEIVE STOCK =====
+        document.getElementById("receiveBtn").onclick = async () => {
+            if (!canUserEdit(currentUser)) {
+                alert("You don't have permission to receive stock.");
+                return;
+            }
+
+            const productId = document.getElementById("receiveProductSelect").value;
+            const branchId = document.getElementById("receiveBranchSelect").value;
+            const remark = document.getElementById("receiveRemark").value;
+            const receiveType = document.querySelector('input[name="receiveType"]:checked').value;
+
+            if (!productId) { alert("Select a product."); return; }
+            if (!branchId) { alert("Select a branch."); return; }
+
+            const prod = products.find(p => p.id === productId);
+            if (!prod) { alert("Product not found."); return; }
+
+            if (!hasUserAccessToBranch(currentUser, branchId) && currentUser.role !== 'admin') {
+                alert("You don't have access to this branch.");
+                return;
+            }
+
+            // Handle Non-Serialized Receive
+            if (receiveType === 'nonserialized') {
+                const quantity = parseInt(document.getElementById("receiveQuantity").value);
+                if (!quantity || quantity < 1) {
+                    alert("Please enter a valid quantity.");
+                    return;
+                }
+
+                const existingProductWithSameRemark = products.find(p => 
+                    p.sku === prod.sku && 
+                    p.description === prod.description &&
+                    p.remark === remark
+                );
+
+                if (existingProductWithSameRemark) {
+                    const currentQty = existingProductWithSameRemark.quantity || 0;
+                    await db.collection("products").doc(existingProductWithSameRemark.id).update({
+                        quantity: currentQty + quantity,
+                        lastUpdated: new Date().toISOString()
+                    });
+
+                    addLog(
+                        `Received ${quantity} units from ${prod.sku} (${getBranchName(branchId)}) as ${remark} - Non-Serialized`,
+                        [],
+                        {
+                            type: 'receive',
+                            sku: prod.sku,
+                            productName: prod.name,
+                            branch: getBranchName(branchId),
+                            quantity: quantity,
+                            remark: remark,
+                            invoice: ''
+                        }
+                    );
+                } else {
+                    const newProduct = {
+                        sku: prod.sku,
+                        name: prod.name,
+                        description: prod.description || "",
+                        cat: prod.cat || "General",
+                        branchId: branchId,
+                        minStock: prod.minStock || 5,
+                        barcode: prod.barcode + "-" + remark.toUpperCase().substring(0, 3),
+                        serials: [],
+                        quantity: quantity,
+                        remark: remark,
+                        isNonSerialized: true,
+                        created: new Date().toISOString(),
+                        lastUpdated: new Date().toISOString()
+                    };
+                    await db.collection("products").add(newProduct);
+
+                    addLog(
+                        `Created new ${prod.sku} (${prod.description || 'No description'}) (${remark}) with ${quantity} units - Non-Serialized`,
+                        [],
+                        {
+                            type: 'receive',
+                            sku: prod.sku,
+                            productName: prod.name,
+                            branch: getBranchName(branchId),
+                            quantity: quantity,
+                            remark: remark,
+                            invoice: ''
+                        }
+                    );
+                }
+
+                document.getElementById("receiveQuantity").value = "1";
+                const msg = document.getElementById("receiveMsg");
+                msg.style.display = "block";
+                msg.innerHTML = `✅ Added ${quantity} units as "${remark}" with description: "${prod.description || 'No description'}"!`;
+                setTimeout(() => msg.style.display = "none", 3000);
+                return;
+            }
+
+            // Handle Serialized Receive
+            const serialsText = document.getElementById("receiveSerials").value.trim();
+            if (!serialsText) { alert("Enter at least one serial number."); return; }
+
+            const newSerials = serialsText.split('\n')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            if (newSerials.length === 0) {
+                alert("No valid serial numbers found.");
+                return;
+            }
+
+            const existingProductWithSameRemark = products.find(p => 
+                p.sku === prod.sku && 
+                p.description === prod.description &&
+                p.remark === remark
+            );
+
+            if (existingProductWithSameRemark) {
+                const existingSerials = existingProductWithSameRemark.serials || [];
+                const uniqueNew = newSerials.filter(s => !existingSerials.includes(s));
+
+                if (uniqueNew.length === 0) {
+                    alert("All serial numbers already exist for this remark.");
+                    return;
+                }
+
+                await db.collection("products").doc(existingProductWithSameRemark.id).update({
+                    serials: [...existingSerials, ...uniqueNew]
+                });
+
+                addLog(
+                    `Received ${uniqueNew.length} serials for ${prod.sku} (${getBranchName(branchId)}) as ${remark} - ${prod.description || 'No description'}`,
+                    uniqueNew,
+                    {
+                        type: 'receive',
+                        sku: prod.sku,
+                        productName: prod.name,
+                        branch: getBranchName(branchId),
+                        quantity: uniqueNew.length,
+                        remark: remark,
+                        invoice: ''
+                    }
+                );
+
+            } else {
+                const newProduct = {
+                    sku: prod.sku,
+                    name: prod.name,
+                    description: prod.description || "",
+                    cat: prod.cat || "General",
+                    branchId: branchId,
+                    minStock: prod.minStock || 5,
+                    barcode: prod.barcode + "-" + remark.toUpperCase().substring(0, 3),
+                    serials: newSerials,
+                    remark: remark,
+                    isNonSerialized: false,
+                    created: new Date().toISOString(),
+                    lastUpdated: new Date().toISOString()
+                };
+
+                await db.collection("products").add(newProduct);
+
+                addLog(
+                    `Created new ${prod.sku} (${prod.description || 'No description'}) (${remark}) with ${newSerials.length} serials`,
+                    newSerials,
+                    {
+                        type: 'receive',
+                        sku: prod.sku,
+                        productName: prod.name,
+                        branch: getBranchName(branchId),
+                        quantity: newSerials.length,
+                        remark: remark,
+                        invoice: ''
+                    }
+                );
+            }
+
+            document.getElementById("receiveSerials").value = "";
+            const msg = document.getElementById("receiveMsg");
+            msg.style.display = "block";
+            msg.innerHTML = `✅ Added ${newSerials.length} serial numbers as "${remark}" with description: "${prod.description || 'No description'}"!`;
+            setTimeout(() => msg.style.display = "none", 3000);
+        };
 
         // ===== ISSUE STOCK =====
         document.getElementById("issueBtn").onclick = async () => {
@@ -2475,186 +3043,6 @@
             updateIssueCurrentStock();
         };
 
-        // ===== RECEIVE STOCK =====
-        document.getElementById("receiveBtn").onclick = async () => {
-            if (!canUserEdit(currentUser)) {
-                alert("You don't have permission to receive stock.");
-                return;
-            }
-
-            const productId = document.getElementById("receiveProductSelect").value;
-            const branchId = document.getElementById("receiveBranchSelect").value;
-            const remark = document.getElementById("receiveRemark").value;
-            const receiveType = document.querySelector('input[name="receiveType"]:checked').value;
-
-            if (!productId) { alert("Select a product."); return; }
-            if (!branchId) { alert("Select a branch."); return; }
-
-            const prod = products.find(p => p.id === productId);
-            if (!prod) { alert("Product not found."); return; }
-
-            if (!hasUserAccessToBranch(currentUser, branchId) && currentUser.role !== 'admin') {
-                alert("You don't have access to this branch.");
-                return;
-            }
-
-            // Handle Non-Serialized Receive
-            if (receiveType === 'nonserialized') {
-                const quantity = parseInt(document.getElementById("receiveQuantity").value);
-                if (!quantity || quantity < 1) {
-                    alert("Please enter a valid quantity.");
-                    return;
-                }
-
-                const existingProductWithSameRemark = products.find(p =>
-                    p.sku === prod.sku && p.remark === remark
-                );
-
-                if (existingProductWithSameRemark) {
-                    const currentQty = existingProductWithSameRemark.quantity || 0;
-                    await db.collection("products").doc(existingProductWithSameRemark.id).update({
-                        quantity: currentQty + quantity,
-                        lastUpdated: new Date().toISOString()
-                    });
-
-                    addLog(
-                        `Received ${quantity} units from ${prod.sku} (${getBranchName(branchId)}) as ${remark} - Non-Serialized`,
-                        [],
-                        {
-                            type: 'receive',
-                            sku: prod.sku,
-                            productName: prod.name,
-                            branch: getBranchName(branchId),
-                            quantity: quantity,
-                            remark: remark,
-                            invoice: ''
-                        }
-                    );
-                } else {
-                    const newProduct = {
-                        sku: prod.sku,
-                        name: prod.name,
-                        description: prod.description || "",
-                        cat: prod.cat || "General",
-                        branchId: branchId,
-                        minStock: prod.minStock || 5,
-                        barcode: prod.barcode + "-" + remark.toUpperCase().substring(0, 3),
-                        serials: [],
-                        quantity: quantity,
-                        remark: remark,
-                        isNonSerialized: true,
-                        created: new Date().toISOString(),
-                        lastUpdated: new Date().toISOString()
-                    };
-                    await db.collection("products").add(newProduct);
-
-                    addLog(
-                        `Created new ${prod.sku} (${remark}) with ${quantity} units - Non-Serialized`,
-                        [],
-                        {
-                            type: 'receive',
-                            sku: prod.sku,
-                            productName: prod.name,
-                            branch: getBranchName(branchId),
-                            quantity: quantity,
-                            remark: remark,
-                            invoice: ''
-                        }
-                    );
-                }
-
-                document.getElementById("receiveQuantity").value = "1";
-                const msg = document.getElementById("receiveMsg");
-                msg.style.display = "block";
-                msg.innerHTML = `✅ Added ${quantity} units as "${remark}"!`;
-                setTimeout(() => msg.style.display = "none", 3000);
-                return;
-            }
-
-            // Handle Serialized Receive
-            const serialsText = document.getElementById("receiveSerials").value.trim();
-            if (!serialsText) { alert("Enter at least one serial number."); return; }
-
-            const newSerials = serialsText.split('\n')
-                .map(s => s.trim())
-                .filter(s => s.length > 0);
-
-            if (newSerials.length === 0) {
-                alert("No valid serial numbers found.");
-                return;
-            }
-
-            const existingProductWithSameRemark = products.find(p =>
-                p.sku === prod.sku && p.remark === remark
-            );
-
-            if (existingProductWithSameRemark) {
-                const existingSerials = existingProductWithSameRemark.serials || [];
-                const uniqueNew = newSerials.filter(s => !existingSerials.includes(s));
-
-                if (uniqueNew.length === 0) {
-                    alert("All serial numbers already exist for this remark.");
-                    return;
-                }
-
-                await db.collection("products").doc(existingProductWithSameRemark.id).update({
-                    serials: [...existingSerials, ...uniqueNew]
-                });
-
-                addLog(
-                    `Received ${uniqueNew.length} serials for ${prod.sku} (${getBranchName(branchId)}) as ${remark}`,
-                    uniqueNew,
-                    {
-                        type: 'receive',
-                        sku: prod.sku,
-                        productName: prod.name,
-                        branch: getBranchName(branchId),
-                        quantity: uniqueNew.length,
-                        remark: remark,
-                        invoice: ''
-                    }
-                );
-
-            } else {
-                const newProduct = {
-                    sku: prod.sku,
-                    name: prod.name,
-                    description: prod.description || "",
-                    cat: prod.cat || "General",
-                    branchId: branchId,
-                    minStock: prod.minStock || 5,
-                    barcode: prod.barcode + "-" + remark.toUpperCase().substring(0, 3),
-                    serials: newSerials,
-                    remark: remark,
-                    isNonSerialized: false,
-                    created: new Date().toISOString(),
-                    lastUpdated: new Date().toISOString()
-                };
-
-                await db.collection("products").add(newProduct);
-
-                addLog(
-                    `Created new ${prod.sku} (${remark}) with ${newSerials.length} serials`,
-                    newSerials,
-                    {
-                        type: 'receive',
-                        sku: prod.sku,
-                        productName: prod.name,
-                        branch: getBranchName(branchId),
-                        quantity: newSerials.length,
-                        remark: remark,
-                        invoice: ''
-                    }
-                );
-            }
-
-            document.getElementById("receiveSerials").value = "";
-            const msg = document.getElementById("receiveMsg");
-            msg.style.display = "block";
-            msg.innerHTML = `✅ Added ${newSerials.length} serial numbers as "${remark}"!`;
-            setTimeout(() => msg.style.display = "none", 3000);
-        };
-
         // ===== ADD PRODUCT =====
         document.getElementById("addBtn").onclick = async () => {
             if (!canUserEdit(currentUser)) {
@@ -2664,6 +3052,7 @@
             const sku = document.getElementById("newSku").value.trim();
             const name = document.getElementById("newName").value.trim();
             const description = document.getElementById("newDesc").value.trim();
+            const cat = document.getElementById("newCat").value.trim();
             const branchId = document.getElementById("newBranch").value;
             const remark = document.getElementById("newRemark").value;
             if (!sku || !name) { alert("SKU and Name required"); return; }
@@ -2682,11 +3071,18 @@
                     c++; }
             }
 
+            // If category is new, add it to categories
+            if (cat && !categories.includes(cat)) {
+                categories.push(cat);
+                localStorage.setItem('wms_categories', JSON.stringify(categories));
+                updateCategoryManagement();
+            }
+
             await db.collection("products").add({
                 sku,
                 name,
                 description: description || "",
-                cat: document.getElementById("newCat").value.trim() || "General",
+                cat: cat || "General",
                 branchId,
                 minStock: parseInt(document.getElementById("newMin").value) || 5,
                 barcode,
@@ -2707,6 +3103,21 @@
             msg.style.display = "block";
             msg.innerHTML = `✅ Product "${sku}" added as ${remark}!`;
             setTimeout(() => msg.style.display = "none", 3000);
+        };
+
+        // ===== ADD CATEGORY =====
+        document.getElementById("addCategoryBtn").onclick = function() {
+            const input = document.getElementById("newCategoryInput");
+            const category = input.value.trim();
+            if (addCategory(category)) {
+                input.value = "";
+            }
+        };
+
+        document.getElementById("newCategoryInput").onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById("addCategoryBtn").click();
+            }
         };
 
         // ===== ADD DEMO PRODUCTS =====
@@ -2799,12 +3210,16 @@
                 let added = 0;
                 for (const d of demos) {
                     await db.collection("products").add(d);
+                    if (d.cat && !categories.includes(d.cat)) {
+                        categories.push(d.cat);
+                    }
                     added++;
                 }
 
+                localStorage.setItem('wms_categories', JSON.stringify(categories));
                 addLog(`Reset data: Added ${added} demo products`);
                 alert(`✅ Reset complete! Added ${added} demo products.\n\nWH-1001 now has TWO separate lines:\n- NEW (3 units)\n- OLD MODEL (2 units)`);
-                renderTable();
+                renderAll();
 
             } catch (error) {
                 console.error("Error resetting data:", error);
@@ -2893,32 +3308,105 @@
             }
             const id = document.getElementById("editSelect").value;
             const prod = products.find(p => p.id === id);
-            if (!prod) return;
+            if (!prod) {
+                alert("Product not found.");
+                return;
+            }
 
             const updates = {};
             const newSku = document.getElementById("editSku").value.trim();
+            const newDescription = document.getElementById("editDesc").value.trim();
+            const newRemark = document.getElementById("editRemark").value;
+            const newName = document.getElementById("editName").value.trim();
+            const newCat = document.getElementById("editCat").value.trim();
+            const newBranch = document.getElementById("editBranch").value;
+            const newMin = parseInt(document.getElementById("editMin").value);
+            
+            // Check if SKU is being changed
             if (newSku && newSku !== prod.sku) {
-                if (products.some(p => p.sku === newSku && p.id !== id)) {
-                    alert("SKU already exists on another product!");
+                // Check if another product has the same SKU AND same description AND same type
+                const duplicateProduct = products.find(p => 
+                    p.id !== id && 
+                    p.sku === newSku && 
+                    p.description === (newDescription || prod.description) &&
+                    p.remark === (newRemark || prod.remark)
+                );
+                
+                if (duplicateProduct) {
+                    alert(`A product already exists with SKU "${newSku}", Description "${newDescription || prod.description}", and Type "${newRemark || prod.remark}".\n\nPlease use a different combination.`);
                     return;
                 }
+                
+                // Check if there's a product with the same SKU but different description/type - this is allowed
+                const sameSkuDifferentDesc = products.find(p => 
+                    p.id !== id && 
+                    p.sku === newSku && 
+                    (p.description !== (newDescription || prod.description) || p.remark !== (newRemark || prod.remark))
+                );
+                
+                if (sameSkuDifferentDesc) {
+                    if (!confirm(`⚠️ Product "${sameSkuDifferentDesc.sku} - ${sameSkuDifferentDesc.description}" already exists with the same SKU but different description/type.\n\nThis is allowed, but make sure you want to proceed.`)) {
+                        return;
+                    }
+                }
+                
                 updates.sku = newSku;
             }
-            if (document.getElementById("editName").value.trim()) updates.name = document.getElementById("editName").value
-                .trim();
-            if (document.getElementById("editDesc").value.trim() !== undefined) updates.description = document.getElementById(
-                    "editDesc").value.trim();
-            if (document.getElementById("editCat").value.trim()) updates.cat = document.getElementById("editCat").value
-                .trim();
-            if (document.getElementById("editBranch").value) updates.branchId = document.getElementById("editBranch").value;
-            if (document.getElementById("editRemark").value) updates.remark = document.getElementById("editRemark").value;
-            const newMin = parseInt(document.getElementById("editMin").value);
-            if (!isNaN(newMin) && newMin >= 0) updates.minStock = newMin;
+            
+            // Check if description is being changed
+            if (newDescription && newDescription !== prod.description) {
+                const duplicateProduct = products.find(p => 
+                    p.id !== id && 
+                    p.sku === (newSku || prod.sku) && 
+                    p.description === newDescription &&
+                    p.remark === (newRemark || prod.remark)
+                );
+                
+                if (duplicateProduct) {
+                    alert(`A product already exists with SKU "${newSku || prod.sku}", Description "${newDescription}", and Type "${newRemark || prod.remark}".\n\nPlease use a different combination.`);
+                    return;
+                }
+            }
+            
+            // Check if type is being changed
+            if (newRemark && newRemark !== prod.remark) {
+                const duplicateProduct = products.find(p => 
+                    p.id !== id && 
+                    p.sku === (newSku || prod.sku) && 
+                    p.description === (newDescription || prod.description) &&
+                    p.remark === newRemark
+                );
+                
+                if (duplicateProduct) {
+                    alert(`A product already exists with SKU "${newSku || prod.sku}", Description "${newDescription || prod.description}", and Type "${newRemark}".\n\nPlease use a different combination.`);
+                    return;
+                }
+            }
+            
+            // Apply updates
+            if (newName && newName !== prod.name) updates.name = newName;
+            if (newDescription && newDescription !== prod.description) updates.description = newDescription;
+            
+            if (newCat && newCat !== prod.cat) {
+                updates.cat = newCat;
+                if (newCat && !categories.includes(newCat)) {
+                    categories.push(newCat);
+                    localStorage.setItem('wms_categories', JSON.stringify(categories));
+                    updateCategoryManagement();
+                }
+            }
+            
+            if (newBranch && newBranch !== prod.branchId) updates.branchId = newBranch;
+            if (newRemark && newRemark !== prod.remark) updates.remark = newRemark;
+            if (!isNaN(newMin) && newMin >= 0 && newMin !== prod.minStock) updates.minStock = newMin;
 
             if (Object.keys(updates).length) {
                 await db.collection("products").doc(id).update(updates);
-                addLog(`Updated ${prod.sku}`);
-                alert("✅ Updated!");
+                addLog(`Updated ${prod.sku} - ${updates.description || prod.description} (${updates.remark || prod.remark})`);
+                alert("✅ Updated successfully!");
+                renderAll();
+            } else {
+                alert("No changes made.");
             }
         };
 
@@ -2972,7 +3460,7 @@
                     'old': '📻 Old Model'
                 };
                 document.getElementById("lookupInfo").innerHTML =
-                    `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Remark: ${remarkLabels[prod.remark] || 'New'}<br>Stock: ${serialCount} units<br>Serials: ${(prod.serials || []).slice(0,5).join(', ')}${serialCount > 5 ? ` +${serialCount-5} more` : ''}`;
+                    `<strong>${escapeHtml(prod.name)}</strong> (${escapeHtml(prod.sku)})<br>Branch: ${escapeHtml(getBranchName(prod.branchId))}<br>Category: ${escapeHtml(prod.cat || 'General')}<br>Remark: ${remarkLabels[prod.remark] || 'New'}<br>Stock: ${serialCount} units<br>Serials: ${(prod.serials || []).slice(0,5).join(', ')}${serialCount > 5 ? ` +${serialCount-5} more` : ''}`;
                 resultDiv.style.display = "block";
                 resultDiv.setAttribute("data-id", prod.id);
             } else {
@@ -3242,6 +3730,9 @@
             if (remarkFilter !== 'all') {
                 filtered = filtered.filter(p => (p.remark || 'new') === remarkFilter);
             }
+            if (currentCategoryFilter !== 'all') {
+                filtered = filtered.filter(p => (p.cat || '') === currentCategoryFilter);
+            }
 
             const remarkLabels = {
                 'new': 'New',
@@ -3284,6 +3775,9 @@
             let filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
             if (remarkFilter !== 'all') {
                 filtered = filtered.filter(p => (p.remark || 'new') === remarkFilter);
+            }
+            if (currentCategoryFilter !== 'all') {
+                filtered = filtered.filter(p => (p.cat || '') === currentCategoryFilter);
             }
 
             const remarkLabels = {
@@ -3688,7 +4182,7 @@
             remark: '',
             invoice: ''
         });
-        console.log("WMS Pro loaded successfully with Movement Report.");
+        console.log("WMS Pro loaded successfully with fixed category filters and SKU management.");
         console.log("To fix old logs, run: fixOldLogs()");
     </script>
 </body>
