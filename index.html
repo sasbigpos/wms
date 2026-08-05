@@ -1690,79 +1690,57 @@
 
         // ===== CATEGORY MANAGEMENT =====
         function getUniqueCategories() {
-            // Get categories from localStorage first (user-managed list)
             const storedCats = JSON.parse(localStorage.getItem('wms_categories') || '[]');
-            
-            // Get categories from products
             const productCats = new Set();
             products.forEach(p => {
                 if (p.cat && p.cat.trim()) productCats.add(p.cat.trim());
             });
-            
-            // Combine: keep stored categories AND product categories
             const allCats = new Set();
-            
-            // Add stored categories
             storedCats.forEach(c => {
                 if (c && c.trim()) allCats.add(c.trim());
             });
-            
-            // Add product categories
             productCats.forEach(c => {
                 if (c && c.trim()) allCats.add(c.trim());
             });
-            
             const finalCats = Array.from(allCats).sort();
             localStorage.setItem('wms_categories', JSON.stringify(finalCats));
-            
             return finalCats;
         }
 
         window.deleteCategory = function(category) {
-            // Check if any products are using this category
             const productsUsingCat = products.filter(p => (p.cat || '').trim() === category);
-            
             let confirmMessage = `Delete category "${category}"?`;
             if (productsUsingCat.length > 0) {
                 confirmMessage = `Category "${category}" is used by ${productsUsingCat.length} product(s).\n\nClick OK to remove this category from all products (set to "General") AND delete it.\nClick Cancel to keep it.`;
             }
-            
             if (!confirm(confirmMessage)) {
                 return;
             }
-
-            // Remove category from all products that use it
             if (productsUsingCat.length > 0) {
                 productsUsingCat.forEach(async (p) => {
                     await db.collection("products").doc(p.id).update({
                         cat: "General"
                     });
                 });
-                // Remove from categories array after a moment
                 setTimeout(() => {
                     categories = categories.filter(c => c.trim() !== category);
                     localStorage.setItem('wms_categories', JSON.stringify(categories));
-                    
                     updateCategoryManagement();
                     updateCategoryFilters();
                     renderTable();
                     addLog(`Deleted category: ${category} and removed from ${productsUsingCat.length} products`);
-                    
                     const msg = document.getElementById('categoryMsg');
                     msg.style.display = 'block';
                     msg.innerHTML = `✅ Category "${category}" deleted and removed from ${productsUsingCat.length} product(s).`;
                     setTimeout(() => msg.style.display = 'none', 3000);
                 }, 500);
             } else {
-                // Remove from categories array
                 categories = categories.filter(c => c.trim() !== category);
                 localStorage.setItem('wms_categories', JSON.stringify(categories));
-                
                 updateCategoryManagement();
                 updateCategoryFilters();
                 renderTable();
                 addLog(`Deleted category: ${category}`);
-                
                 const msg = document.getElementById('categoryMsg');
                 msg.style.display = 'block';
                 msg.innerHTML = `✅ Category "${category}" deleted.`;
@@ -1776,30 +1754,24 @@
                 alert('Please enter a category name.');
                 return false;
             }
-
             const existingCats = getUniqueCategories();
             if (existingCats.includes(category)) {
                 alert(`Category "${category}" already exists.`);
                 return false;
             }
-
             categories.push(category);
             localStorage.setItem('wms_categories', JSON.stringify(categories));
-            
             updateCategoryManagement();
             updateCategoryFilters();
             renderTable();
-            
             const msg = document.getElementById('categoryMsg');
             msg.style.display = 'block';
             msg.innerHTML = `✅ Category "${category}" added!`;
             setTimeout(() => msg.style.display = 'none', 3000);
-            
             addLog(`Added category: ${category}`);
             return true;
         }
 
-        // ===== LOAD CATEGORIES FROM STORAGE =====
         function loadCategories() {
             const stored = localStorage.getItem('wms_categories');
             if (stored) {
@@ -1809,14 +1781,11 @@
                     categories = [];
                 }
             }
-            
-            // Also extract categories from products
             products.forEach(p => {
                 if (p.cat && p.cat.trim() && !categories.includes(p.cat.trim())) {
                     categories.push(p.cat.trim());
                 }
             });
-            
             categories = Array.from(new Set(categories)).sort();
             localStorage.setItem('wms_categories', JSON.stringify(categories));
         }
@@ -1824,12 +1793,10 @@
         function updateCategoryManagement() {
             const container = document.getElementById('categoryManagementList');
             const cats = getUniqueCategories();
-            
             if (cats.length === 0) {
                 container.innerHTML = '<span style="color:#64748b;font-size:0.75rem;">No categories yet. Add one below.</span>';
                 return;
             }
-
             container.innerHTML = cats.map(cat => `
                 <span class="category-item">
                     📁 ${escapeHtml(cat)}
@@ -1840,13 +1807,9 @@
             `).join('');
         }
 
-        // ===== UPDATE CATEGORY FILTERS (FIXED) =====
         function updateCategoryFilters() {
             const categories = getUniqueCategories();
-            
             const filterGroup = document.getElementById('categoryFilterGroup');
-            
-            // Create "All Categories" button with proper event handler
             const allBtn = document.createElement('button');
             allBtn.className = 'category-btn active';
             allBtn.dataset.category = 'all';
@@ -1854,10 +1817,8 @@
             allBtn.onclick = function() {
                 setCategoryFilter('all');
             };
-            
             filterGroup.innerHTML = '';
             filterGroup.appendChild(allBtn);
-            
             categories.forEach(cat => {
                 const btn = document.createElement('button');
                 btn.className = 'category-btn';
@@ -1869,8 +1830,6 @@
                 if (currentCategoryFilter === cat) btn.classList.add('active');
                 filterGroup.appendChild(btn);
             });
-
-            // Update receive category filter
             const receiveCatFilter = document.getElementById('receiveCategoryFilter');
             const receiveVal = receiveCatFilter.value;
             receiveCatFilter.innerHTML = '<option value="all">📂 All Categories</option>';
@@ -1883,8 +1842,6 @@
             if (receiveVal && categories.includes(receiveVal)) {
                 receiveCatFilter.value = receiveVal;
             }
-
-            // Update issue category filter
             const issueCatFilter = document.getElementById('issueCategoryFilter');
             const issueVal = issueCatFilter.value;
             issueCatFilter.innerHTML = '<option value="all">📂 All Categories</option>';
@@ -1897,13 +1854,11 @@
             if (issueVal && categories.includes(issueVal)) {
                 issueCatFilter.value = issueVal;
             }
-
             updateCategoryManagement();
         }
 
         function setCategoryFilter(category) {
             currentCategoryFilter = category;
-            // Update all category buttons
             document.querySelectorAll('#categoryFilterGroup .category-btn').forEach(btn => {
                 if (btn.dataset.category === category) {
                     btn.classList.add('active');
@@ -1925,9 +1880,7 @@
             const modal = document.getElementById("serialModal");
             const title = document.getElementById("serialModalTitle");
             const body = document.getElementById("serialModalBody");
-
             title.textContent = `${prod.sku} - ${prod.name} (${serials.length} serials)`;
-
             if (serials.length === 0) {
                 body.innerHTML = '<p style="color:#94a3b8;">No serial numbers for this product.</p>';
             } else {
@@ -1935,7 +1888,6 @@
                     `<span class="serial-item">${escapeHtml(s)}</span>`
                 ).join('') + `<p style="margin-top:12px;color:#94a3b8;font-size:0.7rem;">Total: ${serials.length} units</p>`;
             }
-
             modal.classList.add("active");
         }
 
@@ -1954,7 +1906,6 @@
             const user = currentUser || { email: 'system' };
             let logText = msg;
             const serialsArray = serialsList || [];
-
             const entry = {
                 time: new Date().toLocaleString(),
                 text: logText,
@@ -1969,7 +1920,6 @@
                 remark: details?.remark || '',
                 invoice: details?.invoice || ''
             };
-
             transactionLogs.unshift(entry);
             if (transactionLogs.length > 200) transactionLogs.pop();
             localStorage.setItem("wms_logs", JSON.stringify(transactionLogs));
@@ -1990,40 +1940,33 @@
                 let remark = '';
                 let invoice = '';
                 let type = 'issue';
-
                 if (text.toLowerCase().includes('received') || text.toLowerCase().includes('receive')) {
                     type = 'receive';
                 } else if (text.toLowerCase().includes('issued') || text.toLowerCase().includes('issue')) {
                     type = 'issue';
                 }
-
                 const skuMatch = text.match(/([A-Z]{2,4}[-\s]?[A-Z0-9]+)/i);
                 if (skuMatch) {
                     sku = skuMatch[1].trim();
                 }
-
                 const qtyMatch = text.match(/(\d+)\s*units?/i);
                 if (qtyMatch) {
                     quantity = parseInt(qtyMatch[1]);
                 } else if (log.serials && log.serials.length > 0) {
                     quantity = log.serials.length;
                 }
-
                 const branchMatch = text.match(/\(([^)]+)\)/);
                 if (branchMatch) {
                     branch = branchMatch[1];
                 }
-
                 const invMatch = text.match(/Invoice:\s*([^\s|]+)/i);
                 if (invMatch) {
                     invoice = invMatch[1];
                 }
-
                 const remarkMatch = text.match(/as\s+(\w+)/i);
                 if (remarkMatch && ['new', 'demo', 'refurbished', 'old'].includes(remarkMatch[1].toLowerCase())) {
                     remark = remarkMatch[1];
                 }
-
                 if (sku || productName || branch || quantity > 0) {
                     fixed++;
                     return {
@@ -2037,10 +1980,8 @@
                         invoice: invoice
                     };
                 }
-
                 return log;
             });
-
             localStorage.setItem("wms_logs", JSON.stringify(transactionLogs));
             console.log(`Fixed ${fixed} old logs`);
             renderLogs();
@@ -2064,43 +2005,33 @@
             const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
             currentRemarkFilter = remarkFilter;
-
             let filtered = products;
-
             if (currentBranchFilter !== 'all') {
                 filtered = filtered.filter(p => p.branchId === currentBranchFilter);
             }
-
             if (remarkFilter !== 'all') {
                 filtered = filtered.filter(p => (p.remark || 'new') === remarkFilter);
             }
-
             if (currentCategoryFilter !== 'all') {
                 filtered = filtered.filter(p => (p.cat || '') === currentCategoryFilter);
             }
-
             filtered = filtered.filter(p =>
                 (p.sku || "").toLowerCase().includes(search) ||
                 (p.name || "").toLowerCase().includes(search) ||
                 (p.serials || []).some(s => s.toLowerCase().includes(search)) ||
                 (p.description || "").toLowerCase().includes(search)
             );
-
-            // Keep products with stock > 0
             filtered = filtered.filter(p => {
                 const hasQuantity = (p.quantity || 0) > 0;
                 const hasSerials = (p.serials || []).length > 0;
                 return hasQuantity || hasSerials;
             });
-
             const tbody = document.getElementById("tableBody");
             if (filtered.length === 0) {
                 tbody.innerHTML =
                     `<tr><td colspan="12" style="text-align:center;padding:30px;">📦 No products found</td></tr>`;
             } else {
                 let allRows = [];
-
-                // Sort by SKU first, then by Description
                 filtered.sort((a, b) => {
                     const skuCompare = (a.sku || '').localeCompare(b.sku || '');
                     if (skuCompare !== 0) return skuCompare;
@@ -2108,12 +2039,10 @@
                     const descB = b.description || '';
                     return descA.localeCompare(descB);
                 });
-
                 let rowNumber = 1;
                 filtered.forEach((p, index) => {
                     const serialsLength = (p.serials || []).length;
                     let qty;
-
                     if (serialsLength > 0) {
                         qty = serialsLength;
                     } else if (p.quantity !== undefined && p.quantity > 0) {
@@ -2121,9 +2050,7 @@
                     } else {
                         qty = 0;
                     }
-
                     const low = qty <= (p.minStock || 0);
-
                     let serialDisplay;
                     if (qty > 0) {
                         const hasQuantityOnly = (p.quantity && p.quantity > 0) && (p.serials || []).length === 0;
@@ -2137,10 +2064,8 @@
                     } else {
                         serialDisplay = `<span style="color:#64748b;">No serials</span>`;
                     }
-
                     const typeBadge = getTypeBadge(p.remark || 'new');
                     const displayDescription = p.description || '—';
-
                     allRows.push(`
                         <tr>
                             <td class="row-number">${rowNumber}</td>
@@ -2163,21 +2088,15 @@
                     `);
                     rowNumber++;
                 });
-
                 tbody.innerHTML = allRows.join('');
             }
-
-            // Update dropdowns
             updateReceiveProductDropdown();
             updateIssueProductDropdown();
-            
             const options = products.map(p =>
                 `<option value="${p.id}">${escapeHtml(p.sku)} - ${escapeHtml(p.name)} ${escapeHtml(p.description ? ' - ' + p.description : '')}</option>`
             ).join('');
             document.getElementById("editSelect").innerHTML = options || '<option>No products</option>';
             document.getElementById("barcodeSelect").innerHTML = options || '<option>No products</option>';
-
-            // Stats
             const activeProducts = products.filter(p => {
                 const hasQuantity = (p.quantity || 0) > 0;
                 const hasSerials = (p.serials || []).length > 0;
@@ -2206,8 +2125,6 @@
             document.getElementById("totalProducts").innerText = totalProducts;
             document.getElementById("totalUnits").innerText = totalUnits;
             document.getElementById("lowStockCount").innerText = lowCount;
-
-            // Attach events
             document.querySelectorAll(".fa-edit").forEach(icon => {
                 icon.onclick = () => {
                     const id = icon.getAttribute("data-id");
@@ -2224,7 +2141,6 @@
                     }, 100);
                 };
             });
-
             document.querySelectorAll(".fa-trash-alt").forEach(icon => {
                 icon.onclick = async () => {
                     const id = icon.getAttribute("data-id");
@@ -2240,7 +2156,6 @@
                     }
                 };
             });
-
             document.querySelectorAll(".fa-barcode").forEach(icon => {
                 icon.onclick = () => {
                     const id = icon.getAttribute("data-id");
@@ -2263,12 +2178,10 @@
             const categoryFilter = document.getElementById("receiveCategoryFilter").value;
             const select = document.getElementById("receiveProductSelect");
             const currentVal = select.value;
-            
             let filteredProducts = products;
             if (categoryFilter !== 'all') {
                 filteredProducts = products.filter(p => (p.cat || '') === categoryFilter);
             }
-
             select.innerHTML = '<option value="">-- Select a product --</option>';
             filteredProducts.forEach(p => {
                 const opt = document.createElement('option');
@@ -2284,7 +2197,6 @@
                 opt.textContent = `${p.sku} - ${p.name}${desc} | Qty: ${qty} | ${p.cat || 'General'}`;
                 select.appendChild(opt);
             });
-
             if (currentVal && filteredProducts.some(p => p.id === currentVal)) {
                 select.value = currentVal;
             }
@@ -2296,7 +2208,6 @@
             const typeFilter = document.getElementById("issueTypeFilter").value;
             const select = document.getElementById("issueProductSelect");
             const currentVal = select.value;
-            
             let filteredProducts = products;
             if (categoryFilter !== 'all') {
                 filteredProducts = products.filter(p => (p.cat || '') === categoryFilter);
@@ -2304,14 +2215,11 @@
             if (typeFilter !== 'all') {
                 filteredProducts = filteredProducts.filter(p => (p.remark || 'new') === typeFilter);
             }
-
-            // Only show products with stock > 0
             filteredProducts = filteredProducts.filter(p => {
                 const hasQuantity = (p.quantity || 0) > 0;
                 const hasSerials = (p.serials || []).length > 0;
                 return hasQuantity || hasSerials;
             });
-
             select.innerHTML = '<option value="">-- Select a product --</option>';
             filteredProducts.forEach(p => {
                 const opt = document.createElement('option');
@@ -2327,7 +2235,6 @@
                 opt.textContent = `${p.sku} - ${p.name}${desc} | Qty: ${qty} | ${p.cat || 'General'}`;
                 select.appendChild(opt);
             });
-
             if (currentVal && filteredProducts.some(p => p.id === currentVal)) {
                 select.value = currentVal;
             }
@@ -2343,7 +2250,6 @@
                 return;
             }
             document.getElementById("adminAddUserBtn").style.display = 'inline-flex';
-
             if (users.length === 0) {
                 container.innerHTML = '<p style="color:#94a3b8;">No users registered yet.</p>';
             } else {
@@ -2364,7 +2270,6 @@
                         </div>
                     `).join('');
             }
-
             const container2 = document.getElementById("adminRegBranchAccess");
             if (container2) {
                 container2.innerHTML = branches.map(b =>
@@ -2383,7 +2288,6 @@
                 return;
             }
             document.getElementById("addBranchBtn").style.display = 'inline-flex';
-
             if (branches.length === 0) {
                 container.innerHTML = '<p style="color:#94a3b8;">No branches created yet.</p>';
             } else {
@@ -2399,19 +2303,16 @@
                         </div>
                     `).join('');
             }
-
             const branchOptions = branches.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
             document.getElementById("newBranch").innerHTML = branchOptions;
             document.getElementById("editBranch").innerHTML = branchOptions;
             document.getElementById("receiveBranchSelect").innerHTML = branchOptions;
             document.getElementById("issueBranchSelect").innerHTML = branchOptions;
             document.getElementById("reportBranch").innerHTML = `<option value="all">All Branches</option>` + branchOptions;
-
             const filter = document.getElementById("branchFilter");
             const currentVal = filter.value;
             filter.innerHTML = `<option value="all">🏢 All Branches</option>` + branchOptions;
             filter.value = currentVal;
-
             const display = document.getElementById("headerBranchDisplay");
             if (currentBranchFilter === 'all') {
                 display.textContent = 'All Branches';
@@ -2419,7 +2320,6 @@
                 const b = branches.find(x => x.id === currentBranchFilter);
                 display.textContent = b ? b.name : 'Unknown';
             }
-
             const container3 = document.getElementById("adminRegBranchAccess");
             if (container3) {
                 container3.innerHTML = branches.map(b =>
@@ -2444,7 +2344,6 @@
             if (!user) return;
             const newRole = prompt(`Enter new role for ${user.email} (admin/manager/user):`, user.role);
             if (!newRole || !['admin', 'manager', 'user'].includes(newRole)) return;
-
             const branchList = branches.map(b => b.id);
             const selectedBranches = [];
             for (const b of branchList) {
@@ -2452,7 +2351,6 @@
                     selectedBranches.push(b);
                 }
             }
-
             await db.collection("users").doc(userId).update({
                 role: newRole,
                 branches: newRole === 'admin' ? [] : selectedBranches
@@ -2517,25 +2415,21 @@
             const productId = document.getElementById("issueProductSelect").value;
             const branchId = document.getElementById("issueBranchSelect").value;
             const checkboxDiv = document.getElementById("serialCheckboxList");
-
             if (!productId) {
                 checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Select a product first</span>';
                 selectedSerials = [];
                 updateSelectedDisplay();
                 return;
             }
-
             const prod = products.find(p => p.id === productId);
             if (!prod) {
                 checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Product not found</span>';
                 return;
             }
-
             if (!hasUserAccessToBranch(currentUser, branchId) && currentUser.role !== 'admin') {
                 checkboxDiv.innerHTML = '<span style="color:#fca5a5;font-size:0.75rem;width:100%;text-align:center;">You don\'t have access to this branch</span>';
                 return;
             }
-
             const serials = prod.serials || [];
             if (serials.length === 0) {
                 checkboxDiv.innerHTML = '<span style="color:#fbbf24;font-size:0.75rem;width:100%;text-align:center;">No serials available for this product</span>';
@@ -2543,7 +2437,6 @@
                 updateSelectedDisplay();
                 return;
             }
-
             const issueType = document.querySelector('input[name="issueType"]:checked').value;
             if (issueType === 'select') {
                 checkboxDiv.innerHTML = serials.map(s =>
@@ -2555,7 +2448,6 @@
             } else {
                 checkboxDiv.innerHTML = '<span style="color:#64748b;font-size:0.75rem;width:100%;text-align:center;">Manual entry mode active</span>';
             }
-
             updateSelectedDisplay();
         }
 
@@ -2698,7 +2590,7 @@
             }
         }
 
-        // ===== RECEIVE STOCK =====
+        // ===== RECEIVE STOCK (FIXED - Proper Grouping) =====
         document.getElementById("receiveBtn").onclick = async () => {
             if (!canUserEdit(currentUser)) {
                 alert("You don't have permission to receive stock.");
@@ -2729,21 +2621,26 @@
                     return;
                 }
 
-                const existingProductWithSameRemark = products.find(p => 
+                // FIX: Check by all identifying attributes - SKU, Name, Description, Category, Branch, AND Remark
+                const existingProduct = products.find(p => 
                     p.sku === prod.sku && 
+                    p.name === prod.name &&
                     p.description === prod.description &&
+                    p.cat === prod.cat &&
+                    p.branchId === branchId &&
                     p.remark === remark
                 );
 
-                if (existingProductWithSameRemark) {
-                    const currentQty = existingProductWithSameRemark.quantity || 0;
-                    await db.collection("products").doc(existingProductWithSameRemark.id).update({
+                if (existingProduct) {
+                    // Update existing product
+                    const currentQty = existingProduct.quantity || 0;
+                    await db.collection("products").doc(existingProduct.id).update({
                         quantity: currentQty + quantity,
                         lastUpdated: new Date().toISOString()
                     });
 
                     addLog(
-                        `Received ${quantity} units from ${prod.sku} (${getBranchName(branchId)}) as ${remark} - Non-Serialized`,
+                        `Received ${quantity} units to ${prod.sku} - ${prod.name} (${getBranchName(branchId)}) as ${remark} - Non-Serialized`,
                         [],
                         {
                             type: 'receive',
@@ -2756,6 +2653,7 @@
                         }
                     );
                 } else {
+                    // Create new product only if no match found
                     const newProduct = {
                         sku: prod.sku,
                         name: prod.name,
@@ -2774,7 +2672,7 @@
                     await db.collection("products").add(newProduct);
 
                     addLog(
-                        `Created new ${prod.sku} (${prod.description || 'No description'}) (${remark}) with ${quantity} units - Non-Serialized`,
+                        `Created new ${prod.sku} - ${prod.name} (${prod.description || 'No description'}) (${remark}) with ${quantity} units - Non-Serialized`,
                         [],
                         {
                             type: 'receive',
@@ -2791,7 +2689,7 @@
                 document.getElementById("receiveQuantity").value = "1";
                 const msg = document.getElementById("receiveMsg");
                 msg.style.display = "block";
-                msg.innerHTML = `✅ Added ${quantity} units as "${remark}" with description: "${prod.description || 'No description'}"!`;
+                msg.innerHTML = `✅ Added ${quantity} units to "${prod.name}" as "${remark}"!`;
                 setTimeout(() => msg.style.display = "none", 3000);
                 return;
             }
@@ -2809,27 +2707,33 @@
                 return;
             }
 
-            const existingProductWithSameRemark = products.find(p => 
+            // FIX: Check by all identifying attributes
+            const existingProduct = products.find(p => 
                 p.sku === prod.sku && 
+                p.name === prod.name &&
                 p.description === prod.description &&
+                p.cat === prod.cat &&
+                p.branchId === branchId &&
                 p.remark === remark
             );
 
-            if (existingProductWithSameRemark) {
-                const existingSerials = existingProductWithSameRemark.serials || [];
+            if (existingProduct) {
+                // Update existing product
+                const existingSerials = existingProduct.serials || [];
                 const uniqueNew = newSerials.filter(s => !existingSerials.includes(s));
 
                 if (uniqueNew.length === 0) {
-                    alert("All serial numbers already exist for this remark.");
+                    alert("All serial numbers already exist for this product.");
                     return;
                 }
 
-                await db.collection("products").doc(existingProductWithSameRemark.id).update({
-                    serials: [...existingSerials, ...uniqueNew]
+                await db.collection("products").doc(existingProduct.id).update({
+                    serials: [...existingSerials, ...uniqueNew],
+                    lastUpdated: new Date().toISOString()
                 });
 
                 addLog(
-                    `Received ${uniqueNew.length} serials for ${prod.sku} (${getBranchName(branchId)}) as ${remark} - ${prod.description || 'No description'}`,
+                    `Received ${uniqueNew.length} serials to ${prod.sku} - ${prod.name} (${getBranchName(branchId)}) as ${remark}`,
                     uniqueNew,
                     {
                         type: 'receive',
@@ -2843,6 +2747,7 @@
                 );
 
             } else {
+                // Create new product only if no match found
                 const newProduct = {
                     sku: prod.sku,
                     name: prod.name,
@@ -2861,7 +2766,7 @@
                 await db.collection("products").add(newProduct);
 
                 addLog(
-                    `Created new ${prod.sku} (${prod.description || 'No description'}) (${remark}) with ${newSerials.length} serials`,
+                    `Created new ${prod.sku} - ${prod.name} (${prod.description || 'No description'}) (${remark}) with ${newSerials.length} serials`,
                     newSerials,
                     {
                         type: 'receive',
@@ -2878,7 +2783,7 @@
             document.getElementById("receiveSerials").value = "";
             const msg = document.getElementById("receiveMsg");
             msg.style.display = "block";
-            msg.innerHTML = `✅ Added ${newSerials.length} serial numbers as "${remark}" with description: "${prod.description || 'No description'}"!`;
+            msg.innerHTML = `✅ Added ${newSerials.length} serial numbers to "${prod.name}" as "${remark}"!`;
             setTimeout(() => msg.style.display = "none", 3000);
         };
 
@@ -3071,7 +2976,6 @@
                     c++; }
             }
 
-            // If category is new, add it to categories
             if (cat && !categories.includes(cat)) {
                 categories.push(cat);
                 localStorage.setItem('wms_categories', JSON.stringify(categories));
@@ -3218,7 +3122,7 @@
 
                 localStorage.setItem('wms_categories', JSON.stringify(categories));
                 addLog(`Reset data: Added ${added} demo products`);
-                alert(`✅ Reset complete! Added ${added} demo products.\n\nWH-1001 now has TWO separate lines:\n- NEW (3 units)\n- OLD MODEL (2 units)`);
+                alert(`✅ Reset complete! Added ${added} demo products.`);
                 renderAll();
 
             } catch (error) {
@@ -3322,38 +3226,30 @@
             const newBranch = document.getElementById("editBranch").value;
             const newMin = parseInt(document.getElementById("editMin").value);
             
-            // Check if SKU is being changed
             if (newSku && newSku !== prod.sku) {
-                // Check if another product has the same SKU AND same description AND same type
                 const duplicateProduct = products.find(p => 
                     p.id !== id && 
                     p.sku === newSku && 
                     p.description === (newDescription || prod.description) &&
                     p.remark === (newRemark || prod.remark)
                 );
-                
                 if (duplicateProduct) {
                     alert(`A product already exists with SKU "${newSku}", Description "${newDescription || prod.description}", and Type "${newRemark || prod.remark}".\n\nPlease use a different combination.`);
                     return;
                 }
-                
-                // Check if there's a product with the same SKU but different description/type - this is allowed
                 const sameSkuDifferentDesc = products.find(p => 
                     p.id !== id && 
                     p.sku === newSku && 
                     (p.description !== (newDescription || prod.description) || p.remark !== (newRemark || prod.remark))
                 );
-                
                 if (sameSkuDifferentDesc) {
                     if (!confirm(`⚠️ Product "${sameSkuDifferentDesc.sku} - ${sameSkuDifferentDesc.description}" already exists with the same SKU but different description/type.\n\nThis is allowed, but make sure you want to proceed.`)) {
                         return;
                     }
                 }
-                
                 updates.sku = newSku;
             }
             
-            // Check if description is being changed
             if (newDescription && newDescription !== prod.description) {
                 const duplicateProduct = products.find(p => 
                     p.id !== id && 
@@ -3361,14 +3257,12 @@
                     p.description === newDescription &&
                     p.remark === (newRemark || prod.remark)
                 );
-                
                 if (duplicateProduct) {
                     alert(`A product already exists with SKU "${newSku || prod.sku}", Description "${newDescription}", and Type "${newRemark || prod.remark}".\n\nPlease use a different combination.`);
                     return;
                 }
             }
             
-            // Check if type is being changed
             if (newRemark && newRemark !== prod.remark) {
                 const duplicateProduct = products.find(p => 
                     p.id !== id && 
@@ -3376,14 +3270,12 @@
                     p.description === (newDescription || prod.description) &&
                     p.remark === newRemark
                 );
-                
                 if (duplicateProduct) {
                     alert(`A product already exists with SKU "${newSku || prod.sku}", Description "${newDescription || prod.description}", and Type "${newRemark}".\n\nPlease use a different combination.`);
                     return;
                 }
             }
             
-            // Apply updates
             if (newName && newName !== prod.name) updates.name = newName;
             if (newDescription && newDescription !== prod.description) updates.description = newDescription;
             
@@ -3537,24 +3429,19 @@
                 const logDate = new Date(log.time);
                 const logYear = logDate.getFullYear();
                 const logMonth = logDate.getMonth();
-
                 if (logYear !== year || logMonth !== month) return false;
-
                 if (branchFilter !== 'all') {
                     const branchName = getBranchName(branchFilter);
                     if (!log.branch && !log.text.includes(branchName)) return false;
                     if (log.branch && log.branch !== branchName) return false;
                 }
-
                 if (typeFilter !== 'all') {
                     if (log.type !== typeFilter) return false;
                 }
-
                 return true;
             });
 
             reportData = filteredLogs;
-
             const tableWrapper = document.getElementById("reportTableWrapper");
             const tableBody = document.getElementById("reportTableBody");
             const summaryDiv = document.getElementById("reportSummary");
@@ -3578,7 +3465,6 @@
                 const isReceive = log.type === 'receive' || log.text.toLowerCase().includes('received');
                 const isIssue = log.type === 'issue' || log.text.toLowerCase().includes('issued');
                 const count = log.quantity || 1;
-
                 if (isReceive) totalReceived += count;
                 if (isIssue) totalIssued += count;
             });
@@ -3595,21 +3481,17 @@
                 const isReceive = log.type === 'receive' || log.text.toLowerCase().includes('received');
                 const type = isReceive ? '📥 Receive' : '📤 Issue';
                 const typeClass = isReceive ? 'style="color:#34d399;"' : 'style="color:#fca5a5;"';
-
                 const sku = log.sku || '';
                 const product = log.productName || '';
-
                 let serialsDisplay = '';
                 if (log.serials && log.serials.length > 0) {
                     serialsDisplay = log.serials.join(', ');
                 }
-
                 const qtyDisplay = log.quantity || 0;
                 const branch = log.branch || '';
                 const invoice = log.invoice || '';
                 const typeValue = log.remark || '';
                 const user = log.user || 'system';
-
                 return `<tr>
                         <td>${escapeHtml(log.time)}</td>
                         <td ${typeClass}>${type}</td>
@@ -3631,7 +3513,6 @@
                 alert("No data to export. Generate a report first.");
                 return;
             }
-
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape', 'mm', 'a4');
             doc.setFontSize(14);
@@ -3641,7 +3522,6 @@
             const month = parseInt(document.getElementById("reportMonth").value);
             const year = document.getElementById("reportYear").value;
             doc.text(`Inventory Movement Report - ${monthNames[month]} ${year}`, 14, 20);
-
             const tableData = reportData.map(log => {
                 const isReceive = log.type === 'receive' || log.text.toLowerCase().includes('received');
                 const type = isReceive ? 'Receive' : 'Issue';
@@ -3656,10 +3536,8 @@
                 const invoice = log.invoice || '';
                 const typeValue = log.remark || '';
                 const user = log.user || 'system';
-
                 return [log.time, type, sku, product, branch, serialsDisplay, qtyDisplay, typeValue, invoice, user];
             });
-
             doc.autoTable({
                 head: [
                     ['Date', 'Type', 'SKU', 'Product', 'Branch', 'Serial #', 'Qty', 'Type', 'Invoice No.', 'User']
@@ -3669,7 +3547,6 @@
                 styles: { fontSize: 6, cellPadding: 2 },
                 headStyles: { fillColor: [52, 211, 153], textColor: [15, 23, 42] }
             });
-
             doc.save(`movement_report_${monthNames[month]}_${year}.pdf`);
             addLog(`Exported movement report for ${monthNames[month]} ${year} to PDF`);
         }
@@ -3680,7 +3557,6 @@
                 alert("No data to export. Generate a report first.");
                 return;
             }
-
             const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
                 'October', 'November', 'December'
             ];
@@ -3701,15 +3577,12 @@
                 const invoice = log.invoice || '';
                 const typeValue = log.remark || '';
                 const user = log.user || 'system';
-
                 return [log.time, type, sku, product, branch, serialsDisplay, qtyDisplay, typeValue, invoice, user];
             });
-
             let csv = headers.join(',') + '\n';
             data.forEach(row => {
                 csv += row.map(cell => `"${cell}"`).join(',') + '\n';
             });
-
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -3724,7 +3597,6 @@
             const doc = new jsPDF('landscape', 'mm', 'a4');
             doc.setFontSize(14);
             doc.text('Inventory Report - StockFlow WMS', 14, 20);
-
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
             let filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
             if (remarkFilter !== 'all') {
@@ -3733,14 +3605,12 @@
             if (currentCategoryFilter !== 'all') {
                 filtered = filtered.filter(p => (p.cat || '') === currentCategoryFilter);
             }
-
             const remarkLabels = {
                 'new': 'New',
                 'demo': 'Demo',
                 'refurbished': 'Refurbished',
                 'old': 'Old Model'
             };
-
             const tableData = filtered.map(p => [
                 p.sku || '',
                 p.name || '',
@@ -3753,7 +3623,6 @@
                 ((p.serials || []).length > 0 ? (p.serials || []).length : (p.quantity || 0)) <= (p.minStock || 0) ?
                 'Low Stock' : 'OK'
             ]);
-
             doc.autoTable({
                 head: [
                     ['SKU', 'Name', 'Description', 'Category', 'Branch', 'Qty', 'Type', 'Min', 'Status']
@@ -3763,7 +3632,6 @@
                 styles: { fontSize: 7, cellPadding: 2 },
                 headStyles: { fillColor: [52, 211, 153], textColor: [15, 23, 42] }
             });
-
             const filterLabel = remarkFilter === 'all' ? 'all' : remarkFilter;
             doc.save(`inventory_report_${filterLabel}_${new Date().toISOString().slice(0, 10)}.pdf`);
             addLog(`Exported ${filterLabel} inventory to PDF`);
@@ -3779,14 +3647,12 @@
             if (currentCategoryFilter !== 'all') {
                 filtered = filtered.filter(p => (p.cat || '') === currentCategoryFilter);
             }
-
             const remarkLabels = {
                 'new': 'New',
                 'demo': 'Demo',
                 'refurbished': 'Refurbished',
                 'old': 'Old Model'
             };
-
             const headers = ['SKU', 'Name', 'Description', 'Category', 'Branch', 'Qty', 'Type', 'Min', 'Status', 'Serials'];
             const data = filtered.map(p => [
                 p.sku || '',
@@ -3801,12 +3667,10 @@
                 'Low Stock' : 'OK',
                 (p.serials || []).length > 0 ? (p.serials || []).join('; ') : 'Non-Serialized'
             ]);
-
             let csv = headers.join(',') + '\n';
             data.forEach(row => {
                 csv += row.map(cell => `"${cell}"`).join(',') + '\n';
             });
-
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -3826,16 +3690,12 @@
             const email = document.getElementById("adminRegEmail").value.trim();
             const password = document.getElementById("adminRegPassword").value;
             const role = document.getElementById("adminRegRole").value;
-
             if (!name || !email || !password) { alert("All fields required."); return; }
             if (password.length < 6) { alert("Password must be at least 6 chars."); return; }
-
             const existing = await db.collection("users").where("email", "==", email).get();
             if (!existing.empty) { alert("Email already registered."); return; }
-
             const branchCheckboxes = document.querySelectorAll('#adminRegBranchAccess input[type="checkbox"]:checked');
             const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
-
             await db.collection("users").add({
                 name,
                 email,
@@ -3844,7 +3704,6 @@
                 branches: role === 'admin' ? [] : selectedBranches,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-
             document.getElementById("adminRegName").value = "";
             document.getElementById("adminRegEmail").value = "";
             document.getElementById("adminRegPassword").value = "";
@@ -3876,7 +3735,6 @@
                 if (target) target.classList.add("active");
                 document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
                 btn.classList.add("active");
-
                 if (tab === 'users' && !canUserManageUsers(currentUser)) {
                     alert("Only admins can access User Management.");
                     document.querySelector('[data-tab="inventory"]').click();
@@ -3923,11 +3781,9 @@
             roleEl.textContent = currentUser.role || 'user';
             roleEl.className =
                 `role-badge ${currentUser.role === 'admin' ? 'role-admin' : currentUser.role === 'manager' ? 'role-manager' : 'role-user'}`;
-
             document.getElementById("usersTab").style.display = canUserManageUsers(currentUser) ? 'inline-flex' : 'none';
             document.getElementById("branchesTab").style.display = canUserManageBranches(currentUser) ? 'inline-flex' :
                 'none';
-
             populateReportYear();
             renderAll();
         }
@@ -3945,38 +3801,31 @@
             const email = document.getElementById("loginEmail").value.trim();
             const password = document.getElementById("loginPassword").value;
             const errorDiv = document.getElementById("loginError");
-
             if (!email || !password) {
                 errorDiv.textContent = "Please fill in all fields.";
                 errorDiv.style.display = "block";
                 return;
             }
-
             try {
                 const userRef = db.collection("users");
                 const query = await userRef.where("email", "==", email).get();
-
                 if (query.empty) {
                     errorDiv.textContent = "User not found. Please register or use the demo account.";
                     errorDiv.style.display = "block";
                     return;
                 }
-
                 const userDoc = query.docs[0];
                 const userData = userDoc.data();
-
                 if (userData.password !== password) {
                     errorDiv.textContent = "Invalid password. Please try again.";
                     errorDiv.style.display = "block";
                     return;
                 }
-
                 currentUser = { id: userDoc.id, ...userData };
                 localStorage.setItem("wms_user", JSON.stringify(currentUser));
                 errorDiv.style.display = "none";
                 addLog(`User ${currentUser.email} logged in`);
                 showApp();
-
             } catch (error) {
                 console.error("Login error:", error);
                 errorDiv.textContent = "Error connecting to database. Please try again.";
@@ -3990,10 +3839,8 @@
             const btn = this;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Creating...';
-
             try {
                 const existing = await db.collection("users").where("email", "==", "allan.koay@bigpos.com").get();
-
                 if (!existing.empty) {
                     errorDiv.style.display = "block";
                     errorDiv.textContent = "✅ Admin account already exists! Use it to login.";
@@ -4002,7 +3849,6 @@
                     btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
                     return;
                 }
-
                 await db.collection("users").add({
                     name: "Allan Koay",
                     email: "allan.koay@bigpos.com",
@@ -4011,20 +3857,17 @@
                     branches: [],
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-
                 errorDiv.style.display = "block";
                 errorDiv.textContent = "✅ Admin account created! Email: allan.koay@bigpos.com, Password: Admin@2025";
                 errorDiv.style.color = "#34d399";
                 document.getElementById("loginEmail").value = "allan.koay@bigpos.com";
                 document.getElementById("loginPassword").value = "Admin@2025";
-
             } catch (error) {
                 console.error("Error creating admin:", error);
                 errorDiv.style.display = "block";
                 errorDiv.textContent = "Error creating admin account: " + error.message;
                 errorDiv.style.color = "#fca5a5";
             }
-
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
         };
@@ -4053,19 +3896,16 @@
             const password = document.getElementById("regPassword").value;
             const role = document.getElementById("regRole").value;
             const errorDiv = document.getElementById("registerError");
-
             if (!name || !email || !password) {
                 errorDiv.textContent = "All fields required.";
                 errorDiv.style.display = "block";
                 return;
             }
-
             if (password.length < 6) {
                 errorDiv.textContent = "Password must be at least 6 characters.";
                 errorDiv.style.display = "block";
                 return;
             }
-
             try {
                 const existing = await db.collection("users").where("email", "==", email).get();
                 if (!existing.empty) {
@@ -4073,10 +3913,8 @@
                     errorDiv.style.display = "block";
                     return;
                 }
-
                 const branchCheckboxes = document.querySelectorAll('#regBranchAccess input[type="checkbox"]:checked');
                 const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
-
                 await db.collection("users").add({
                     name,
                     email,
@@ -4085,18 +3923,15 @@
                     branches: role === 'admin' ? [] : selectedBranches,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-
                 errorDiv.textContent = "✅ Registration successful! Please login.";
                 errorDiv.style.color = "#34d399";
                 errorDiv.style.display = "block";
-
                 setTimeout(() => {
                     document.getElementById("loginForm").style.display = "block";
                     document.getElementById("registerForm").style.display = "none";
                     errorDiv.style.display = "none";
                     document.getElementById("loginEmail").value = email;
                 }, 1500);
-
             } catch (error) {
                 console.error("Registration error:", error);
                 errorDiv.textContent = "Error: " + error.message;
@@ -4182,7 +4017,7 @@
             remark: '',
             invoice: ''
         });
-        console.log("WMS Pro loaded successfully with fixed category filters and SKU management.");
+        console.log("WMS Pro loaded successfully with fixed product grouping.");
         console.log("To fix old logs, run: fixOldLogs()");
     </script>
 </body>
