@@ -1637,8 +1637,15 @@
         }
 
         function getBranchName(id) {
+            if (!id) return 'No Branch';
             const b = branches.find(x => x.id === id);
-            return b ? b.name : 'Unknown';
+            if (b) return b.name;
+            if (branches.some(x => x.name === id)) return id;
+            if (branches.length === 0) return 'No Branch Set';
+            if (id.startsWith('demo') || id === 'demoBranchId') {
+                return branches[0]?.name || 'Main Branch';
+            }
+            return 'Unknown';
         }
 
         function hasUserAccessToBranch(user, branchId) {
@@ -2066,6 +2073,7 @@
                     }
                     const typeBadge = getTypeBadge(p.remark || 'new');
                     const displayDescription = p.description || '—';
+                    const branchName = getBranchName(p.branchId);
                     allRows.push(`
                         <tr>
                             <td class="row-number">${rowNumber}</td>
@@ -2073,7 +2081,7 @@
                             <td>${escapeHtml(p.name)}</td>
                             <td><span class="description-text" title="${escapeHtml(displayDescription)}">${escapeHtml(displayDescription)}</span></td>
                             <td><span class="branch-tag">${escapeHtml(p.cat || "General")}</span></td>
-                            <td><span class="branch-tag">${escapeHtml(getBranchName(p.branchId))}</span></td>
+                            <td><span class="branch-tag">${escapeHtml(branchName)}</span></td>
                             <td><span class="stock-badge ${low ? 'low-stock' : ''}">${qty}</span></td>
                             <td>${serialDisplay}</td>
                             <td>${typeBadge}</td>
@@ -2153,6 +2161,7 @@
                     if (confirm(`Delete "${prod.name}" permanently?`)) {
                         await db.collection("products").doc(id).delete();
                         addLog(`Deleted ${prod.sku}`);
+                        renderTable();
                     }
                 };
             });
@@ -2356,6 +2365,7 @@
                 branches: newRole === 'admin' ? [] : selectedBranches
             });
             addLog(`Updated user ${user.email} to ${newRole}`);
+            renderUsers();
         };
 
         window.deleteUser = async function(userId) {
@@ -2368,6 +2378,7 @@
             if (confirm(`Delete user ${user.email}?`)) {
                 await db.collection("users").doc(userId).delete();
                 addLog(`Deleted user ${user.email}`);
+                renderUsers();
             }
         };
 
@@ -2375,6 +2386,7 @@
             if (confirm(`Delete branch "${getBranchName(branchId)}"?`)) {
                 await db.collection("branches").doc(branchId).delete();
                 addLog(`Deleted branch ${getBranchName(branchId)}`);
+                renderBranches();
             }
         };
 
@@ -2590,7 +2602,7 @@
             }
         }
 
-        // ===== RECEIVE STOCK (FIXED - Proper Grouping) =====
+        // ===== RECEIVE STOCK =====
         document.getElementById("receiveBtn").onclick = async () => {
             if (!canUserEdit(currentUser)) {
                 alert("You don't have permission to receive stock.");
@@ -2621,7 +2633,6 @@
                     return;
                 }
 
-                // FIX: Check by all identifying attributes - SKU, Name, Description, Category, Branch, AND Remark
                 const existingProduct = products.find(p => 
                     p.sku === prod.sku && 
                     p.name === prod.name &&
@@ -2632,7 +2643,6 @@
                 );
 
                 if (existingProduct) {
-                    // Update existing product
                     const currentQty = existingProduct.quantity || 0;
                     await db.collection("products").doc(existingProduct.id).update({
                         quantity: currentQty + quantity,
@@ -2653,7 +2663,6 @@
                         }
                     );
                 } else {
-                    // Create new product only if no match found
                     const newProduct = {
                         sku: prod.sku,
                         name: prod.name,
@@ -2691,6 +2700,7 @@
                 msg.style.display = "block";
                 msg.innerHTML = `✅ Added ${quantity} units to "${prod.name}" as "${remark}"!`;
                 setTimeout(() => msg.style.display = "none", 3000);
+                renderTable();
                 return;
             }
 
@@ -2707,7 +2717,6 @@
                 return;
             }
 
-            // FIX: Check by all identifying attributes
             const existingProduct = products.find(p => 
                 p.sku === prod.sku && 
                 p.name === prod.name &&
@@ -2718,7 +2727,6 @@
             );
 
             if (existingProduct) {
-                // Update existing product
                 const existingSerials = existingProduct.serials || [];
                 const uniqueNew = newSerials.filter(s => !existingSerials.includes(s));
 
@@ -2747,7 +2755,6 @@
                 );
 
             } else {
-                // Create new product only if no match found
                 const newProduct = {
                     sku: prod.sku,
                     name: prod.name,
@@ -2785,6 +2792,7 @@
             msg.style.display = "block";
             msg.innerHTML = `✅ Added ${newSerials.length} serial numbers to "${prod.name}" as "${remark}"!`;
             setTimeout(() => msg.style.display = "none", 3000);
+            renderTable();
         };
 
         // ===== ISSUE STOCK =====
@@ -2869,6 +2877,7 @@
                     document.getElementById("issueMsg").style.display = "none";
                 }, 3000);
                 updateIssueCurrentStock();
+                renderTable();
                 return;
             }
 
@@ -2946,6 +2955,7 @@
 
             updateIssuePanel();
             updateIssueCurrentStock();
+            renderTable();
         };
 
         // ===== ADD PRODUCT =====
@@ -3007,6 +3017,7 @@
             msg.style.display = "block";
             msg.innerHTML = `✅ Product "${sku}" added as ${remark}!`;
             setTimeout(() => msg.style.display = "none", 3000);
+            renderTable();
         };
 
         // ===== ADD CATEGORY =====
@@ -3051,7 +3062,7 @@
                     barcode: "690123456789",
                     serials: ["SN-2025-0001", "SN-2025-0002", "SN-2025-0003"],
                     minStock: 5,
-                    branchId,
+                    branchId: branchId,
                     remark: "new",
                     isNonSerialized: false
                 }, {
@@ -3062,7 +3073,7 @@
                     barcode: "690123456790",
                     serials: ["SN-2024-0001", "SN-2024-0002"],
                     minStock: 3,
-                    branchId,
+                    branchId: branchId,
                     remark: "old",
                     isNonSerialized: false
                 }, {
@@ -3073,7 +3084,7 @@
                     barcode: "692837461025",
                     serials: ["SN-2025-0010", "SN-2025-0011"],
                     minStock: 5,
-                    branchId,
+                    branchId: branchId,
                     remark: "demo",
                     isNonSerialized: false
                 }, {
@@ -3084,7 +3095,7 @@
                     barcode: "697215438902",
                     serials: ["SN-2025-0020"],
                     minStock: 4,
-                    branchId,
+                    branchId: branchId,
                     remark: "refurbished",
                     isNonSerialized: false
                 }, {
@@ -3095,7 +3106,7 @@
                     barcode: "694178362501",
                     serials: ["SN-2025-0030", "SN-2025-0031", "SN-2025-0032", "SN-2025-0033"],
                     minStock: 5,
-                    branchId,
+                    branchId: branchId,
                     remark: "old",
                     isNonSerialized: false
                 }, {
@@ -3106,7 +3117,7 @@
                     barcode: "698234517890",
                     serials: ["SN-2025-0040", "SN-2025-0041"],
                     minStock: 2,
-                    branchId,
+                    branchId: branchId,
                     remark: "refurbished",
                     isNonSerialized: false
                 }];
@@ -3169,6 +3180,7 @@
             document.getElementById("manualRegenBarcode").value = "";
             document.querySelector('input[name="regenOption"][value="auto"]').checked = true;
             document.getElementById("manualRegenArea").classList.add("hidden");
+            renderTable();
         };
 
         // ===== PREVIEW BARCODE =====
@@ -3315,6 +3327,7 @@
                 await db.collection("products").doc(id).delete();
                 addLog(`Deleted ${prod.sku}`);
                 alert("✅ Deleted!");
+                renderTable();
             }
         };
 
@@ -3403,6 +3416,7 @@
             document.getElementById("scanSerial").value = "";
             resultDiv.style.display = "none";
             alert(`✅ Serial ${action === 'add' ? 'added' : 'removed'}!`);
+            renderTable();
         };
 
         // ===== MOVEMENT REPORT FUNCTIONS =====
@@ -3591,26 +3605,42 @@
             addLog(`Exported movement report for ${monthNames[month]} ${year} to CSV`);
         }
 
-        // ===== EXPORT INVENTORY PDF =====
+        // ===== EXPORT INVENTORY PDF (FIXED - Only products with stock > 0) =====
         document.getElementById("exportPdfBtn").onclick = () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape', 'mm', 'a4');
             doc.setFontSize(14);
             doc.text('Inventory Report - StockFlow WMS', 14, 20);
+
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
             let filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
+            
+            // FIX: Only include products with stock > 0
+            filtered = filtered.filter(p => {
+                const hasQuantity = (p.quantity || 0) > 0;
+                const hasSerials = (p.serials || []).length > 0;
+                return hasQuantity || hasSerials;
+            });
+            
             if (remarkFilter !== 'all') {
                 filtered = filtered.filter(p => (p.remark || 'new') === remarkFilter);
             }
             if (currentCategoryFilter !== 'all') {
                 filtered = filtered.filter(p => (p.cat || '') === currentCategoryFilter);
             }
+
+            if (filtered.length === 0) {
+                alert("No products with stock to export.");
+                return;
+            }
+
             const remarkLabels = {
                 'new': 'New',
                 'demo': 'Demo',
                 'refurbished': 'Refurbished',
                 'old': 'Old Model'
             };
+
             const tableData = filtered.map(p => [
                 p.sku || '',
                 p.name || '',
@@ -3623,6 +3653,7 @@
                 ((p.serials || []).length > 0 ? (p.serials || []).length : (p.quantity || 0)) <= (p.minStock || 0) ?
                 'Low Stock' : 'OK'
             ]);
+
             doc.autoTable({
                 head: [
                     ['SKU', 'Name', 'Description', 'Category', 'Branch', 'Qty', 'Type', 'Min', 'Status']
@@ -3632,27 +3663,43 @@
                 styles: { fontSize: 7, cellPadding: 2 },
                 headStyles: { fillColor: [52, 211, 153], textColor: [15, 23, 42] }
             });
+
             const filterLabel = remarkFilter === 'all' ? 'all' : remarkFilter;
             doc.save(`inventory_report_${filterLabel}_${new Date().toISOString().slice(0, 10)}.pdf`);
             addLog(`Exported ${filterLabel} inventory to PDF`);
         };
 
-        // ===== EXPORT INVENTORY CSV =====
+        // ===== EXPORT INVENTORY CSV (FIXED - Only products with stock > 0) =====
         document.getElementById("exportCsvBtn").onclick = () => {
             const remarkFilter = document.getElementById("remarkFilter")?.value || 'all';
             let filtered = products.filter(p => currentBranchFilter === 'all' || p.branchId === currentBranchFilter);
+            
+            // FIX: Only include products with stock > 0
+            filtered = filtered.filter(p => {
+                const hasQuantity = (p.quantity || 0) > 0;
+                const hasSerials = (p.serials || []).length > 0;
+                return hasQuantity || hasSerials;
+            });
+            
             if (remarkFilter !== 'all') {
                 filtered = filtered.filter(p => (p.remark || 'new') === remarkFilter);
             }
             if (currentCategoryFilter !== 'all') {
                 filtered = filtered.filter(p => (p.cat || '') === currentCategoryFilter);
             }
+
+            if (filtered.length === 0) {
+                alert("No products with stock to export.");
+                return;
+            }
+
             const remarkLabels = {
                 'new': 'New',
                 'demo': 'Demo',
                 'refurbished': 'Refurbished',
                 'old': 'Old Model'
             };
+
             const headers = ['SKU', 'Name', 'Description', 'Category', 'Branch', 'Qty', 'Type', 'Min', 'Status', 'Serials'];
             const data = filtered.map(p => [
                 p.sku || '',
@@ -3667,10 +3714,12 @@
                 'Low Stock' : 'OK',
                 (p.serials || []).length > 0 ? (p.serials || []).join('; ') : 'Non-Serialized'
             ]);
+
             let csv = headers.join(',') + '\n';
             data.forEach(row => {
                 csv += row.map(cell => `"${cell}"`).join(',') + '\n';
             });
+
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -3712,6 +3761,7 @@
             msg.innerHTML = `✅ User "${email}" added!`;
             setTimeout(() => msg.style.display = "none", 3000);
             addLog(`Admin added user: ${email} (${role})`);
+            renderUsers();
         };
 
         // ===== CLEAR LOGS =====
@@ -3801,31 +3851,38 @@
             const email = document.getElementById("loginEmail").value.trim();
             const password = document.getElementById("loginPassword").value;
             const errorDiv = document.getElementById("loginError");
+
             if (!email || !password) {
                 errorDiv.textContent = "Please fill in all fields.";
                 errorDiv.style.display = "block";
                 return;
             }
+
             try {
                 const userRef = db.collection("users");
                 const query = await userRef.where("email", "==", email).get();
+
                 if (query.empty) {
                     errorDiv.textContent = "User not found. Please register or use the demo account.";
                     errorDiv.style.display = "block";
                     return;
                 }
+
                 const userDoc = query.docs[0];
                 const userData = userDoc.data();
+
                 if (userData.password !== password) {
                     errorDiv.textContent = "Invalid password. Please try again.";
                     errorDiv.style.display = "block";
                     return;
                 }
+
                 currentUser = { id: userDoc.id, ...userData };
                 localStorage.setItem("wms_user", JSON.stringify(currentUser));
                 errorDiv.style.display = "none";
                 addLog(`User ${currentUser.email} logged in`);
                 showApp();
+
             } catch (error) {
                 console.error("Login error:", error);
                 errorDiv.textContent = "Error connecting to database. Please try again.";
@@ -3839,8 +3896,10 @@
             const btn = this;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Creating...';
+
             try {
                 const existing = await db.collection("users").where("email", "==", "allan.koay@bigpos.com").get();
+
                 if (!existing.empty) {
                     errorDiv.style.display = "block";
                     errorDiv.textContent = "✅ Admin account already exists! Use it to login.";
@@ -3849,6 +3908,7 @@
                     btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
                     return;
                 }
+
                 await db.collection("users").add({
                     name: "Allan Koay",
                     email: "allan.koay@bigpos.com",
@@ -3857,17 +3917,20 @@
                     branches: [],
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+
                 errorDiv.style.display = "block";
                 errorDiv.textContent = "✅ Admin account created! Email: allan.koay@bigpos.com, Password: Admin@2025";
                 errorDiv.style.color = "#34d399";
                 document.getElementById("loginEmail").value = "allan.koay@bigpos.com";
                 document.getElementById("loginPassword").value = "Admin@2025";
+
             } catch (error) {
                 console.error("Error creating admin:", error);
                 errorDiv.style.display = "block";
                 errorDiv.textContent = "Error creating admin account: " + error.message;
                 errorDiv.style.color = "#fca5a5";
             }
+
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Demo Admin Account';
         };
@@ -3896,16 +3959,19 @@
             const password = document.getElementById("regPassword").value;
             const role = document.getElementById("regRole").value;
             const errorDiv = document.getElementById("registerError");
+
             if (!name || !email || !password) {
                 errorDiv.textContent = "All fields required.";
                 errorDiv.style.display = "block";
                 return;
             }
+
             if (password.length < 6) {
                 errorDiv.textContent = "Password must be at least 6 characters.";
                 errorDiv.style.display = "block";
                 return;
             }
+
             try {
                 const existing = await db.collection("users").where("email", "==", email).get();
                 if (!existing.empty) {
@@ -3913,8 +3979,10 @@
                     errorDiv.style.display = "block";
                     return;
                 }
+
                 const branchCheckboxes = document.querySelectorAll('#regBranchAccess input[type="checkbox"]:checked');
                 const selectedBranches = Array.from(branchCheckboxes).map(cb => cb.value);
+
                 await db.collection("users").add({
                     name,
                     email,
@@ -3923,15 +3991,18 @@
                     branches: role === 'admin' ? [] : selectedBranches,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+
                 errorDiv.textContent = "✅ Registration successful! Please login.";
                 errorDiv.style.color = "#34d399";
                 errorDiv.style.display = "block";
+
                 setTimeout(() => {
                     document.getElementById("loginForm").style.display = "block";
                     document.getElementById("registerForm").style.display = "none";
                     errorDiv.style.display = "none";
                     document.getElementById("loginEmail").value = email;
                 }, 1500);
+
             } catch (error) {
                 console.error("Registration error:", error);
                 errorDiv.textContent = "Error: " + error.message;
@@ -3975,6 +4046,7 @@
             msg.style.display = "block";
             msg.innerHTML = `✅ Branch "${name}" added!`;
             setTimeout(() => msg.style.display = "none", 3000);
+            renderBranches();
         };
 
         window.fixOldLogs = fixOldLogs;
@@ -4008,7 +4080,7 @@
         document.querySelector('input[name="issueType"][value="select"]').checked = true;
         document.getElementById("issueManualArea").classList.add("hidden");
 
-        addLog("System initialized with Movement Report", [], {
+        addLog("System initialized", [], {
             type: 'system',
             sku: '',
             productName: '',
@@ -4017,7 +4089,7 @@
             remark: '',
             invoice: ''
         });
-        console.log("WMS Pro loaded successfully with fixed product grouping.");
+        console.log("WMS Pro loaded successfully with fixed export.");
         console.log("To fix old logs, run: fixOldLogs()");
     </script>
 </body>
