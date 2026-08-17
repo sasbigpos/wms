@@ -2602,7 +2602,7 @@
             }
         }
 
-        // ===== RECEIVE STOCK =====
+        // ===== RECEIVE STOCK (FIXED - No duplicates) =====
         document.getElementById("receiveBtn").onclick = async () => {
             if (!canUserEdit(currentUser)) {
                 alert("You don't have permission to receive stock.");
@@ -2633,21 +2633,25 @@
                     return;
                 }
 
+                // FIX: Check by SKU, Name, Branch, AND Remark (ignore description for grouping)
                 const existingProduct = products.find(p => 
                     p.sku === prod.sku && 
                     p.name === prod.name &&
-                    p.description === prod.description &&
-                    p.cat === prod.cat &&
                     p.branchId === branchId &&
                     p.remark === remark
                 );
 
                 if (existingProduct) {
                     const currentQty = existingProduct.quantity || 0;
-                    await db.collection("products").doc(existingProduct.id).update({
+                    const updates = {
                         quantity: currentQty + quantity,
                         lastUpdated: new Date().toISOString()
-                    });
+                    };
+                    // Only update description if the existing one is empty
+                    if (!existingProduct.description && prod.description) {
+                        updates.description = prod.description;
+                    }
+                    await db.collection("products").doc(existingProduct.id).update(updates);
 
                     addLog(
                         `Received ${quantity} units to ${prod.sku} - ${prod.name} (${getBranchName(branchId)}) as ${remark} - Non-Serialized`,
@@ -2717,11 +2721,10 @@
                 return;
             }
 
+            // FIX: Check by SKU, Name, Branch, AND Remark (ignore description for grouping)
             const existingProduct = products.find(p => 
                 p.sku === prod.sku && 
                 p.name === prod.name &&
-                p.description === prod.description &&
-                p.cat === prod.cat &&
                 p.branchId === branchId &&
                 p.remark === remark
             );
@@ -2735,10 +2738,15 @@
                     return;
                 }
 
-                await db.collection("products").doc(existingProduct.id).update({
+                const updates = {
                     serials: [...existingSerials, ...uniqueNew],
                     lastUpdated: new Date().toISOString()
-                });
+                };
+                // Only update description if the existing one is empty
+                if (!existingProduct.description && prod.description) {
+                    updates.description = prod.description;
+                }
+                await db.collection("products").doc(existingProduct.id).update(updates);
 
                 addLog(
                     `Received ${uniqueNew.length} serials to ${prod.sku} - ${prod.name} (${getBranchName(branchId)}) as ${remark}`,
@@ -4049,8 +4057,69 @@
             renderBranches();
         };
 
-        window.fixOldLogs = fixOldLogs;
-        console.log("To fix old logs, run: fixOldLogs()");
+        // ===== FIX DUPLICATE PRODUCTS FUNCTION =====
+        window.fixDuplicates = async function() {
+            // Find all products with the same SKU, Name, Branch, and Remark
+            const grouped = {};
+            products.forEach(p => {
+                const key = `${p.sku}|${p.name}|${p.branchId}|${p.remark}`;
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(p);
+            });
+
+            let fixed = 0;
+            let deleted = 0;
+
+            for (const key in grouped) {
+                const items = grouped[key];
+                if (items.length > 1) {
+                    // Keep the first one as master
+                    const master = items[0];
+                    const masterSerials = master.serials || [];
+                    let totalQuantity = master.quantity || 0;
+                    let masterDescription = master.description || '';
+
+                    // Merge all others into master
+                    for (let i = 1; i < items.length; i++) {
+                        const item = items[i];
+                        totalQuantity += item.quantity || 0;
+                        // Merge serials
+                        const itemSerials = item.serials || [];
+                        itemSerials.forEach(s => {
+                            if (!masterSerials.includes(s)) {
+                                masterSerials.push(s);
+                            }
+                        });
+                        // Keep description if master doesn't have one
+                        if (!masterDescription && item.description) {
+                            masterDescription = item.description;
+                        }
+                        // Delete the duplicate
+                        await db.collection("products").doc(item.id).delete();
+                        deleted++;
+                        console.log(`Deleted duplicate: ${item.sku} - ${item.name} (${item.id})`);
+                    }
+
+                    // Update master with merged data
+                    const updates = {
+                        serials: masterSerials,
+                        quantity: totalQuantity,
+                        lastUpdated: new Date().toISOString()
+                    };
+                    if (masterDescription) {
+                        updates.description = masterDescription;
+                    }
+                    await db.collection("products").doc(master.id).update(updates);
+                    fixed++;
+                    console.log(`Updated master: ${master.sku} - ${master.name} with ${masterSerials.length} serials, ${totalQuantity} units`);
+                }
+            }
+
+            alert(`✅ Fixed ${fixed} product group(s)! Deleted ${deleted} duplicate(s). Refreshing...`);
+            renderAll();
+        };
+
+        console.log("To fix duplicate products, run: fixDuplicates()");
 
         // ===== INIT =====
         if (!checkAuth()) {
@@ -4089,8 +4158,9 @@
             remark: '',
             invoice: ''
         });
-        console.log("WMS Pro loaded successfully with fixed export.");
+        console.log("WMS Pro loaded successfully with duplicate detection fix.");
         console.log("To fix old logs, run: fixOldLogs()");
+        console.log("To fix duplicate products, run: fixDuplicates()");
     </script>
 </body>
 </html>
